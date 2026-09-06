@@ -1,0 +1,275 @@
+const express = require("express");
+const router = express.Router();
+const { protect } = require("../middleware/auth");
+const { adminOnly } = require("../middleware/admin");
+
+const Domain = require("../models/Domain");
+const Duration = require("../models/Duration");
+const Application = require("../models/Application");
+const Assignment = require("../models/Assignment");
+const User = require("../models/User");
+const Payment = require("../models/Payment");
+const Certificate = require("../models/Certificate");
+const { generateCertificateId, generateVerificationId } = require("../utils/generateIds");
+const { generateCertificatePdf } = require("../utils/generatePdf");
+const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
+
+router.use(protect, adminOnly);
+
+// ---- Dashboard overview ----
+router.get("/stats", async (req, res) => {
+  const [totalStudents, totalApplications, selected, active, completed, revenueAgg, certificatesIssued] = await Promise.all([
+    User.countDocuments({ role: "student" }),
+    Application.countDocuments(),
+    Application.countDocuments({ status: "Selected" }),
+    Application.countDocuments({ status: "Active" }),
+    Application.countDocuments({ status: "Completed" }),
+    Payment.aggregate([{ $match: { status: "Successful" } }, { $group: { _id: null, total: { $sum: "$amount" } } }]),
+    Application.countDocuments({ certificateIssued: true }),
+  ]);
+
+  res.json({
+    totalStudents,
+    totalApplications,
+    selected,
+    active,
+    completed,
+    revenue: revenueAgg[0]?.total || 0,
+    certificatesIssued,
+  });
+});
+
+// ---- Domain CRUD ----
+router.get("/domains", async (req, res) => {
+  const domains = await Domain.find().populate("availableDurations").sort({ createdAt: -1 });
+  res.json(domains);
+});
+
+router.post("/domains", async (req, res) => {
+  const domain = await Domain.create(req.body);
+  res.status(201).json(domain);
+});
+
+router.put("/domains/:id", async (req, res) => {
+  const domain = await Domain.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!domain) return res.status(404).json({ message: "Not found" });
+  res.json(domain);
+});
+
+router.delete("/domains/:id", async (req, res) => {
+  const domain = await Domain.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+  res.json(domain);
+});
+
+// ---- Duration / pricing CRUD ----
+router.get("/durations", async (req, res) => {
+  res.json(await Duration.find().sort({ weeks: 1 }));
+});
+
+router.post("/durations", async (req, res) => {
+  const duration = await Duration.create(req.body);
+  res.status(201).json(duration);
+});
+
+router.put("/durations/:id", async (req, res) => {
+  const duration = await Duration.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(duration);
+});
+
+router.delete("/durations/:id", async (req, res) => {
+  const duration = await Duration.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+  res.json(duration);
+});
+
+// ---- Curriculum / assignments CRUD ----
+router.get("/assignments", async (req, res) => {
+  const filter = {};
+  if (req.query.domain) filter.domain = req.query.domain;
+  res.json(await Assignment.find(filter).populate("domain").sort({ week: 1 }));
+});
+
+router.post("/assignments", async (req, res) => {
+  const assignment = await Assignment.create(req.body);
+  res.status(201).json(assignment);
+});
+
+router.put("/assignments/:id", async (req, res) => {
+  const assignment = await Assignment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(assignment);
+});
+
+router.delete("/assignments/:id", async (req, res) => {
+  await Assignment.findByIdAndDelete(req.params.id);
+  res.json({ success: true });
+});
+
+// ---- Application management with payment details ----
+router.get("/applications", async (req, res) => {
+  const filter = {};
+  if (req.query.status) filter.status = req.query.status;
+  if (req.query.domain) filter.domain = req.query.domain;
+  if (req.query.duration) filter.duration = req.query.duration;
+  if (req.query.search) filter.applicationId = { $regex: req.query.search, $options: "i" };
+
+  const [applications, payments] = await Promise.all([
+    Application.find(filter)
+      .populate("student", "fullName email phone college")
+      .populate("domain", "name")
+      .populate("duration", "label weeks fee")
+      .sort({ createdAt: -1 }),
+    Payment.find().lean(),
+  ]);
+
+  const paymentMap = {};
+  payments.forEach((p) => {
+    if (p.application) {
+      paymentMap[p.application.toString()] = p;
+    }
+  });
+
+  const enriched = applications.map((app) => {
+    const p = paymentMap[app._id.toString()];
+    return {
+      ...app.toObject(),
+      paymentDetails: p
+        ? {
+            utrNumber: p.utrNumber || p.paymentId || "N/A",
+            payerName: p.payerName || app.student?.fullName,
+            registeredEmail: p.registeredEmail || app.student?.email,
+            amount: p.amount || app.duration?.fee || 100,
+            status: p.status,
+            createdAt: p.createdAt,
+          }
+        : null,
+    };
+  });
+
+  res.json(enriched);
+});
+
+// Change application status
+router.put("/applications/:id/status", async (req, res) => {
+  const { status, note, paymentStatus } = req.body;
+  const application = await Application.findById(req.params.id).populate("domain").populate("student");
+  if (!application) return res.status(404).json({ message: "Not found" });
+
+  application.status = status;
+  if (paymentStatus) application.paymentStatus = paymentStatus;
+  application.statusHistory.push({ status, note });
+
+  if ((status === "Active" || status === "Selected") && !application.startDate) {
+    application.startDate = new Date();
+    const durationDoc = await Duration.findById(application.duration);
+    const end = new Date();
+    end.setDate(end.getDate() + (durationDoc?.weeks || 4) * 7);
+    application.endDate = end;
+  }
+
+  await application.save();
+
+  if (status === "Selected" || status === "Active") {
+    const t = templates.selected(application.student.fullName, application.domain.name);
+    sendEmail({ to: application.student.email, ...t }).catch(() => {});
+  } else if (status === "Rejected") {
+    const t = templates.rejected(application.student.fullName, application.domain.name);
+    sendEmail({ to: application.student.email, ...t }).catch(() => {});
+  }
+
+  res.json(application);
+});
+
+// Admin 1-click Mark Payment Paid & Activate
+router.put("/applications/:id/mark-payment", async (req, res) => {
+  const application = await Application.findById(req.params.id).populate("domain").populate("student");
+  if (!application) return res.status(404).json({ message: "Not found" });
+
+  application.paymentStatus = "Successful";
+  if (["Submitted", "Under Review", "Selected"].includes(application.status)) {
+    application.status = "Active";
+  }
+
+  if (!application.startDate) {
+    application.startDate = new Date();
+    const durationDoc = await Duration.findById(application.duration);
+    const end = new Date();
+    end.setDate(end.getDate() + (durationDoc?.weeks || 4) * 7);
+    application.endDate = end;
+  }
+
+  await application.save();
+
+  let payment = await Payment.findOne({ application: application._id });
+  if (!payment) {
+    payment = new Payment({
+      application: application._id,
+      student: application.student._id,
+      orderId: `admin_approved_${Date.now()}`,
+      amount: application.duration?.fee || 100,
+      currency: "INR",
+    });
+  }
+  payment.status = "Successful";
+  payment.paymentId = `ADMIN_VERIFIED_${Date.now()}`;
+  await payment.save();
+
+  const t = templates.paymentSuccess(application.student.fullName, application.duration?.fee || 100);
+  sendEmail({ to: application.student.email, ...t }).catch(() => {});
+
+  res.json({ success: true, application, payment });
+});
+
+// Admin Direct Certificate Issuance (Instant Issue & Complete)
+router.post("/applications/:id/issue-certificate", async (req, res) => {
+  const application = await Application.findById(req.params.id).populate("domain").populate("duration").populate("student");
+  if (!application) return res.status(404).json({ message: "Application record not found." });
+
+  // Update application state
+  application.paymentStatus = "Successful";
+  application.status = "Completed";
+  application.certificateIssued = true;
+  if (!application.startDate) application.startDate = new Date();
+  if (!application.endDate) {
+    const end = new Date();
+    end.setDate(end.getDate() + (application.duration?.weeks || 4) * 7);
+    application.endDate = end;
+  }
+  await application.save();
+
+  // Create or retrieve Certificate document
+  let cert = await Certificate.findOne({ application: application._id });
+  if (!cert) {
+    const count = await Certificate.countDocuments();
+    const certificateId = generateCertificateId(count + 1);
+    const verificationId = generateVerificationId();
+    const pdfUrl = await generateCertificatePdf({
+      studentName: application.student.fullName,
+      collegeName: application.student.college || "",
+      domainName: application.domain?.name || "Tech Internship Domain",
+      durationLabel: application.duration?.label || "4 Weeks Track",
+      startDate: application.startDate,
+      endDate: application.endDate,
+      certificateId,
+      verificationId,
+      orgName: "InternDock",
+    });
+    cert = await Certificate.create({
+      application: application._id,
+      student: application.student._id,
+      certificateId,
+      verificationId,
+      pdfUrl,
+    });
+  }
+
+  const t = templates.certificateIssued(application.student.fullName);
+  sendEmail({ to: application.student.email, ...t }).catch(() => {});
+
+  res.json({ success: true, message: "Certificate issued successfully!", application, certificate: cert });
+});
+
+// ---- Email logs ----
+router.get("/email-logs", async (req, res) => {
+  res.json(getEmailLog());
+});
+
+module.exports = router;

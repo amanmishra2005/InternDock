@@ -1,0 +1,57 @@
+# macOS and editor files
+.DS_Store
+.AppleDouble
+.LSOverride
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs and local runtime files
+*.log
+logs/
+pids/
+*.pid
+*.seed
+
+# Build and test output
+coverage/
+dist/
+build/
+.vite/
+.tmp/
+.cache/
+
+# Local databases and database dumps
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+
+# Generated/private backend data
+Backend/uploads/*
+!Backend/uploads/.gitkeep
+Backend/uploads/spreadsheet_ledger/*.csv
+Backend/seed/spreadsheet_ledger/*.csv
+Backend/assets/generated/
+
+# Generated documents and reports
+*.pdf
+*.doc
+*.docx
+
+# Frontend local configuration
+Frontend/.env.local
+Frontend/.env.*.local

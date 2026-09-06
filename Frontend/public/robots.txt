@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://interndock.com/sitemap.xml

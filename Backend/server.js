@@ -17,6 +17,8 @@ const documentRoutes = require("./routes/documentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const defaultOrigins = [
   "http://localhost:5173",
   "https://www.interndock.in",

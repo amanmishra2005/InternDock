@@ -179,3 +179,4 @@ The administrator is created from `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWO
 ## License
 
 No open-source license has been selected yet. Add a license before distributing InternDock for reuse.
+# InternDock

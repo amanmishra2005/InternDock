@@ -13,9 +13,9 @@ import {
   Zap,
   QrCode,
 } from "lucide-react";
-import axios from "axios";
 import confetti from "canvas-confetti";
 import OfferLetterPreview from "../components/OfferLetterPreview";
+import api from "../api/axios";
 
 export default function VerifyOffer() {
   const { id } = useParams();
@@ -30,9 +30,7 @@ export default function VerifyOffer() {
     setError("");
     setResult(null);
     try {
-      const { data } = await axios.get(
-        `/api/documents/verify/offer/${verificationId}`,
-      );
+      const { data } = await api.get(`/documents/verify/offer/${verificationId}`);
       setResult(data);
       if (data.valid) {
         confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });

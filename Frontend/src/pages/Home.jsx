@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
 import {
   Sparkles,
   ArrowRight,
@@ -26,6 +25,7 @@ import {
 import DomainCard from "../components/DomainCard";
 import CertificatePreview from "../components/CertificatePreview";
 import OfferLetterPreview from "../components/OfferLetterPreview";
+import api from "../api/axios";
 
 export default function Home() {
   const [domains, setDomains] = useState([]);
@@ -46,8 +46,8 @@ export default function Home() {
   const [previewTab, setPreviewTab] = useState("certificate");
 
   useEffect(() => {
-    axios
-      .get("/api/domains")
+    api
+      .get("/domains")
       .then((res) => {
         setDomains(res.data);
       })
@@ -66,7 +66,7 @@ export default function Home() {
     e.preventDefault();
     setContactSubmitting(true);
     try {
-      await axios.post("/api/contact", contactForm);
+      await api.post("/contact", contactForm);
       setContactSubmitted(true);
       setContactForm({ name: "", email: "", subject: "", message: "" });
     } catch (err) {

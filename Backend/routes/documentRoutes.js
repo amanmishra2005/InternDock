@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const router = express.Router();
 const Application = require("../models/Application");
 const OfferLetter = require("../models/OfferLetter");
@@ -8,6 +10,38 @@ const { protect } = require("../middleware/auth");
 const { generateOfferReferenceId, generateCertificateId, generateVerificationId } = require("../utils/generateIds");
 const { generateOfferLetterPdf, generateCertificatePdf, TEMPLATE_VERSION } = require("../utils/generatePdf");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
+
+async function downloadDocument(req, res, Model, label) {
+  const document = await Model.findOne({ application: req.params.applicationId }).lean();
+  if (!document) return res.status(404).json({ message: `${label} not found` });
+  if (String(document.student) !== String(req.user._id) && !["admin", "superadmin"].includes(req.user.role)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  const filename = path.basename(document.pdfUrl || "");
+  const filePath = path.join(__dirname, "..", "uploads", "documents", filename);
+  if (!filename || !fs.existsSync(filePath)) {
+    return res.status(404).json({ message: `${label} file not found` });
+  }
+
+  return res.download(filePath, filename);
+}
+
+router.get("/offer-letter/:applicationId/download", protect, async (req, res, next) => {
+  try {
+    await downloadDocument(req, res, OfferLetter, "Offer letter");
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/certificate/:applicationId/download", protect, async (req, res, next) => {
+  try {
+    await downloadDocument(req, res, Certificate, "Certificate");
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET /api/documents/offer-letter/:applicationId — student fetches (generates if missing)
 router.get("/offer-letter/:applicationId", protect, async (req, res) => {
@@ -79,7 +113,8 @@ router.get("/offer-letter/:applicationId", protect, async (req, res) => {
 
     res.json(offer);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Offer letter error:", err);
+    res.status(500).json({ message: "Unable to prepare the offer letter." });
   }
 });
 
@@ -150,7 +185,8 @@ router.get("/certificate/:applicationId", protect, async (req, res) => {
 
     res.json(cert);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Certificate error:", err);
+    res.status(500).json({ message: "Unable to prepare the certificate." });
   }
 });
 
@@ -183,7 +219,8 @@ router.post("/final-report", protect, async (req, res) => {
 
     res.status(201).json(report);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Final report error:", err);
+    res.status(500).json({ message: "Unable to submit the final report." });
   }
 });
 

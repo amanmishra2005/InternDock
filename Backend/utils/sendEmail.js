@@ -1,10 +1,19 @@
 const nodemailer = require("nodemailer");
 
 let transporter = null;
-if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+const smtpPort = Number(process.env.SMTP_PORT) || 587;
+const smtpConfigured = Boolean(
+  process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS,
+);
+
+if (smtpConfigured) {
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT) || 587,
+    port: smtpPort,
+    secure: process.env.SMTP_SECURE === "true",
+    requireTLS: process.env.SMTP_REQUIRE_TLS !== "false",
+    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 10000,
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
 }
@@ -25,10 +34,13 @@ async function sendEmail({ to, subject, html }) {
         html,
       });
     } else {
-      // No SMTP configured — log to console so devs can see emails during local dev.
-      console.log(`\n----- EMAIL (not sent, no SMTP configured) -----`);
-      console.log(`To: ${to}\nSubject: ${subject}\n${html}`);
-      console.log(`--------------------------------------------------\n`);
+      entry.status = "Skipped";
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`\n----- EMAIL (not sent, no SMTP configured) -----`);
+        console.log(`To: ${to}\nSubject: ${subject}\n${html}`);
+        console.log(`--------------------------------------------------\n`);
+      }
+      return entry;
     }
     entry.status = "Sent";
   } catch (err) {

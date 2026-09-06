@@ -14,7 +14,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import api from "../api/axios";
-import axios from "axios";
 import DomainCard from "../components/DomainCard";
 
 export default function StudentDashboard() {
@@ -49,8 +48,8 @@ export default function StudentDashboard() {
       .finally(() => setLoadingApp(false));
 
     setLoadingDom(true);
-    axios
-      .get("/api/domains")
+    api
+      .get("/domains")
       .then((res) => {
         setDomains(res.data);
         setFilteredDomains(res.data);
@@ -100,7 +99,7 @@ export default function StudentDashboard() {
     if (!customForm.name) return;
     setCustomSubmitting(true);
     try {
-      const res = await axios.post("/api/domains/request-custom", customForm);
+      const res = await api.post("/domains/request-custom", customForm);
       setShowCustomModal(false);
       setCustomForm({
         name: "",
@@ -109,7 +108,7 @@ export default function StudentDashboard() {
         description: "",
       });
 
-      const refreshed = await axios.get("/api/domains");
+      const refreshed = await api.get("/domains");
       setDomains(refreshed.data);
 
       if (res.data.domain) {

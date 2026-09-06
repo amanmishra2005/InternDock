@@ -12,9 +12,9 @@ import {
   Zap,
   QrCode,
 } from "lucide-react";
-import axios from "axios";
 import confetti from "canvas-confetti";
 import CertificatePreview from "../components/CertificatePreview";
+import api from "../api/axios";
 
 export default function VerifyCertificate() {
   const { id } = useParams();
@@ -29,9 +29,7 @@ export default function VerifyCertificate() {
     setError("");
     setResult(null);
     try {
-      const { data } = await axios.get(
-        `/api/documents/verify/certificate/${verificationId}`,
-      );
+      const { data } = await api.get(`/documents/verify/certificate/${verificationId}`);
       setResult(data);
       if (data.valid) {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });

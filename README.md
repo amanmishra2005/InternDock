@@ -140,6 +140,7 @@ In a second terminal:
 ```bash
 cd Frontend
 npm install
+cp .env.example .env
 npm run dev
 ```
 
@@ -147,7 +148,7 @@ Open the Vite URL shown in the terminal, normally `http://localhost:5173`.
 
 ## Environment Variables
 
-The complete template is in [`Backend/.env.example`](Backend/.env.example).
+Templates are in [`Backend/.env.example`](Backend/.env.example) and [`Frontend/.env.example`](Frontend/.env.example). Frontend `VITE_` variables are public build-time configuration; never put a secret in them.
 
 | Variable                                           | Purpose                                          |
 | -------------------------------------------------- | ------------------------------------------------ |
@@ -157,13 +158,27 @@ The complete template is in [`Backend/.env.example`](Backend/.env.example).
 | `JWT_SECRET`                                       | Secret used to sign authentication tokens        |
 | `JWT_EXPIRES_IN`                                   | Token lifetime, such as `7d`                     |
 | `CLIENT_URL`                                       | Frontend origin allowed by CORS                  |
+| `TRUST_PROXY`                                      | Set to `1` behind a trusted reverse proxy        |
 | `ADMIN_NAME`                                       | Seeded administrator display name                |
 | `ADMIN_EMAIL`                                      | Seeded administrator login email                 |
 | `ADMIN_PASSWORD`                                   | Seeded administrator password                    |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Optional email delivery settings                 |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | SMTP host, port, and provider credentials        |
+| `SMTP_SECURE`, `SMTP_REQUIRE_TLS`                 | Use `true` for port `465`; use STARTTLS for `587` |
 | `EMAIL_FROM`                                       | Sender identity for email notifications          |
 | `ORG_NAME`, `ORG_SIGNATORY`                        | Organization details used in generated documents |
 | `GOOGLE_SHEET_WEBHOOK_URL`                         | Optional Google Apps Script URL for ledger sync  |
+| `GOOGLE_SHEET_WEBHOOK_TOKEN`                       | Shared token sent in webhook payloads            |
+| `GOOGLE_SHEET_SYNC_TIMEOUT_MS`                     | Webhook request timeout, default `10000` ms      |
+
+| Frontend variable | Purpose |
+| --- | --- |
+| `VITE_API_URL` | API base URL. Use `/api` for same-domain reverse-proxy deployments, or an HTTPS API URL such as `https://api.example.com/api` for separate deployments. |
+
+### Production deployment
+
+Set `NODE_ENV=production`, a strong unique `JWT_SECRET`, an Atlas or managed MongoDB `MONGO_URI`, and HTTPS `CLIENT_URL` origins before deploying the API. Set `Frontend/.env` with the production `VITE_API_URL` **before** running `npm run build`; Vite embeds this public value in the generated files. Do not commit either `.env` file.
+
+For spreadsheet sync, deploy a Google Apps Script Web App and set its HTTPS URL in `GOOGLE_SHEET_WEBHOOK_URL`. Configure a random `GOOGLE_SHEET_WEBHOOK_TOKEN` in both the backend and Apps Script, then verify the incoming `webhookToken` before appending the payload to the requested sheet.
 
 ## Database Seeding
 

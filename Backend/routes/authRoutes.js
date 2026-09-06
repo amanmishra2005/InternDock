@@ -33,7 +33,8 @@ router.post("/register", async (req, res) => {
 
     return res.status(201).json({ user: sanitize(user), token: signToken(user) });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("Registration error:", err);
+    return res.status(500).json({ message: "Unable to create the account." });
   }
 });
 
@@ -49,7 +50,8 @@ router.post("/login", async (req, res) => {
 
     return res.json({ user: sanitize(user), token: signToken(user) });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("Login error:", err);
+    return res.status(500).json({ message: "Unable to sign in." });
   }
 });
 
@@ -72,7 +74,8 @@ router.put("/me", protect, async (req, res) => {
     await req.user.save();
     res.json({ user: sanitize(req.user) });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Profile update error:", err);
+    res.status(500).json({ message: "Unable to update the profile." });
   }
 });
 

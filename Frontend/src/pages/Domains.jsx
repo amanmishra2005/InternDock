@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
 import { Search, Plus, X, Sparkles, Layers, ArrowRight } from "lucide-react";
 import DomainCard from "../components/DomainCard";
+import api from "../api/axios";
 
 export default function Domains() {
   const [domains, setDomains] = useState([]);
@@ -21,8 +21,8 @@ export default function Domains() {
 
   const loadDomains = () => {
     setLoading(true);
-    axios
-      .get("/api/domains")
+    api
+      .get("/domains")
       .then((res) => {
         setDomains(res.data);
         setFilteredDomains(res.data);
@@ -74,7 +74,7 @@ export default function Domains() {
     if (!customForm.name) return;
     setCustomSubmitting(true);
     try {
-      const res = await axios.post("/api/domains/request-custom", customForm);
+      const res = await api.post("/domains/request-custom", customForm);
       setShowCustomModal(false);
       setCustomForm({ name: "", category: "Custom Track", skills: "", description: "" });
       loadDomains();

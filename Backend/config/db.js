@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { MongoMemoryServer } = require("mongodb-memory-server");
 
 let mongoServer = null;
 
@@ -651,7 +650,7 @@ async function connectDB() {
 
   try {
     await mongoose.connect(uri, mongoOptions);
-    console.log("MongoDB connected with optimized pool settings:", uri);
+    console.log("MongoDB connected with optimized pool settings.");
   } catch (err) {
     console.log("Local/Atlas MongoDB not available:", err.message);
     if (process.env.NODE_ENV === "production") {
@@ -660,6 +659,7 @@ async function connectDB() {
     }
     console.log("Starting embedded MongoMemoryServer fallback for development...");
     try {
+      const { MongoMemoryServer } = require("mongodb-memory-server");
       mongoServer = await MongoMemoryServer.create();
       const memoryUri = mongoServer.getUri();
       await mongoose.connect(memoryUri);

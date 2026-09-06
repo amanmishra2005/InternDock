@@ -106,7 +106,8 @@ router.get("/for-application/:applicationId", protect, async (req, res) => {
 
     return res.json(merged);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("Assignment loading error:", err);
+    return res.status(500).json({ message: "Unable to load assignments." });
   }
 });
 
@@ -146,7 +147,8 @@ router.post("/:assignmentId/submit", protect, async (req, res) => {
 
     return res.status(201).json(submission);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("Assignment submission error:", err);
+    return res.status(500).json({ message: "Unable to submit the assignment." });
   }
 });
 

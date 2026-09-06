@@ -327,14 +327,11 @@ export default function ApplicationWorkspace() {
 
   const downloadOfferLetter = async () => {
     try {
-      const res = await api.get(`/documents/offer-letter/${id}`);
-      const pdfPath = res.data.pdfUrl;
-      const downloadUrl = pdfPath.startsWith("http")
-        ? pdfPath
-        : pdfPath.startsWith("/")
-          ? pdfPath
-          : `/${pdfPath}`;
-      window.open(downloadUrl, "_blank");
+      await api.get(`/documents/offer-letter/${id}`);
+      const response = await api.get(`/documents/offer-letter/${id}/download`, {
+        responseType: "blob",
+      });
+      downloadPdf(response.data, "offer-letter.pdf");
     } catch (err) {
       console.error("Error downloading offer letter:", err);
       alert(
@@ -345,20 +342,26 @@ export default function ApplicationWorkspace() {
 
   const downloadCertificate = async () => {
     try {
-      const res = await api.get(`/documents/certificate/${id}`);
-      const pdfPath = res.data.pdfUrl;
-      const downloadUrl = pdfPath.startsWith("http")
-        ? pdfPath
-        : pdfPath.startsWith("/")
-          ? pdfPath
-          : `/${pdfPath}`;
-      window.open(downloadUrl, "_blank");
+      await api.get(`/documents/certificate/${id}`);
+      const response = await api.get(`/documents/certificate/${id}/download`, {
+        responseType: "blob",
+      });
+      downloadPdf(response.data, "certificate.pdf");
     } catch (err) {
       console.error("Error downloading certificate:", err);
       alert(
         err.response?.data?.message || "Could not generate certificate PDF.",
       );
     }
+  };
+
+  const downloadPdf = (pdf, filename) => {
+    const downloadUrl = URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(downloadUrl);
   };
 
   return (

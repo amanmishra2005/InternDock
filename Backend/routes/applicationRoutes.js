@@ -55,7 +55,8 @@ router.post("/", protect, async (req, res) => {
 
     return res.status(201).json(application);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("Application creation error:", err);
+    return res.status(500).json({ message: "Unable to submit the application." });
   }
 });
 

@@ -48,10 +48,16 @@ function appendToSpreadsheet(sheetName, recordData) {
       await fs.promises.appendFile(filePath, formatCsvLine(enrichedRecord) + "\n", "utf8");
 
       if (process.env.GOOGLE_SHEET_WEBHOOK_URL && typeof fetch === "function") {
+        const timeoutMs = Number(process.env.GOOGLE_SHEET_SYNC_TIMEOUT_MS) || 10000;
         await fetch(process.env.GOOGLE_SHEET_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sheetName, ...enrichedRecord }),
+          body: JSON.stringify({
+            sheetName,
+            ...enrichedRecord,
+            webhookToken: process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || undefined,
+          }),
+          signal: AbortSignal.timeout(timeoutMs),
         }).catch((err) => console.error("Google Sheets sync error:", err.message));
       }
     })

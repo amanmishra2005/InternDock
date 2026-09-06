@@ -28,7 +28,8 @@ router.post("/create-order", protect, async (req, res) => {
 
     res.status(201).json(payment);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Payment order error:", err);
+    res.status(500).json({ message: "Unable to create the payment order." });
   }
 });
 
@@ -52,6 +53,10 @@ router.post("/confirm", protect, async (req, res) => {
 
     if (!application) {
       return res.status(404).json({ message: "Application record not found for payment confirmation." });
+    }
+
+    if (String(application.student) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
     }
 
     if (!payment) {
@@ -116,7 +121,8 @@ router.post("/confirm", protect, async (req, res) => {
       application,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Payment confirmation error:", err);
+    res.status(500).json({ message: "Unable to confirm the payment." });
   }
 });
 

@@ -82,7 +82,8 @@ router.post("/request-custom", async (req, res) => {
 
     return res.status(201).json({ message: "Custom domain created successfully!", domain });
   } catch (err) {
-    return res.status(500).json({ message: "Failed to create custom domain", detail: err.message });
+    console.error("Custom domain creation error:", err);
+    return res.status(500).json({ message: "Failed to create custom domain" });
   }
 });
 

@@ -17,11 +17,18 @@ const documentRoutes = require("./routes/documentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 
-const isProduction = process.env.NODE_ENV === "production";
-const allowedOrigins = (process.env.CLIENT_URL || "")
+const defaultOrigins = [
+  "http://localhost:5173",
+  "https://www.interndock.in",
+  "https://interndock.in",
+];
+
+const envOrigins = (process.env.CLIENT_URL || "")
   .split(",")
   .map((origin) => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
+
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 
 if (
   isProduction &&

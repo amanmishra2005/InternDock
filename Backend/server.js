@@ -56,16 +56,24 @@ app.use((req, res, next) => {
 app.use(
   cors({
     origin(origin, callback) {
+      // 1. Allow server-to-server or postman requests (!origin)
+      // 2. Normalize and check if the origin matches your allowed list
       if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
         return callback(null, true);
       }
-      const error = new Error("Origin is not allowed by CORS.");
-      error.status = 403;
-      return callback(error);
+      
+      // Instead of returning callback(error), return false.
+      // This rejects the origin without throwing an application-wide exception.
+      return callback(null, false);
     },
     optionsSuccessStatus: 204,
+    credentials: true, // Add this if your frontend passes cookies/auth tokens
   }),
 );
+
+// Add this line immediately underneath to explicitly handle preflight OPTIONS requests globally
+app.options("*", cors());
+
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan(isProduction ? "combined" : "dev"));
 

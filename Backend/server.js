@@ -50,6 +50,12 @@ const isOriginAllowed = (origin) => {
     if (normalizedAllowed === "*") return true;
     if (normalizedAllowed === normalizedOrigin) return true;
 
+    // Automatic www / apex domain alias matching (e.g., https://interndock.in <-> https://www.interndock.in)
+    const altWww = normalizedAllowed.includes("://www.")
+      ? normalizedAllowed.replace("://www.", "://")
+      : normalizedAllowed.replace("://", "://www.");
+    if (altWww === normalizedOrigin) return true;
+
     if (normalizedAllowed.includes("*")) {
       const pattern =
         "^" +

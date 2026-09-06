@@ -31,8 +31,59 @@ if (
 }
 
 if (isProduction && allowedOrigins.length === 0) {
-  throw new Error("CLIENT_URL must include at least one allowed frontend origin in production.");
+  console.warn(
+    "[CORS WARNING] CLIENT_URL environment variable is not set in production. CORS will allow requests from all origins. Set CLIENT_URL to restrict origins.",
+  );
 }
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+
+  const normalizedOrigin = origin.trim().replace(/\/$/, "");
+
+  if (allowedOrigins.length === 0 || allowedOrigins.includes("*")) {
+    return true;
+  }
+
+  return allowedOrigins.some((allowed) => {
+    const normalizedAllowed = allowed.trim().replace(/\/$/, "");
+    if (normalizedAllowed === "*") return true;
+    if (normalizedAllowed === normalizedOrigin) return true;
+
+    if (normalizedAllowed.includes("*")) {
+      const pattern =
+        "^" +
+        normalizedAllowed
+          .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+          .replace(/\\\*/g, ".*") +
+        "$";
+      return new RegExp(pattern, "i").test(normalizedOrigin);
+    }
+    return false;
+  });
+};
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (isOriginAllowed(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+    "Access-Control-Allow-Headers",
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers",
+  ],
+  optionsSuccessStatus: 204,
+};
 
 const app = express();
 const apiLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 500 });
@@ -53,26 +104,9 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.use(
-  cors({
-    origin(origin, callback) {
-      // 1. Allow server-to-server or postman requests (!origin)
-      // 2. Normalize and check if the origin matches your allowed list
-      if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
-        return callback(null, true);
-      }
-      
-      // Instead of returning callback(error), return false.
-      // This rejects the origin without throwing an application-wide exception.
-      return callback(null, false);
-    },
-    optionsSuccessStatus: 204,
-    credentials: true, // Add this if your frontend passes cookies/auth tokens
-  }),
-);
 
-// Add this line immediately underneath to explicitly handle preflight OPTIONS requests globally
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan(isProduction ? "combined" : "dev"));

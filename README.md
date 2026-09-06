@@ -169,6 +169,7 @@ Templates are in [`Backend/.env.example`](Backend/.env.example) and [`Frontend/.
 | `GOOGLE_SHEET_WEBHOOK_URL`                         | Optional Google Apps Script URL for ledger sync  |
 | `GOOGLE_SHEET_WEBHOOK_TOKEN`                       | Shared token sent in webhook payloads            |
 | `GOOGLE_SHEET_SYNC_TIMEOUT_MS`                     | Webhook request timeout, default `10000` ms      |
+| `UPLOAD_DIR`, `LEDGER_DIR`                         | Optional absolute paths for persistent documents and CSV ledgers |
 
 | Frontend variable | Purpose |
 | --- | --- |

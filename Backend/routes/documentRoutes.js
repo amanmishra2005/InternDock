@@ -19,7 +19,8 @@ async function downloadDocument(req, res, Model, label) {
   }
 
   const filename = path.basename(document.pdfUrl || "");
-  const filePath = path.join(__dirname, "..", "uploads", "documents", filename);
+  const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, "..", "uploads", "documents");
+  const filePath = path.join(uploadDir, filename);
   if (!filename || !fs.existsSync(filePath)) {
     return res.status(404).json({ message: `${label} file not found` });
   }

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const LEDGER_DIR = path.join(__dirname, "..", "uploads", "spreadsheet_ledger");
+const LEDGER_DIR = process.env.LEDGER_DIR || path.join(__dirname, "..", "uploads", "spreadsheet_ledger");
 const writeQueues = new Map();
 const ALLOWED_SHEETS = new Set([
   "applications",

@@ -2,7 +2,7 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 
-const UPLOAD_DIR = path.join(__dirname, "..", "uploads", "documents");
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, "..", "uploads", "documents");
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const SIGNATURE_PATH = path.join(__dirname, "..", "assets", "ceo_signature.png");

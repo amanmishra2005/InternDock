@@ -6,6 +6,7 @@ const Application = require("../models/Application");
 const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
 const { sendEmail, templates } = require("../utils/sendEmail");
+const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
 
 // POST /api/payments/create-order
 router.post("/create-order", protect, async (req, res) => {
@@ -75,6 +76,17 @@ router.post("/confirm", protect, async (req, res) => {
     if (payerName) payment.payerName = payerName;
     if (registeredEmail) payment.registeredEmail = registeredEmail;
     await payment.save();
+
+    appendToSpreadsheet("payments", {
+      paymentId: payment.paymentId,
+      orderId: payment.orderId,
+      applicationId: application.applicationId || application._id,
+      studentId: req.user._id,
+      amount: feeAmount,
+      currency: payment.currency,
+      utrNumber: payment.utrNumber || "",
+      status: payment.status,
+    });
 
     // Instantly update application paymentStatus & unlock Active workspace
     application.paymentStatus = "Successful";

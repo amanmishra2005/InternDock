@@ -2,7 +2,27 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { Sparkles, ArrowRight, ShieldCheck, CheckCircle2, Award, Zap, BookOpen, Compass, Layers, Check, ChevronLeft, ChevronRight, Mail, Phone, MapPin, Send, MessageSquare, Code2, FileText } from "lucide-react";
+import {
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  Award,
+  Zap,
+  BookOpen,
+  Compass,
+  Layers,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  Phone,
+  MapPin,
+  Send,
+  MessageSquare,
+  Code2,
+  FileText,
+} from "lucide-react";
 import DomainCard from "../components/DomainCard";
 import CertificatePreview from "../components/CertificatePreview";
 import OfferLetterPreview from "../components/OfferLetterPreview";
@@ -13,7 +33,12 @@ export default function Home() {
   const sliderRef = useRef(null);
 
   // Contact Form State
-  const [contactForm, setContactForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [contactSubmitting, setContactSubmitting] = useState(false);
 
@@ -46,7 +71,9 @@ export default function Home() {
       setContactForm({ name: "", email: "", subject: "", message: "" });
     } catch (err) {
       console.error("Error submitting contact form:", err);
-      alert("Could not send message. Please try again or email support@interndock.in directly.");
+      alert(
+        "Could not send message. Please try again or email support@interndock.in directly.",
+      );
     } finally {
       setContactSubmitting(false);
     }
@@ -70,16 +97,20 @@ export default function Home() {
             >
               <span className="pulse-dot"></span>
               <Sparkles size={14} />
-              <span>2026 Batch Open • Verified Tech Tracks</span>
+              <span>2026 Cohort Open • All Streams Welcome</span>
             </motion.div>
 
             <h1 className="hero-heading">
-              Accelerate Engineering Career with <br />
-              <span className="gradient-text">Verified Internships.</span>
+              Build Experience. <br />
+              <span className="gradient-text">
+                Earn Credentials that Travel.
+              </span>
             </h1>
 
             <p className="hero-subheading">
-              InternDock is an enterprise-grade internship & tech upskilling platform. Build production capstones, receive expert mentor reviews, and earn cryptographically verified credentials.
+              InternDock helps students and graduates from every stream turn
+              focused project work into credible experience, mentor feedback,
+              and verifiable credentials.
             </p>
 
             <div className="hero-cta-group">
@@ -89,11 +120,11 @@ export default function Home() {
                   whileTap={{ scale: 0.96 }}
                   className="btn btn-primary btn-glow btn-lg"
                 >
-                  <span>Explore 25+ Domains</span>
+                  <span>Explore 25+ Tracks</span>
                   <ArrowRight size={18} />
                 </motion.button>
               </Link>
-              <Link to="/verify/offer/sample">
+              <Link to="/verify/offer">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
@@ -116,7 +147,9 @@ export default function Home() {
                 <span className="metric-txt">Tech Domains</span>
               </motion.div>
               <motion.div whileHover={{ y: -3 }} className="metric-box">
-                <span className="metric-num gradient-text-emerald">Self-Paced</span>
+                <span className="metric-num gradient-text-emerald">
+                  Self-Paced
+                </span>
                 <span className="metric-txt">Learn Anytime</span>
               </motion.div>
             </div>
@@ -136,10 +169,16 @@ export default function Home() {
               />
               <motion.div
                 animate={{ y: [0, -7, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
                 className="floating-badge badge-top-right"
               >
-                <span className="badge-icon"><Zap size={22} color="#d97706" /></span>
+                <span className="badge-icon">
+                  <Zap size={22} color="#d97706" />
+                </span>
                 <div>
                   <strong>Guaranteed Selection Letter</strong>
                   <span>Direct HR Ledger Verification</span>
@@ -148,10 +187,17 @@ export default function Home() {
 
               <motion.div
                 animate={{ y: [0, -7, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+                transition={{
+                  duration: 3.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 0.6,
+                }}
                 className="floating-badge badge-bottom-left"
               >
-                <span className="badge-icon"><Award size={22} color="#7c3aed" /></span>
+                <span className="badge-icon">
+                  <Award size={22} color="#7c3aed" />
+                </span>
                 <div>
                   <strong>Flexible Program Duration</strong>
                   <span>4, 6, 8, 12 & 24 Weeks</span>
@@ -172,7 +218,8 @@ export default function Home() {
             </span>
             <h2 className="section-title">Features of InternDock</h2>
             <p className="section-subtitle">
-              Engineered to provide students and graduates with real engineering experience and verifiable credentials.
+              Built for students and graduates who want practical project
+              experience, thoughtful feedback, and verifiable credentials.
             </p>
           </div>
 
@@ -181,39 +228,39 @@ export default function Home() {
               {
                 icon: ShieldCheck,
                 color: "#4f46e5",
-                title: "Cryptographically Signed Credentials",
-                desc: "Every offer letter and completion certificate comes with a public verification URL & QR code for recruiter validation."
+                title: "Verifiable Credentials",
+                desc: "Every offer letter and completion certificate includes a public verification URL and QR code for recruiter validation.",
               },
               {
                 icon: Code2,
                 color: "#7c3aed",
                 title: "Weekly Production Capstones",
-                desc: "Work on real industry repositories using MERN, Python, AWS, and Docker instead of simulated multiple-choice quizzes."
+                desc: "Work on practical projects across technology, design, business, and creative tracks instead of simulated multiple-choice quizzes.",
               },
               {
                 icon: Award,
                 color: "#059669",
                 title: "Accredited Evaluation Reports",
-                desc: "Get detailed weekly code reviews and mentor feedback to level up your software architecture skills."
+                desc: "Get detailed weekly code reviews and mentor feedback to level up your software architecture skills.",
               },
               {
                 icon: Zap,
                 color: "#d97706",
                 title: "Self-Paced Remote Flexibility",
-                desc: "Complete assignments on your schedule with 4, 6, 8, 12, or 24-week flexible duration tracks."
+                desc: "Complete assignments on your schedule with 4, 6, 8, 12, or 24-week flexible duration tracks.",
               },
               {
                 icon: Compass,
                 color: "#0284c7",
                 title: "Specified Custom Track Builder",
-                desc: "Need a specialized domain like Game Dev, Systems Rust, or AI Analytics? Create your own customized track instantly."
+                desc: "Need a specialized domain like Game Dev, Systems Rust, or AI Analytics? Create your own customized track instantly.",
               },
               {
                 icon: BookOpen,
                 color: "#db2777",
                 title: "Shareable Digital Certificate",
-                desc: "Finish your track and receive a detailed, verifiable completion certificate you can share on LinkedIn, your resume, or with recruiters."
-              }
+                desc: "Finish your track and receive a detailed, verifiable completion certificate you can share on LinkedIn, your resume, or with recruiters.",
+              },
             ].map((f, idx) => {
               const IconComp = f.icon;
               return (
@@ -226,7 +273,10 @@ export default function Home() {
                   whileHover={{ y: -5 }}
                   className="glass-card feature-card-item"
                 >
-                  <div className="feature-icon-wrapper" style={{ backgroundColor: `${f.color}15`, color: f.color }}>
+                  <div
+                    className="feature-icon-wrapper"
+                    style={{ backgroundColor: `${f.color}15`, color: f.color }}
+                  >
                     <IconComp size={24} />
                   </div>
                   <h3>{f.title}</h3>
@@ -248,16 +298,33 @@ export default function Home() {
             </span>
             <h2 className="section-title">How InternDock Works</h2>
             <p className="section-subtitle">
-              From domain selection to verified completion certificate in 4 simple horizontal steps.
+              From domain selection to verified completion certificate in 4
+              simple horizontal steps.
             </p>
           </div>
 
           <div className="horizontal-stepper-container">
             {[
-              { step: "01", title: "Select Domain Track", desc: "Choose from 25+ tech domains or specify your custom domain track." },
-              { step: "02", title: "Pick Program Duration", desc: "Select 4, 6, 8, 12, or 24 weeks track with transparent program fees." },
-              { step: "03", title: "Build Capstone Projects", desc: "Submit weekly GitHub code assignments in your candidate workspace." },
-              { step: "04", title: "Earn Verifiable Credentials", desc: "Claim cryptographically signed PDF certificate & offer letter." },
+              {
+                step: "01",
+                title: "Select Domain Track",
+                desc: "Choose from 25+ tech domains or specify your custom domain track.",
+              },
+              {
+                step: "02",
+                title: "Pick Program Duration",
+                desc: "Select 4, 6, 8, 12, or 24 weeks track with transparent program fees.",
+              },
+              {
+                step: "03",
+                title: "Build Capstone Projects",
+                desc: "Submit weekly GitHub code assignments in your candidate workspace.",
+              },
+              {
+                step: "04",
+                title: "Earn Verifiable Credentials",
+                desc: "Claim cryptographically signed PDF certificate & offer letter.",
+              },
             ].map((s, idx) => (
               <React.Fragment key={s.step}>
                 <motion.div
@@ -292,11 +359,13 @@ export default function Home() {
           <div className="section-header text-center">
             <span className="badge-pill badge-pill-emerald">
               <ShieldCheck size={14} />
-              <span>Official Executive Credentials</span>
+              <span>Credential previews</span>
             </span>
             <h2 className="section-title">Live Credential Previews</h2>
             <p className="section-subtitle">
-              Inspect our authentic, non-AI styled double-bordered credentials signed by Founder &amp; CEO <strong>Aman Mishra</strong>.
+              See sample previews of the credentials issued after a completed
+              InternDock track. Every final document includes a public
+              verification record.
             </p>
 
             <div className="doc-tab-switcher">
@@ -368,7 +437,8 @@ export default function Home() {
               </span>
               <h2 className="section-title">Internship Domains</h2>
               <p className="section-subtitle">
-                Slide horizontally to explore all available tech internship tracks.
+                Slide horizontally to explore all available tech internship
+                tracks.
               </p>
             </div>
 
@@ -392,7 +462,10 @@ export default function Home() {
                 <ChevronRight size={20} />
               </motion.button>
               <Link to="/domains">
-                <motion.button whileHover={{ scale: 1.04 }} className="btn btn-primary">
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  className="btn btn-primary"
+                >
                   <span>View All ({domains.length})</span>
                   <ArrowRight size={16} />
                 </motion.button>
@@ -401,7 +474,10 @@ export default function Home() {
           </div>
 
           {loading ? (
-            <div className="glass-panel text-center" style={{ padding: "3rem" }}>
+            <div
+              className="glass-panel text-center"
+              style={{ padding: "3rem" }}
+            >
               <div className="spinner"></div>
               <p>Loading domain catalog...</p>
             </div>
@@ -410,9 +486,10 @@ export default function Home() {
               <Compass size={32} className="domains-empty-icon" />
               <h3>No domains loaded yet</h3>
               <p className="color-muted">
-                The domain catalog couldn't be reached. Make sure the backend API server is
-                running (<code>cd backend &amp;&amp; npm run dev</code>) and connected to a database —
-                it seeds sample domains automatically on first run.
+                The domain catalog couldn't be reached. Make sure the backend
+                API server is running (
+                <code>cd backend &amp;&amp; npm run dev</code>) and connected to
+                a database — it seeds sample domains automatically on first run.
               </p>
             </div>
           ) : (
@@ -439,21 +516,38 @@ export default function Home() {
                 <span>Get In Touch</span>
               </span>
               <h2>Have Questions? Talk to Our Admissions Team</h2>
-              <p>Whether you need help selecting a domain track, verifying credentials, or setting up a college cohort, we are here 24/7.</p>
+              <p>
+                Whether you need help selecting a domain track, verifying
+                credentials, or setting up a college cohort, we are here 24/7.
+              </p>
 
               <div className="contact-details-stack">
                 <div className="contact-detail-item">
                   <Mail className="c-icon" size={20} />
                   <div>
                     <strong>Email Support</strong>
-                    <p><a href="mailto:support@interndock.in" style={{ color: "inherit", textDecoration: "none" }}>support@interndock.in</a></p>
+                    <p>
+                      <a
+                        href="mailto:support@interndock.in"
+                        style={{ color: "inherit", textDecoration: "none" }}
+                      >
+                        support@interndock.in
+                      </a>
+                    </p>
                   </div>
                 </div>
                 <div className="contact-detail-item">
                   <Phone className="c-icon" size={20} />
                   <div>
                     <strong>Direct Line</strong>
-                    <p><a href="tel:+918808307121" style={{ color: "inherit", textDecoration: "none" }}>+91 8808307121</a></p>
+                    <p>
+                      <a
+                        href="tel:+918808307121"
+                        style={{ color: "inherit", textDecoration: "none" }}
+                      >
+                        +91 8808307121
+                      </a>
+                    </p>
                   </div>
                 </div>
                 <div className="contact-detail-item">
@@ -468,23 +562,44 @@ export default function Home() {
 
             <div className="contact-form-col">
               {contactSubmitted ? (
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="contact-success-box text-center">
-                  <CheckCircle2 size={48} color="#059669" style={{ marginBottom: "1rem" }} />
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="contact-success-box text-center"
+                >
+                  <CheckCircle2
+                    size={48}
+                    color="#059669"
+                    style={{ marginBottom: "1rem" }}
+                  />
                   <h3>Message Dispatched to support@interndock.in!</h3>
-                  <p>Thank you for reaching out to InternDock. Your inquiry has been sent directly to <strong>support@interndock.in</strong> and a confirmation has been emailed to you.</p>
-                  <button onClick={() => setContactSubmitted(false)} className="btn btn-secondary" style={{ marginTop: "1.5rem" }}>
+                  <p>
+                    Thank you for reaching out to InternDock. Your inquiry has
+                    been sent directly to <strong>support@interndock.in</strong>{" "}
+                    and a confirmation has been emailed to you.
+                  </p>
+                  <button
+                    onClick={() => setContactSubmitted(false)}
+                    className="btn btn-secondary"
+                    style={{ marginTop: "1.5rem" }}
+                  >
                     Send Another Message
                   </button>
                 </motion.div>
               ) : (
-                <form onSubmit={handleContactSubmit} className="contact-main-form">
+                <form
+                  onSubmit={handleContactSubmit}
+                  className="contact-main-form"
+                >
                   <div className="input-group">
                     <label className="input-label">Your Name</label>
                     <input
                       className="input-field"
                       placeholder="e.g. Alex Morgan"
                       value={contactForm.name}
-                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                      onChange={(e) =>
+                        setContactForm({ ...contactForm, name: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -496,7 +611,12 @@ export default function Home() {
                       type="email"
                       placeholder="alex@university.edu"
                       value={contactForm.email}
-                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                      onChange={(e) =>
+                        setContactForm({
+                          ...contactForm,
+                          email: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -507,7 +627,12 @@ export default function Home() {
                       className="input-field"
                       placeholder="Domain Track Inquiry / Verification / Partner Cohort"
                       value={contactForm.subject}
-                      onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                      onChange={(e) =>
+                        setContactForm({
+                          ...contactForm,
+                          subject: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -519,7 +644,12 @@ export default function Home() {
                       rows="4"
                       placeholder="How can we assist you with your internship journey?"
                       value={contactForm.message}
-                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                      onChange={(e) =>
+                        setContactForm({
+                          ...contactForm,
+                          message: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -531,7 +661,9 @@ export default function Home() {
                     className="btn btn-primary btn-glow full-width btn-lg"
                     disabled={contactSubmitting}
                   >
-                    <span>{contactSubmitting ? "Sending..." : "Send Message"}</span>
+                    <span>
+                      {contactSubmitting ? "Sending..." : "Send Message"}
+                    </span>
                     <Send size={16} />
                   </motion.button>
                 </form>
@@ -641,16 +773,21 @@ export default function Home() {
 
         /* Contact Section */
         .contact-section { padding: 4.5rem 0 6rem 0; }
-        .contact-card-wrapper { padding: 3.5rem; gap: 3.5rem; background: linear-gradient(135deg, #ffffff 0%, rgba(248, 250, 252, 0.9) 100%) !important; }
-        .contact-info-col h2 { font-size: 2.2rem; font-weight: 800; margin: 0.75rem 0 1rem 0; }
-        .contact-info-col p { color: var(--text-muted); font-size: 1rem; margin-bottom: 2rem; }
-        .contact-details-stack { display: flex; flex-direction: column; gap: 1.5rem; }
+        .contact-card-wrapper { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); align-items: start; padding: 2.5rem; gap: 3rem; background: linear-gradient(135deg, #ffffff 0%, rgba(248, 250, 252, 0.9) 100%) !important; }
+        .contact-info-col, .contact-form-col { min-width: 0; }
+        .contact-info-col h2 { font-size: clamp(1.8rem, 2.8vw, 2.35rem); font-weight: 800; line-height: 1.12; margin: 0.75rem 0 1rem 0; }
+        .contact-info-col > p { color: var(--text-muted); font-size: 0.98rem; line-height: 1.55; margin-bottom: 1.75rem; }
+        .contact-details-stack { display: flex; flex-direction: column; gap: 1.1rem; }
         .contact-detail-item { display: flex; align-items: flex-start; gap: 1rem; }
         .c-icon { color: var(--primary); margin-top: 3px; flex-shrink: 0; }
         .contact-detail-item strong { color: #0f172a; font-size: 0.95rem; display: block; }
         .contact-detail-item p { font-size: 0.875rem; margin: 0; color: var(--text-muted); }
         .contact-success-box { padding: 3rem 1.5rem; background: rgba(5, 150, 105, 0.05); border: 1px solid rgba(5, 150, 105, 0.2); border-radius: var(--radius-md); }
         .full-width { width: 100%; }
+        .contact-main-form { gap: 0.8rem; }
+        .contact-main-form .input-group { margin-bottom: 0; }
+        .contact-main-form .input-field, .contact-main-form .textarea-field { padding: 0.7rem 0.9rem; }
+        .contact-main-form .textarea-field { min-height: 104px; }
 
         /* Document Preview Section */
         .doc-preview-section { padding: 4rem 0; background: linear-gradient(180deg, rgba(248, 250, 252, 0.5) 0%, rgba(241, 245, 249, 0.8) 100%); border-y: 1px solid var(--border-color); }
@@ -663,10 +800,17 @@ export default function Home() {
           .hero-heading { font-size: 2.5rem; }
           .metrics-row { flex-direction: column; gap: 1rem; }
           .contact-card-wrapper { padding: 2rem; }
+          .contact-card-wrapper { grid-template-columns: 1fr; }
           .badge-top-right, .badge-bottom-left { display: none; }
           .slider-card-item { width: 300px; }
           .horizontal-stepper-container { flex-direction: column; }
           .step-horizontal-arrow-connector { display: none; }
+        }
+        @media (max-width: 560px) {
+          .contact-section { padding: 3rem 0 4rem; }
+          .contact-card-wrapper { padding: 1.25rem; gap: 2rem; }
+          .contact-info-col h2 { font-size: 1.8rem; }
+          .contact-details-stack { gap: 0.9rem; }
         }
       `}</style>
     </div>

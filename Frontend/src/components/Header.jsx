@@ -1,7 +1,19 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Compass, ShieldCheck, LayoutDashboard, User, LogOut, Menu, X, ArrowRight, Layers, Mail } from "lucide-react";
+import {
+  Sparkles,
+  Compass,
+  ShieldCheck,
+  LayoutDashboard,
+  User,
+  LogOut,
+  Menu,
+  X,
+  ArrowRight,
+  Layers,
+  Mail,
+} from "lucide-react";
 import Logo from "./Logo";
 
 export default function Header() {
@@ -25,7 +37,7 @@ export default function Header() {
       <div className="container header-container">
         {/* Brand Logo & Name */}
         <Link to="/" className="brand-logo-group">
-          <motion.div 
+          <motion.div
             className="brand-icon-wrapper"
             whileHover={{ scale: 1.08, rotate: 3 }}
             whileTap={{ scale: 0.95 }}
@@ -48,11 +60,17 @@ export default function Header() {
             <Layers className="nav-icon" size={16} />
             <span>How it Works</span>
           </a>
-          <Link to="/domains" className={`nav-link ${isActive("/domains") ? "active" : ""}`}>
+          <Link
+            to="/domains"
+            className={`nav-link ${isActive("/domains") ? "active" : ""}`}
+          >
             <Compass className="nav-icon" size={16} />
             <span>Domains</span>
           </Link>
-          <Link to="/verify/offer/sample" className={`nav-link ${location.pathname.includes('/verify') ? "active" : ""}`}>
+          <Link
+            to="/verify/offer"
+            className={`nav-link ${location.pathname.includes("/verify") ? "active" : ""}`}
+          >
             <ShieldCheck className="nav-icon" size={16} />
             <span>Verification</span>
           </Link>
@@ -61,13 +79,19 @@ export default function Header() {
             <span>Contact</span>
           </a>
           {user && (
-            <Link to="/dashboard" className={`nav-link ${isActive("/dashboard") ? "active" : ""}`}>
+            <Link
+              to="/dashboard"
+              className={`nav-link ${isActive("/dashboard") ? "active" : ""}`}
+            >
               <LayoutDashboard className="nav-icon" size={16} />
               <span>Workspace</span>
             </Link>
           )}
           {user && user.role === "admin" && (
-            <Link to="/admin" className={`nav-link admin-nav-pill ${location.pathname.includes('/admin') ? "active" : ""}`}>
+            <Link
+              to="/admin"
+              className={`nav-link admin-nav-pill ${location.pathname.includes("/admin") ? "active" : ""}`}
+            >
               <Sparkles className="nav-icon" size={15} />
               <span>Admin Panel</span>
             </Link>
@@ -79,13 +103,15 @@ export default function Header() {
           {token && user ? (
             <div className="user-profile-menu">
               <div className="user-info-chip">
-                <span className="user-avatar-circle">{user.fullName ? user.fullName[0].toUpperCase() : "U"}</span>
+                <span className="user-avatar-circle">
+                  {user.fullName ? user.fullName[0].toUpperCase() : "U"}
+                </span>
                 <span className="user-name-text">{user.fullName}</span>
               </div>
-              <motion.button 
-                whileHover={{ scale: 1.05 }} 
+              <motion.button
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleLogout} 
+                onClick={handleLogout}
                 className="btn btn-secondary btn-sm"
               >
                 <LogOut size={14} />
@@ -95,12 +121,20 @@ export default function Header() {
           ) : (
             <div className="auth-buttons-group">
               <Link to="/login">
-                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="btn btn-secondary btn-sm">
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="btn btn-secondary btn-sm"
+                >
                   Sign In
                 </motion.button>
               </Link>
               <Link to="/register">
-                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="btn btn-primary btn-sm btn-glow">
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="btn btn-primary btn-sm btn-glow"
+                >
                   <span>Apply Now</span>
                   <ArrowRight size={14} />
                 </motion.button>
@@ -109,13 +143,17 @@ export default function Header() {
           )}
 
           {/* Mobile Menu Toggle */}
-          <motion.button 
+          <motion.button
             whileTap={{ scale: 0.9 }}
             className="mobile-toggle-btn"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle navigation"
           >
-            {mobileOpen ? <X size={24} color="#0f172a" /> : <Menu size={24} color="#0f172a" />}
+            {mobileOpen ? (
+              <X size={24} color="#0f172a" />
+            ) : (
+              <Menu size={24} color="#0f172a" />
+            )}
           </motion.button>
         </div>
       </div>
@@ -123,55 +161,97 @@ export default function Header() {
       {/* Mobile Drawer Navigation */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="mobile-drawer"
           >
-            <a href="/#features" onClick={() => setMobileOpen(false)} className="mobile-nav-item">
+            <a
+              href="/#features"
+              onClick={() => setMobileOpen(false)}
+              className="mobile-nav-item"
+            >
               <Sparkles size={18} />
               <span>Features</span>
             </a>
-            <a href="/#how-it-works" onClick={() => setMobileOpen(false)} className="mobile-nav-item">
+            <a
+              href="/#how-it-works"
+              onClick={() => setMobileOpen(false)}
+              className="mobile-nav-item"
+            >
               <Layers size={18} />
               <span>How it Works</span>
             </a>
-            <Link to="/domains" onClick={() => setMobileOpen(false)} className="mobile-nav-item">
+            <Link
+              to="/domains"
+              onClick={() => setMobileOpen(false)}
+              className="mobile-nav-item"
+            >
               <Compass size={18} />
               <span>Explore Domains</span>
             </Link>
-            <Link to="/verify/offer/sample" onClick={() => setMobileOpen(false)} className="mobile-nav-item">
+            <Link
+              to="/verify/offer"
+              onClick={() => setMobileOpen(false)}
+              className="mobile-nav-item"
+            >
               <ShieldCheck size={18} />
               <span>Certificate Verification</span>
             </Link>
-            <a href="/#contact" onClick={() => setMobileOpen(false)} className="mobile-nav-item">
+            <a
+              href="/#contact"
+              onClick={() => setMobileOpen(false)}
+              className="mobile-nav-item"
+            >
               <Mail size={18} />
               <span>Contact</span>
             </a>
             {user ? (
               <>
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="mobile-nav-item">
+                <Link
+                  to="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="mobile-nav-item"
+                >
                   <LayoutDashboard size={18} />
                   <span>My Dashboard</span>
                 </Link>
                 {user.role === "admin" && (
-                  <Link to="/admin" onClick={() => setMobileOpen(false)} className="mobile-nav-item">
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    className="mobile-nav-item"
+                  >
                     <User size={18} />
                     <span>Admin Panel</span>
                   </Link>
                 )}
-                <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="btn btn-secondary full-width">
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileOpen(false);
+                  }}
+                  className="btn btn-secondary full-width"
+                >
                   <LogOut size={16} />
                   <span>Logout ({user.fullName})</span>
                 </button>
               </>
             ) : (
               <div className="mobile-auth-stack">
-                <Link to="/login" onClick={() => setMobileOpen(false)} className="btn btn-secondary full-width">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="btn btn-secondary full-width"
+                >
                   Sign In
                 </Link>
-                <Link to="/register" onClick={() => setMobileOpen(false)} className="btn btn-primary full-width btn-glow">
+                <Link
+                  to="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="btn btn-primary full-width btn-glow"
+                >
                   Apply Now
                 </Link>
               </div>
@@ -196,6 +276,7 @@ export default function Header() {
           align-items: center;
           justify-content: space-between;
           height: 76px;
+          min-width: 0;
         }
         .brand-logo-group {
           display: flex;
@@ -216,6 +297,7 @@ export default function Header() {
         .brand-text-container {
           display: flex;
           flex-direction: column;
+          min-width: 0;
         }
         .brand-name {
           font-family: var(--font-heading);
@@ -232,6 +314,7 @@ export default function Header() {
           color: var(--text-muted);
           letter-spacing: 0.08em;
           text-transform: uppercase;
+          white-space: nowrap;
         }
         .desktop-nav {
           display: flex;
@@ -276,6 +359,7 @@ export default function Header() {
           display: flex;
           align-items: center;
           gap: 1.25rem;
+          flex-shrink: 0;
         }
         .status-indicator-badge {
           display: flex;
@@ -358,12 +442,15 @@ export default function Header() {
         .full-width {
           width: 100%;
         }
-        @media (max-width: 900px) {
+        @media (max-width: 1080px) {
           .desktop-nav, .status-indicator-badge {
             display: none;
           }
           .mobile-toggle-btn {
             display: flex;
+          }
+          .auth-buttons-group, .user-profile-menu {
+            display: none;
           }
         }
       `}</style>

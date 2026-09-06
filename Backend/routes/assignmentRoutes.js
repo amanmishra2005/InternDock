@@ -8,23 +8,49 @@ const { protect } = require("../middleware/auth");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
 
 function getTaskConfigForDuration(maxWeeks) {
-  let count = 2;
-  if (maxWeeks === 4) count = 2;
-  else if (maxWeeks === 6) count = 3;
-  else if (maxWeeks === 8) count = 4;
-  else if (maxWeeks === 12) count = 6;
-  else if (maxWeeks === 24) count = 8;
-  else count = Math.max(2, Math.round(maxWeeks / 2));
+  let count = 1;
+  if (maxWeeks === 4) count = 1;
+  else if (maxWeeks === 6 || maxWeeks === 8) count = 2;
+  else if (maxWeeks === 12) count = 3;
+  else if (maxWeeks === 24) count = 4;
+  else count = Math.max(1, Math.ceil(maxWeeks / 6));
 
   const weekSpan = Math.max(1, Math.floor(maxWeeks / count));
   return { count, weekSpan };
 }
 
+function getBeginnerGuide(domainName = "") {
+  const name = domainName.toLowerCase();
+  if (/design|ui|ux|figma|graphic|creative/.test(name)) {
+    return "1. Pick one simple screen or poster idea.\n2. Create a rough layout with 3-5 sections.\n3. Add readable colors, text, and spacing.\n4. Export a screenshot or share link and write 2 lines about your choices.";
+  }
+  if (/data|analytics|machine|ai|artificial|python/.test(name)) {
+    return "1. Choose a small public dataset or the provided sample data.\n2. Load it and inspect 5-10 rows.\n3. Make one simple chart or calculation.\n4. Write three short observations and share your notebook or report.";
+  }
+  if (/marketing|content|sales|business|finance|hr|human resource|management/.test(name)) {
+    return "1. Choose one realistic business problem.\n2. Collect 3 simple examples or references.\n3. Create a one-page plan, table, or presentation.\n4. Add three practical recommendations and share the document link.";
+  }
+  if (/legal|law|health|hospital|biotech|biology|supply|logistic|event|environment|sustain|agri/.test(name)) {
+    return "1. Choose one beginner-friendly real-world topic.\n2. Find three reliable references or examples.\n3. Make a simple checklist, diagram, summary, or short report.\n4. Add three key learnings and share the final document link.";
+  }
+  return "1. Create a small starter project with one clear goal.\n2. Add one feature at a time and keep the layout simple.\n3. Test the result with two example inputs.\n4. Add a short README with setup steps and share your repository link.";
+}
+
+function getTaskGuide(assignment, domainName) {
+  const instructions = String(assignment.instructions || "").trim();
+  const numberedSteps = instructions
+    .split("\n")
+    .filter((line) => /^\s*\d+[.)]\s+/.test(line));
+
+  if (numberedSteps.length >= 2) return numberedSteps.join("\n");
+  return getBeginnerGuide(domainName);
+}
+
 // GET /api/assignments/for-application/:applicationId
-// Returns simple milestone tasks matching duration track (2 for 4w, 3 for 6w, 4 for 8w, 6 for 12w, 8 for 24w).
+// Returns a smaller milestone set matching the duration track (1 for 4w, 2 for 6-8w, 3 for 12w, 4 for 24w).
 router.get("/for-application/:applicationId", protect, async (req, res) => {
   try {
-    const application = await Application.findById(req.params.applicationId).populate("duration").lean();
+    const application = await Application.findById(req.params.applicationId).populate("duration").populate("domain", "name").lean();
     if (!application) return res.status(404).json({ message: "Application not found" });
 
     const studentId = application.student?._id ? application.student._id : application.student;
@@ -67,6 +93,7 @@ router.get("/for-application/:applicationId", protect, async (req, res) => {
         weekLabel,
         title: `Milestone ${idx + 1}: ${cleanTitle}`,
         description: `${a.description.replace(/\(Guided,.*?\)/i, "").replace(/\(Easy,.*?\)/i, "")} (Beginner effort: ~30-45 mins for ${weekLabel}).`,
+        beginnerGuide: getTaskGuide(a, application.domain?.name),
       };
     });
 

@@ -2,8 +2,15 @@
 .doc-preview-wrapper {
   width: 100%;
   max-width: 840px;
+  min-width: 0;
   margin: 0 auto;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 }
 
 .doc-preview-actions {
@@ -25,6 +32,8 @@
   padding: 0.4rem 0.85rem;
   border-radius: 9999px;
   border: 1px solid rgba(5, 150, 105, 0.2);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* ===================================================
@@ -32,24 +41,37 @@
    =================================================== */
 .doc-card-frame {
   position: relative;
+  width: 100%;
+  min-width: 0;
   background: #fffdf8;
   color: #0f172a;
   border-radius: 6px;
   padding: 1.25rem;
-  box-shadow: 0 20px 45px -15px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.1);
+  box-shadow:
+    0 20px 45px -15px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(15, 23, 42, 0.1);
   border: 2px solid #0f172a;
+}
+
+.doc-card-portrait {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.doc-card-landscape {
+  max-width: 840px;
+  margin-inline: auto;
 }
 
 .doc-inner-content {
   border: 1px solid #0f172a;
   border-radius: 4px;
   padding: 2.25rem 2rem 1.25rem 2rem;
-  background:
-    radial-gradient(#d8d2c2 0.75px, transparent 0.75px),
-    #fffdf8;
+  background: radial-gradient(#d8d2c2 0.75px, transparent 0.75px), #fffdf8;
   background-size: 16px 16px;
   position: relative;
   overflow: hidden;
+  min-width: 0;
 }
 
 /* Decorative L-Corners */
@@ -86,70 +108,103 @@
   border-right: 2.5px solid #0f172a;
 }
 
-/* Background Watermark */
-.doc-watermark {
+.doc-company-watermark {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 320px;
-  height: 320px;
+  width: min(48%, 320px);
+  aspect-ratio: 1;
   transform: translate(-50%, -50%);
+  opacity: 0.1;
   pointer-events: none;
-  opacity: 0.05;
   z-index: 0;
 }
-.doc-watermark img {
+
+.doc-company-watermark img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+}
+
+.doc-footer-seals {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  opacity: 0.58;
+}
+
+.doc-footer-seals img {
+  width: 62px;
+  height: 62px;
   object-fit: contain;
 }
 
 /* Header Row */
 .doc-header-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 .doc-brand-block {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
+  flex: 0 0 auto;
+  margin-right: auto;
+}
+
+.doc-meta-top,
+.doc-contact-info {
+  margin-left: auto;
 }
 
 .doc-logo-img {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
+  border-radius: 9px;
+  background: #111827;
+  padding: 3px;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.14);
 }
 
 .doc-brand-titles {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .doc-brand-name {
-  font-size: 1.35rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.3rem;
   font-weight: 800;
   color: #0f172a;
   line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 
 .doc-brand-tagline {
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   font-weight: 700;
   color: #64748b;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   margin-top: 2px;
 }
 
-.doc-meta-top p, .doc-contact-info p {
+.doc-meta-top p,
+.doc-contact-info p {
   margin: 0;
   font-size: 0.8rem;
   color: #64748b;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .doc-meta-label {
@@ -187,9 +242,10 @@
 }
 
 .cert-main-title {
-  font-family: 'Times New Roman', Times, Georgia, serif;
-  font-size: 2.25rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.8rem, 4vw, 2.25rem);
   font-weight: 700;
+  letter-spacing: -0.025em;
   color: #0f172a;
   margin: 0 0 0.75rem 0;
 }
@@ -201,10 +257,11 @@
 }
 
 .cert-student-name {
-  font-family: 'Times New Roman', Times, Georgia, serif;
+  font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
-  font-size: 2.1rem;
+  font-size: clamp(1.7rem, 3.5vw, 2.1rem);
   font-weight: 700;
+  letter-spacing: -0.015em;
   color: #0f172a;
   margin: 0.4rem 0 0.25rem 0;
 }
@@ -217,15 +274,24 @@
 }
 
 .cert-narrative-text {
-  font-size: 0.95rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.74rem, 1.15vw, 0.88rem);
+  font-weight: 400;
   color: #334155;
-  line-height: 1.65;
-  max-width: 660px;
+  line-height: 1.5;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
+}
+
+.cert-narrative-text span {
+  display: block;
+  white-space: nowrap;
 }
 
 .cert-narrative-text strong {
   color: #0f172a;
+  font-weight: 700;
 }
 
 /* ===================================================
@@ -258,7 +324,7 @@
 }
 
 .offer-main-title {
-  font-family: 'Times New Roman', Times, Georgia, serif;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 1.85rem;
   font-weight: 700;
   color: #0f172a;
@@ -323,6 +389,7 @@
   padding: 0.35rem 0;
   border-bottom: 1px solid #ece5d3;
   font-size: 0.88rem;
+  gap: 1rem;
 }
 
 .row-key {
@@ -334,9 +401,12 @@
   color: #0f172a;
   font-weight: 700;
   font-style: italic;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
-.offer-body-p, .offer-closing-p {
+.offer-body-p,
+.offer-closing-p {
   margin-bottom: 1rem;
 }
 
@@ -358,6 +428,7 @@
   padding-top: 1rem;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 .doc-cid-block {
@@ -375,43 +446,7 @@
 
 /* Dual Seals Center Container */
 .doc-center-seals {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-}
-
-.doc-seal-badge {
-  width: 74px;
-  height: 74px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-  overflow: hidden;
-  flex-shrink: 0;
-  padding: 3px;
-  box-sizing: border-box;
-}
-
-.doc-certified-badge {
-  border: 2px solid #0d9488;
-  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.12), 0 0 0 1px rgba(13, 148, 136, 0.3);
-}
-
-.doc-msme-badge {
-  border: 2px solid #c9962f;
-  box-shadow: 0 6px 16px rgba(201, 150, 47, 0.12), 0 0 0 1px rgba(201, 150, 47, 0.3);
-}
-
-.doc-seal-img, .doc-msme-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 50%;
+  display: none;
 }
 
 .doc-seal-captions {
@@ -481,24 +516,37 @@
   text-align: center;
   margin-top: 1.5rem;
   font-size: 0.8rem;
-  font-weight: 800;
-  color: #0d9488;
+  font-weight: 500;
+  color: #64748b;
+  opacity: 0.62;
   letter-spacing: 0.05em;
   position: relative;
   z-index: 1;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 640px) {
+  .doc-preview-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .doc-preview-badge {
+    font-size: 0.78rem;
+  }
   .doc-inner-content {
     padding: 1.5rem 1rem 1rem 1rem;
   }
-  .doc-header-row, .doc-bottom-row {
+  .doc-header-row,
+  .doc-bottom-row {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
     text-align: center !important;
   }
-  .doc-meta-top, .doc-contact-info, .doc-cid-block {
+  .doc-meta-top,
+  .doc-contact-info,
+  .doc-cid-block {
     text-align: center !important;
   }
   .cert-main-title {
@@ -507,7 +555,19 @@
   .cert-student-name {
     font-size: 1.6rem;
   }
+  .cert-narrative-text span {
+    white-space: normal;
+  }
   .offer-main-title {
     font-size: 1.5rem;
+  }
+  .offer-meta-bar,
+  .offer-table-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .row-val {
+    text-align: left;
   }
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Header from "./components/Header";
@@ -26,11 +26,31 @@ import RefundPolicy from "./pages/RefundPolicy";
 export default function App() {
   const location = useLocation();
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    if (!location.hash) return undefined;
+
+    const targetId = decodeURIComponent(location.hash.slice(1));
+    const scrollToTarget = () => {
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ block: "start", behavior: "smooth" });
+      }
+    };
+
+    const frameId = window.requestAnimationFrame(scrollToTarget);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [location.pathname, location.hash]);
+
   return (
-    <div className="app-shell" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div
+      className="app-shell"
+      style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
+    >
       <CursorGlow />
       <Header />
-      <main style={{ flex: 1, position: 'relative' }}>
+      <main style={{ flex: 1, position: "relative" }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -50,18 +70,81 @@ export default function App() {
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/refund-policy" element={<RefundPolicy />} />
 
+              <Route path="/verify/offer" element={<VerifyOffer />} />
               <Route path="/verify/offer/:id" element={<VerifyOffer />} />
-              <Route path="/verify/certificate/:id" element={<VerifyCertificate />} />
+              <Route
+                path="/verify/certificate"
+                element={<VerifyCertificate />}
+              />
+              <Route
+                path="/verify/certificate/:id"
+                element={<VerifyCertificate />}
+              />
 
-              <Route path="/apply/:slug" element={<ProtectedRoute><Apply /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-              <Route path="/applications/:id" element={<ProtectedRoute><ApplicationWorkspace /></ProtectedRoute>} />
+              <Route
+                path="/apply/:slug"
+                element={
+                  <ProtectedRoute>
+                    <Apply />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <StudentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/applications/:id"
+                element={
+                  <ProtectedRoute>
+                    <ApplicationWorkspace />
+                  </ProtectedRoute>
+                }
+              />
 
-              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/domains" element={<AdminRoute><AdminDomains /></AdminRoute>} />
-              <Route path="/admin/applications" element={<AdminRoute><AdminApplications /></AdminRoute>} />
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/domains"
+                element={
+                  <AdminRoute>
+                    <AdminDomains />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/applications"
+                element={
+                  <AdminRoute>
+                    <AdminApplications />
+                  </AdminRoute>
+                }
+              />
 
-              <Route path="*" element={<div className="container" style={{ padding: '5rem 1rem', textAlign: 'center' }}><h2>404 — Page Not Found</h2><p style={{ color: 'var(--text-muted)' }}>The requested route does not exist.</p></div>} />
+              <Route
+                path="*"
+                element={
+                  <div
+                    className="container"
+                    style={{ padding: "5rem 1rem", textAlign: "center" }}
+                  >
+                    <h2>404 — Page Not Found</h2>
+                    <p style={{ color: "var(--text-muted)" }}>
+                      The requested route does not exist.
+                    </p>
+                  </div>
+                }
+              />
             </Routes>
           </motion.div>
         </AnimatePresence>
@@ -70,4 +153,3 @@ export default function App() {
     </div>
   );
 }
-

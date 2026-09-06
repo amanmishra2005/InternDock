@@ -38,5 +38,9 @@ const applicationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+applicationSchema.index({ student: 1, createdAt: -1 });
+applicationSchema.index({ status: 1, createdAt: -1 });
+applicationSchema.index({ domain: 1, status: 1 });
+
 module.exports = mongoose.model("Application", applicationSchema);
 module.exports.STATUS_VALUES = STATUS_VALUES;

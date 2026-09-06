@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Plus, Folder, ArrowRight, Search, X, Layers, Award, Clock, CheckCircle2 } from "lucide-react";
+import {
+  Sparkles,
+  Plus,
+  Folder,
+  ArrowRight,
+  Search,
+  X,
+  Layers,
+  Award,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
 import api from "../api/axios";
 import axios from "axios";
 import DomainCard from "../components/DomainCard";
@@ -18,7 +29,12 @@ export default function StudentDashboard() {
 
   // Custom Domain Request Form State
   const [showCustomModal, setShowCustomModal] = useState(false);
-  const [customForm, setCustomForm] = useState({ name: "", category: "Custom Track", skills: "", description: "" });
+  const [customForm, setCustomForm] = useState({
+    name: "",
+    category: "Custom Track",
+    skills: "",
+    description: "",
+  });
   const [customSubmitting, setCustomSubmitting] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -54,7 +70,7 @@ export default function StudentDashboard() {
         (d) =>
           d.name.toLowerCase().includes(q) ||
           (d.description && d.description.toLowerCase().includes(q)) ||
-          (d.skills && d.skills.some((s) => s.toLowerCase().includes(q)))
+          (d.skills && d.skills.some((s) => s.toLowerCase().includes(q))),
       );
     }
     setFilteredDomains(result);
@@ -76,7 +92,7 @@ export default function StudentDashboard() {
     "Healthcare & Science",
     "Operations & Supply Chain",
     "Events & PR",
-    "Sustainability"
+    "Sustainability",
   ];
 
   const handleCustomSubmit = async (e) => {
@@ -86,8 +102,13 @@ export default function StudentDashboard() {
     try {
       const res = await axios.post("/api/domains/request-custom", customForm);
       setShowCustomModal(false);
-      setCustomForm({ name: "", category: "Custom Track", skills: "", description: "" });
-      
+      setCustomForm({
+        name: "",
+        category: "Custom Track",
+        skills: "",
+        description: "",
+      });
+
       const refreshed = await axios.get("/api/domains");
       setDomains(refreshed.data);
 
@@ -110,9 +131,13 @@ export default function StudentDashboard() {
       case "Selected":
         return <span className="status-pill status-selected">Selected ✓</span>;
       case "Active":
-        return <span className="status-pill status-active">Active Workspace</span>;
+        return (
+          <span className="status-pill status-active">Active Workspace</span>
+        );
       case "Completed":
-        return <span className="status-pill status-completed">Completed 🎓</span>;
+        return (
+          <span className="status-pill status-completed">Completed 🎓</span>
+        );
       default:
         return <span className="status-pill">{status}</span>;
     }
@@ -121,14 +146,14 @@ export default function StudentDashboard() {
   return (
     <div className="container dashboard-container">
       {/* Student Header Card */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="dashboard-welcome-card glass-panel"
       >
         <div className="welcome-text">
-          <motion.div 
+          <motion.div
             animate={{ y: [0, -5, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             className="badge-pill badge-pill-cyan"
@@ -138,17 +163,20 @@ export default function StudentDashboard() {
             <span>Student Workspace Dashboard</span>
           </motion.div>
           <h1>Welcome back, {user?.fullName || "Intern"}!</h1>
-          <p>Manage your internship applications, complete weekly capstone milestones, and explore new tech domains.</p>
+          <p>
+            Manage your internship applications, complete weekly capstone
+            milestones, and explore new tech domains.
+          </p>
         </div>
 
-        <motion.button 
+        <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setShowCustomModal(true)} 
+          onClick={() => setActiveTab("explore-domains")}
           className="btn btn-primary btn-glow"
         >
-          <Plus size={16} />
-          <span>Add Specified Domain</span>
+          <span>Browse Internship Domains</span>
+          <ArrowRight size={16} />
         </motion.button>
       </motion.div>
 
@@ -172,36 +200,44 @@ export default function StudentDashboard() {
       {activeTab === "my-applications" && (
         <section className="dashboard-tab-content">
           {loadingApp ? (
-            <div className="glass-panel text-center" style={{ padding: "4rem" }}>
+            <div
+              className="glass-panel text-center"
+              style={{ padding: "4rem" }}
+            >
               <div className="spinner"></div>
               <p>Loading active internship applications...</p>
             </div>
           ) : applications.length === 0 ? (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="glass-panel empty-dashboard-card text-center" 
+              className="glass-panel empty-dashboard-card text-center"
               style={{ padding: "4rem 2rem" }}
             >
-              <Folder size={48} color="#818cf8" style={{ marginBottom: "1rem" }} />
+              <Folder
+                size={48}
+                color="#818cf8"
+                style={{ marginBottom: "1rem" }}
+              />
               <h3>No Active Internships Yet</h3>
               <p style={{ color: "var(--text-muted)", marginTop: "0.5rem" }}>
-                You haven't applied for any internship tracks yet. Explore our domain catalog to get started.
+                You haven't applied for any internship tracks yet. Explore our
+                domain catalog to get started.
               </p>
               <button
-                onClick={() => setActiveTab("explore-domains")}
+                onClick={() => setShowCustomModal(true)}
                 className="btn btn-primary btn-glow"
                 style={{ marginTop: "1.5rem" }}
               >
-                <span>Browse Internship Domains</span>
-                <ArrowRight size={16} />
+                <Plus size={16} />
+                <span>Add Specified Domain</span>
               </button>
             </motion.div>
           ) : (
             <div className="grid-2 applications-grid">
               {applications.map((app, index) => (
-                <motion.div 
-                  key={app._id} 
+                <motion.div
+                  key={app._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: index * 0.1 }}
@@ -215,21 +251,43 @@ export default function StudentDashboard() {
 
                   <h3 className="app-domain-title">{app.domain?.name}</h3>
                   <div className="app-meta-row">
-                    <span><Clock size={14} className="inline-meta-icon" /> Duration: <strong>{app.duration?.label || `${app.duration?.weeks} Weeks`}</strong></span>
-                    <span>💰 Program Fee: <strong>₹{app.duration?.fee}</strong></span>
+                    <span>
+                      <Clock size={14} className="inline-meta-icon" /> Duration:{" "}
+                      <strong>
+                        {app.duration?.label || `${app.duration?.weeks} Weeks`}
+                      </strong>
+                    </span>
+                    <span>
+                      💰 Program Fee: <strong>₹{app.duration?.fee}</strong>
+                    </span>
                   </div>
 
                   <div className="app-progress-bar-container">
                     <div className="progress-label">
                       <span>Workspace Progress</span>
-                      <span>{app.status === "Completed" ? "100%" : app.status === "Active" ? "60%" : app.status === "Selected" ? "20%" : "5%"}</span>
+                      <span>
+                        {app.status === "Completed"
+                          ? "100%"
+                          : app.status === "Active"
+                            ? "60%"
+                            : app.status === "Selected"
+                              ? "20%"
+                              : "5%"}
+                      </span>
                     </div>
                     <div className="progress-track">
                       <motion.div
                         className="progress-fill"
                         initial={{ width: 0 }}
                         animate={{
-                          width: app.status === "Completed" ? "100%" : app.status === "Active" ? "60%" : app.status === "Selected" ? "20%" : "5%",
+                          width:
+                            app.status === "Completed"
+                              ? "100%"
+                              : app.status === "Active"
+                                ? "60%"
+                                : app.status === "Selected"
+                                  ? "20%"
+                                  : "5%",
                         }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                       ></motion.div>
@@ -238,7 +296,10 @@ export default function StudentDashboard() {
 
                   <div className="app-card-footer">
                     <Link to={`/applications/${app._id}`}>
-                      <motion.button whileHover={{ scale: 1.02 }} className="btn btn-secondary full-width">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        className="btn btn-secondary full-width"
+                      >
                         <span>Open Application Workspace</span>
                         <ArrowRight size={16} />
                       </motion.button>
@@ -254,7 +315,10 @@ export default function StudentDashboard() {
       {/* Tab 2: Integrated Explore Domains Dashboard */}
       {activeTab === "explore-domains" && (
         <section className="dashboard-tab-content">
-          <div className="domains-search-panel glass-panel" style={{ marginBottom: "2rem" }}>
+          <div
+            className="domains-search-panel glass-panel"
+            style={{ marginBottom: "2rem" }}
+          >
             <div className="search-input-group">
               <Search className="search-icon" size={18} />
               <input
@@ -264,10 +328,17 @@ export default function StudentDashboard() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="domains-search-input"
               />
-              {search && <button onClick={() => setSearch("")} className="clear-btn"><X size={18} /></button>}
+              {search && (
+                <button onClick={() => setSearch("")} className="clear-btn">
+                  <X size={18} />
+                </button>
+              )}
             </div>
 
-            <div className="categories-scroll-row" style={{ marginTop: "1rem" }}>
+            <div
+              className="categories-scroll-row"
+              style={{ marginTop: "1rem" }}
+            >
               {categories.map((cat) => (
                 <button
                   key={cat}
@@ -281,15 +352,23 @@ export default function StudentDashboard() {
           </div>
 
           <div className="dashboard-section-top">
-            <span className="results-count">Showing {filteredDomains.length} Tracks Available</span>
-            <button onClick={() => setShowCustomModal(true)} className="btn btn-secondary btn-sm">
+            <span className="results-count">
+              Showing {filteredDomains.length} Tracks Available
+            </span>
+            <button
+              onClick={() => setShowCustomModal(true)}
+              className="btn btn-secondary btn-sm"
+            >
               <Plus size={14} />
               <span>Specify Custom Domain</span>
             </button>
           </div>
 
           {loadingDom ? (
-            <div className="glass-panel text-center" style={{ padding: "4rem" }}>
+            <div
+              className="glass-panel text-center"
+              style={{ padding: "4rem" }}
+            >
               <div className="spinner"></div>
               <p>Loading domain catalog...</p>
             </div>
@@ -313,13 +392,13 @@ export default function StudentDashboard() {
       {/* Custom Specified Domain Modal */}
       <AnimatePresence>
         {showCustomModal && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="modal-overlay"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
@@ -327,19 +406,27 @@ export default function StudentDashboard() {
             >
               <div className="modal-header">
                 <h2>Add Specified Custom Domain</h2>
-                <button onClick={() => setShowCustomModal(false)} className="close-modal-btn">
+                <button
+                  onClick={() => setShowCustomModal(false)}
+                  className="close-modal-btn"
+                >
                   <X size={20} />
                 </button>
               </div>
 
-              <form onSubmit={handleCustomSubmit} className="custom-domain-form">
+              <form
+                onSubmit={handleCustomSubmit}
+                className="custom-domain-form"
+              >
                 <div className="input-group">
                   <label className="input-label">Domain Track Name</label>
                   <input
                     className="input-field"
                     placeholder="e.g. Unity Game Development or Systems Engineering"
                     value={customForm.name}
-                    onChange={(e) => setCustomForm({ ...customForm, name: e.target.value })}
+                    onChange={(e) =>
+                      setCustomForm({ ...customForm, name: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -349,25 +436,35 @@ export default function StudentDashboard() {
                   <select
                     className="select-field"
                     value={customForm.category}
-                    onChange={(e) => setCustomForm({ ...customForm, category: e.target.value })}
+                    onChange={(e) =>
+                      setCustomForm({ ...customForm, category: e.target.value })
+                    }
                   >
-                    <option value="Software Development">Software Development</option>
+                    <option value="Software Development">
+                      Software Development
+                    </option>
                     <option value="Data & AI">Data & AI</option>
                     <option value="Cloud & DevOps">Cloud & DevOps</option>
                     <option value="Cybersecurity">Cybersecurity</option>
                     <option value="Design & Product">Design & Product</option>
-                    <option value="Marketing & Business">Marketing & Business</option>
+                    <option value="Marketing & Business">
+                      Marketing & Business
+                    </option>
                     <option value="Custom Track">Custom Track</option>
                   </select>
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Core Skills / Technologies (Comma Separated)</label>
+                  <label className="input-label">
+                    Core Skills / Technologies (Comma Separated)
+                  </label>
                   <input
                     className="input-field"
                     placeholder="e.g. C#, Unity, Shaders, 3D Design"
                     value={customForm.skills}
-                    onChange={(e) => setCustomForm({ ...customForm, skills: e.target.value })}
+                    onChange={(e) =>
+                      setCustomForm({ ...customForm, skills: e.target.value })
+                    }
                   />
                 </div>
 
@@ -378,16 +475,35 @@ export default function StudentDashboard() {
                     rows="3"
                     placeholder="Describe what you'd like to build and learn during this customized internship track..."
                     value={customForm.description}
-                    onChange={(e) => setCustomForm({ ...customForm, description: e.target.value })}
+                    onChange={(e) =>
+                      setCustomForm({
+                        ...customForm,
+                        description: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
                 <div className="modal-actions">
-                  <button type="button" onClick={() => setShowCustomModal(false)} className="btn btn-secondary">
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomModal(false)}
+                    className="btn btn-secondary"
+                  >
                     Cancel
                   </button>
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} type="submit" className="btn btn-primary btn-glow" disabled={customSubmitting}>
-                    <span>{customSubmitting ? "Creating Domain..." : "Create & Start Track"}</span>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="submit"
+                    className="btn btn-primary btn-glow"
+                    disabled={customSubmitting}
+                  >
+                    <span>
+                      {customSubmitting
+                        ? "Creating Domain..."
+                        : "Create & Start Track"}
+                    </span>
                     <ArrowRight size={16} />
                   </motion.button>
                 </div>

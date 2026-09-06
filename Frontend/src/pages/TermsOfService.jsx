@@ -1,7 +1,18 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, BookOpen, Award, CheckCircle2, ShieldCheck, Code, Globe, Sparkles, ChevronRight, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Award,
+  CheckCircle2,
+  ShieldCheck,
+  Code,
+  Globe,
+  Sparkles,
+  ChevronRight,
+  FileText,
+} from "lucide-react";
 
 export default function TermsOfService() {
   const [activeTab, setActiveTab] = useState("all");
@@ -13,12 +24,25 @@ export default function TermsOfService() {
       iconColor: "#4f46e5",
       badge: "Program Scope",
       title: "1. Nature of Internship Program",
-      summary: "InternDock provides project-based learning internships engineered for practical software development, capstone creation, and mentor evaluations:",
+      summary:
+        "InternDock provides project-based learning internships engineered for practical software development, capstone creation, and mentor evaluations:",
       bullets: [
-        { label: "Learning-Centric Model:", detail: "Programs are designed for academic upskilling, GitHub portfolio development, and engineering mastery." },
-        { label: "Track Durations:", detail: "Flexible self-paced program options spanning 4 Weeks, 6 Weeks, 8 Weeks, 12 Weeks, or 24 Weeks." },
-        { label: "Educational Governance:", detail: "Enrollment is an educational upskilling track and does not constitute a guaranteed employment contract." }
-      ]
+        {
+          label: "Learning-Centric Model:",
+          detail:
+            "Programs are designed for academic upskilling, GitHub portfolio development, and engineering mastery.",
+        },
+        {
+          label: "Track Durations:",
+          detail:
+            "Flexible self-paced program options spanning 4 Weeks, 6 Weeks, 8 Weeks, 12 Weeks, or 24 Weeks.",
+        },
+        {
+          label: "Educational Governance:",
+          detail:
+            "Enrollment is an educational upskilling track and does not constitute a guaranteed employment contract.",
+        },
+      ],
     },
     {
       id: "credentials",
@@ -26,12 +50,25 @@ export default function TermsOfService() {
       iconColor: "#10b981",
       badge: "Document Issuance",
       title: "2. Selection Letter & Certificate Governance",
-      summary: "Official documents are issued under strict evaluation and verification rules:",
+      summary:
+        "Official documents are issued under strict evaluation and verification rules:",
       bullets: [
-        { label: "Immediate Offer Letter Unlocking:", detail: "Upon selection, candidates immediately receive an official PDF Offer Selection Letter signed by Founder & CEO Aman Mishra." },
-        { label: "Weekly Capstone Milestones:", detail: "Students complete weekly guided assignments submitted directly via their Student Workspace." },
-        { label: "Cryptographic Completion Certificate:", detail: "Awarded upon successfully completing assigned weekly milestones and capstone project submissions." }
-      ]
+        {
+          label: "Immediate Offer Letter Unlocking:",
+          detail:
+            "Upon selection, candidates immediately receive an official PDF Offer Selection Letter signed by Founder & CEO Aman Mishra.",
+        },
+        {
+          label: "Weekly Capstone Milestones:",
+          detail:
+            "Students complete weekly guided assignments submitted directly via their Student Workspace.",
+        },
+        {
+          label: "Cryptographic Completion Certificate:",
+          detail:
+            "Awarded upon successfully completing assigned weekly milestones and capstone project submissions.",
+        },
+      ],
     },
     {
       id: "ethics",
@@ -39,11 +76,20 @@ export default function TermsOfService() {
       iconColor: "#d97706",
       badge: "Academic Integrity",
       title: "3. Code of Ethics & Anti-Plagiarism",
-      summary: "We uphold rigorous software engineering standards across all submitted repositories:",
+      summary:
+        "We uphold rigorous software engineering standards across all submitted repositories:",
       bullets: [
-        { label: "Original Code Requirement:", detail: "Submissions must be original or properly attributed open-source work. Fraudulent work voids certificate eligibility." },
-        { label: "Professional Conduct:", detail: "Respectful collaboration is mandatory across mentor reviews and student workspace channels." }
-      ]
+        {
+          label: "Original Code Requirement:",
+          detail:
+            "Submissions must be original or properly attributed open-source work. Fraudulent work voids certificate eligibility.",
+        },
+        {
+          label: "Professional Conduct:",
+          detail:
+            "Respectful collaboration is mandatory across mentor reviews and student workspace channels.",
+        },
+      ],
     },
     {
       id: "verification",
@@ -51,15 +97,25 @@ export default function TermsOfService() {
       iconColor: "#0284c7",
       badge: "Public Ledger",
       title: "4. Intellectual Property & Credential Verification",
-      summary: "Candidates retain 100% ownership over their created software projects and capstones:",
+      summary:
+        "Candidates retain 100% ownership over their created software projects and capstones:",
       bullets: [
-        { label: "Candidate IP Ownership:", detail: "You own all code repositories, projects, and apps built during your internship track." },
-        { label: "Public Ledger Verification:", detail: "InternDock maintains permanent public verification endpoints (/verify/offer/:id and /verify/certificate/:id) for recruiter background checks." }
-      ]
-    }
+        {
+          label: "Candidate IP Ownership:",
+          detail:
+            "You own all code repositories, projects, and apps built during your internship track.",
+        },
+        {
+          label: "Public Ledger Verification:",
+          detail:
+            "InternDock maintains permanent public verification endpoints (/verify/offer/:id and /verify/certificate/:id) for recruiter background checks.",
+        },
+      ],
+    },
   ];
 
-  const filteredSections = activeTab === "all" ? sections : sections.filter(s => s.id === activeTab);
+  const filteredSections =
+    activeTab === "all" ? sections : sections.filter((s) => s.id === activeTab);
 
   return (
     <div className="policy-redesign-wrapper">
@@ -67,7 +123,10 @@ export default function TermsOfService() {
 
       <div className="container policy-container">
         {/* Top Link */}
-        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
           <Link to="/" className="policy-back-btn">
             <ArrowLeft size={16} />
             <span>Back to Main Platform</span>
@@ -99,7 +158,9 @@ export default function TermsOfService() {
           </h1>
 
           <p className="policy-hero-sub">
-            Please review the official rules, project submission guidelines, selection letter terms, and completion certificate issuance policies governing your enrollment at <strong>InternDock</strong>.
+            Please review the official rules, project submission guidelines,
+            selection letter terms, and completion certificate issuance policies
+            governing your enrollment at <strong>InternDock</strong>.
           </p>
 
           <div className="policy-meta-row">
@@ -125,7 +186,7 @@ export default function TermsOfService() {
           >
             <span>Overview &amp; All Rules</span>
           </button>
-          {sections.map(s => (
+          {sections.map((s) => (
             <button
               key={s.id}
               className={`policy-nav-tab ${activeTab === s.id ? "active" : ""}`}
@@ -154,11 +215,25 @@ export default function TermsOfService() {
                     className="policy-card-block glass-panel"
                   >
                     <div className="card-top-header">
-                      <div className="icon-badge-box" style={{ background: `${sec.iconColor}15`, border: `1px solid ${sec.iconColor}30` }}>
-                        <IconComponent size={22} style={{ color: sec.iconColor }} />
+                      <div
+                        className="icon-badge-box"
+                        style={{
+                          background: `${sec.iconColor}15`,
+                          border: `1px solid ${sec.iconColor}30`,
+                        }}
+                      >
+                        <IconComponent
+                          size={22}
+                          style={{ color: sec.iconColor }}
+                        />
                       </div>
                       <div>
-                        <span className="card-tag" style={{ color: sec.iconColor }}>{sec.badge}</span>
+                        <span
+                          className="card-tag"
+                          style={{ color: sec.iconColor }}
+                        >
+                          {sec.badge}
+                        </span>
                         <h2 className="card-title">{sec.title}</h2>
                       </div>
                     </div>
@@ -183,29 +258,52 @@ export default function TermsOfService() {
 
           {/* Sidebar */}
           <div className="policy-sidebar-col">
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="sidebar-sticky">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="sidebar-sticky"
+            >
               {/* MSME Govt Badge Card */}
               <div className="glass-panel msme-sidebar-badge text-center">
                 <div className="msme-badge-header">
-                  <img src="/msme_logo.png" alt="Govt MSME Logo" className="sidebar-msme-img" />
+                  <img
+                    src="/msme_logo.png"
+                    alt="Govt MSME Logo"
+                    className="sidebar-msme-img"
+                  />
                   <div>
                     <h3>Govt. MSME Registered</h3>
-                    <span className="msme-reg-sub">Ministry of MSME, Govt. of India</span>
+                    <span className="msme-reg-sub">
+                      Ministry of MSME, Govt. of India
+                    </span>
                   </div>
                 </div>
                 <p className="msme-badge-desc">
-                  All internship tracks, offer letters, and credentials issued by InternDock comply with Govt. MSME enterprise standards (Gorakhpur U.P. India).
+                  All internship tracks, offer letters, and credentials issued
+                  by InternDock comply with Govt. MSME enterprise standards
+                  (Gorakhpur U.P. India).
                 </p>
               </div>
 
               {/* Legal Desk */}
-              <div className="glass-panel help-sidebar-card" style={{ marginTop: "1.5rem" }}>
+              <div
+                className="glass-panel help-sidebar-card"
+                style={{ marginTop: "1.5rem" }}
+              >
                 <div className="help-icon-wrapper">
                   <FileText size={22} color="#4f46e5" />
                 </div>
                 <h3>Legal &amp; Accreditation</h3>
-                <p>Need custom university cohort onboarding or official verification clearance?</p>
-                <a href="mailto:support@interndock.in" className="btn btn-primary btn-glow full-width" style={{ marginTop: "1rem" }}>
+                <p>
+                  Need custom university cohort onboarding or official
+                  verification clearance?
+                </p>
+                <a
+                  href="mailto:support@interndock.in"
+                  className="btn btn-primary btn-glow full-width"
+                  style={{ marginTop: "1rem" }}
+                >
                   <span>Email Legal Desk</span>
                   <ChevronRight size={16} />
                 </a>
@@ -459,6 +557,20 @@ export default function TermsOfService() {
           .sidebar-sticky {
             position: static;
           }
+        }
+        @media (max-width: 640px) {
+          .policy-redesign-wrapper { padding: 2rem 0 3rem; }
+          .policy-hero-banner { padding: 1.5rem; border-left-width: 3px; }
+          .policy-hero-heading { font-size: clamp(1.8rem, 9vw, 2.35rem); }
+          .policy-hero-sub { font-size: 0.92rem; }
+          .policy-meta-row { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
+          .meta-divider { display: none; }
+          .policy-card-block { padding: 1.25rem; }
+          .card-top-header { align-items: flex-start; gap: 0.7rem; }
+          .card-title { font-size: 1.1rem; overflow-wrap: anywhere; }
+          .card-summary, .bullet-row-item { overflow-wrap: anywhere; }
+          .bullet-row-item { padding: 0.75rem; font-size: 0.87rem; }
+          .msme-sidebar-badge, .help-sidebar-card { padding: 1.25rem; }
         }
       `}</style>
     </div>

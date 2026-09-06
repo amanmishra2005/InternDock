@@ -12,4 +12,6 @@ const contactQuerySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+contactQuerySchema.index({ status: 1, createdAt: -1 });
+
 module.exports = mongoose.model("ContactQuery", contactQuerySchema);

@@ -4,6 +4,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const path = require("path");
 const connectDB = require("./config/db");
+const mongoose = require("mongoose");
 
 const authRoutes = require("./routes/authRoutes");
 const domainRoutes = require("./routes/domainRoutes");
@@ -22,7 +23,21 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.get("/api/health", (req, res) => res.json({ status: "ok" }));
+app.get("/api/health", (req, res) => {
+  const databaseReady = mongoose.connection.readyState === 1;
+  res.status(databaseReady ? 200 : 503).json({
+    status: databaseReady ? "ok" : "degraded",
+    database: databaseReady ? "connected" : "disconnected",
+  });
+});
+
+app.use("/api", (req, res, next) => {
+  if (req.path === "/health" || mongoose.connection.readyState === 1) return next();
+  return res.status(503).json({
+    message: "The data service is temporarily unavailable. Please retry shortly.",
+    database: "disconnected",
+  });
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/domains", domainRoutes);

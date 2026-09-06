@@ -17,6 +17,19 @@ node_modules/
 **/.env
 **/.env.*
 !**/.env.example
+*.secret
+*.secrets
+*.credentials
+*.credentials.json
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+secrets/
+private/
 
 # Logs and local runtime files
 *.log
@@ -39,6 +52,8 @@ build/
 *.db
 *.dump
 *.bak
+*.backup
+*.sql
 
 # Generated/private backend data
 Backend/uploads/*
@@ -46,6 +61,20 @@ Backend/uploads/*
 Backend/uploads/spreadsheet_ledger/*.csv
 Backend/seed/spreadsheet_ledger/*.csv
 Backend/assets/generated/
+Backend/uploads/documents/
+Backend/uploads/*.json
+Backend/uploads/*.csv
+Backend/uploads/*.xlsx
+Backend/uploads/*.zip
+
+# Local exports and personal data
+*.csv
+*.tsv
+*.xlsx
+*.xls
+exports/
+tmp/
+temp/
 
 # Generated documents and reports
 *.pdf

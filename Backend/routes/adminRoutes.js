@@ -1,4 +1,5 @@
 const express = require("express");
+const fs = require("fs");
 const router = express.Router();
 const { protect } = require("../middleware/auth");
 const { adminOnly } = require("../middleware/admin");
@@ -13,8 +14,22 @@ const Certificate = require("../models/Certificate");
 const { generateCertificateId, generateVerificationId } = require("../utils/generateIds");
 const { generateCertificatePdf } = require("../utils/generatePdf");
 const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
+const { getSpreadsheetPath, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
 
 router.use(protect, adminOnly);
+
+// Download a local CSV ledger backup. This is intentionally admin-only.
+router.get("/ledgers/:sheetName", (req, res) => {
+  const { sheetName } = req.params;
+  if (!ALLOWED_SHEETS.has(sheetName)) return res.status(404).json({ message: "Ledger not found" });
+
+  const filePath = getSpreadsheetPath(sheetName);
+  if (!filePath || !fs.existsSync(filePath)) {
+    return res.status(404).json({ message: "This ledger has not been created yet" });
+  }
+
+  return res.download(filePath, `${sheetName}.csv`);
+});
 
 // ---- Dashboard overview ----
 router.get("/stats", async (req, res) => {

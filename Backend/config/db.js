@@ -641,10 +641,12 @@ async function autoSeed() {
 async function connectDB() {
   const uri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/internship_platform";
   const mongoOptions = {
-    serverSelectionTimeoutMS: 3000,
-    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    maxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE) || 40,
     minPoolSize: 2,
     socketTimeoutMS: 45000,
+    maxIdleTimeMS: 30000,
+    retryWrites: true,
   };
 
   try {
@@ -652,7 +654,11 @@ async function connectDB() {
     console.log("MongoDB connected with optimized pool settings:", uri);
   } catch (err) {
     console.log("Local/Atlas MongoDB not available:", err.message);
-    console.log("Starting embedded MongoMemoryServer fallback...");
+    if (process.env.NODE_ENV === "production") {
+      console.error("MongoDB is unavailable in production. API will start in degraded mode until MongoDB is restored.");
+      return false;
+    }
+    console.log("Starting embedded MongoMemoryServer fallback for development...");
     try {
       mongoServer = await MongoMemoryServer.create();
       const memoryUri = mongoServer.getUri();
@@ -664,7 +670,8 @@ async function connectDB() {
     }
   }
 
-  await autoSeed();
+  if (mongoose.connection.readyState === 1) await autoSeed();
+  return mongoose.connection.readyState === 1;
 }
 
 module.exports = connectDB;

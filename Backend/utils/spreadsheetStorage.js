@@ -2,6 +2,15 @@ const fs = require("fs");
 const path = require("path");
 
 const LEDGER_DIR = path.join(__dirname, "..", "uploads", "spreadsheet_ledger");
+const writeQueues = new Map();
+const ALLOWED_SHEETS = new Set([
+  "applications",
+  "certificates",
+  "final_reports",
+  "offer_letters",
+  "submissions",
+  "payments",
+]);
 if (!fs.existsSync(LEDGER_DIR)) {
   fs.mkdirSync(LEDGER_DIR, { recursive: true });
 }
@@ -19,37 +28,42 @@ function formatCsvLine(dataObject) {
 
 // Append a record to a spreadsheet CSV file safely
 function appendToSpreadsheet(sheetName, recordData) {
-  try {
-    const filePath = path.join(LEDGER_DIR, `${sheetName}.csv`);
-    const fileExists = fs.existsSync(filePath);
+  if (!ALLOWED_SHEETS.has(sheetName)) return false;
 
-    const timestamp = new Date().toISOString();
-    const enrichedRecord = { timestamp, ...recordData };
+  const previous = writeQueues.get(sheetName) || Promise.resolve();
+  const write = previous
+    .catch(() => {})
+    .then(async () => {
+      await fs.promises.mkdir(LEDGER_DIR, { recursive: true });
+      const filePath = path.join(LEDGER_DIR, `${sheetName}.csv`);
+      const timestamp = new Date().toISOString();
+      const enrichedRecord = { timestamp, ...recordData };
+      const fileExists = fs.existsSync(filePath);
 
-    if (!fileExists) {
-      // Write CSV headers on first creation
-      const headers = Object.keys(enrichedRecord).map((h) => `"${h}"`).join(",") + "\n";
-      fs.writeFileSync(filePath, headers, "utf8");
-    }
+      if (!fileExists) {
+        const headers = Object.keys(enrichedRecord).map((h) => `"${h}"`).join(",") + "\n";
+        await fs.promises.writeFile(filePath, headers, "utf8");
+      }
 
-    const row = formatCsvLine(enrichedRecord) + "\n";
-    fs.appendFileSync(filePath, row, "utf8");
+      await fs.promises.appendFile(filePath, formatCsvLine(enrichedRecord) + "\n", "utf8");
 
-    // Optional webhook trigger for Google Sheets sync if URL is provided in env
-    if (process.env.GOOGLE_SHEET_WEBHOOK_URL) {
-      const fetch = require("node-fetch");
-      fetch(process.env.GOOGLE_SHEET_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sheetName, ...enrichedRecord }),
-      }).catch(() => {});
-    }
+      if (process.env.GOOGLE_SHEET_WEBHOOK_URL && typeof fetch === "function") {
+        await fetch(process.env.GOOGLE_SHEET_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sheetName, ...enrichedRecord }),
+        }).catch((err) => console.error("Google Sheets sync error:", err.message));
+      }
+    })
+    .catch((err) => console.error(`Spreadsheet append error for ${sheetName}:`, err.message));
 
-    return true;
-  } catch (err) {
-    console.error(`Spreadsheet append error for ${sheetName}:`, err.message);
-    return false;
-  }
+  writeQueues.set(sheetName, write);
+  return true;
+}
+
+function getSpreadsheetPath(sheetName) {
+  if (!ALLOWED_SHEETS.has(sheetName)) return null;
+  return path.join(LEDGER_DIR, `${sheetName}.csv`);
 }
 
 // Helper to read all records from a spreadsheet CSV
@@ -80,4 +94,4 @@ function readSpreadsheet(sheetName) {
   }
 }
 
-module.exports = { appendToSpreadsheet, readSpreadsheet };
+module.exports = { appendToSpreadsheet, readSpreadsheet, getSpreadsheetPath, ALLOWED_SHEETS };

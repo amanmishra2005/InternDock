@@ -1,7 +1,18 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, AlertTriangle, ShieldCheck, Mail, Phone, MapPin, CheckCircle2, Sparkles, ChevronRight, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertTriangle,
+  ShieldCheck,
+  Mail,
+  Phone,
+  MapPin,
+  CheckCircle2,
+  Sparkles,
+  ChevronRight,
+  RefreshCw,
+} from "lucide-react";
 
 export default function RefundPolicy() {
   const [activeTab, setActiveTab] = useState("all");
@@ -13,12 +24,25 @@ export default function RefundPolicy() {
       iconColor: "#ef4444",
       badge: "Fee Structure",
       title: "1. Non-Refundable Fee Structure",
-      summary: "Program track enrollment fees cover immediate administrative processing, cloud infrastructure allocation, cryptographic indexing, and mentor evaluation setup:",
+      summary:
+        "Program track enrollment fees cover immediate administrative processing, cloud infrastructure allocation, cryptographic indexing, and mentor evaluation setup:",
       bullets: [
-        { label: "Strict Non-Refundable Policy:", detail: "Payments made towards internship tracks, selection offer letters, or completion certificate verification cannot be refunded, cancelled, or transferred to another candidate under any circumstances." },
-        { label: "Immediate Credential Allocation:", detail: "Upon payment, candidate credentials and selection letters are immediately registered on www.interndock.in and bound to cryptographic hashes, incurring non-recoverable infrastructure processing costs." },
-        { label: "Track Fee Breakdown:", detail: "₹100 (4 Weeks Track), ₹150 (6 Weeks Track), ₹200 (8 Weeks Track), ₹300 (12 Weeks Track), ₹500 (24 Weeks Track)." }
-      ]
+        {
+          label: "Strict Non-Refundable Policy:",
+          detail:
+            "Payments made towards internship tracks, selection offer letters, or completion certificate verification cannot be refunded, cancelled, or transferred to another candidate under any circumstances.",
+        },
+        {
+          label: "Immediate Credential Allocation:",
+          detail:
+            "Upon payment, candidate credentials and selection letters are immediately registered on www.interndock.in and bound to cryptographic hashes, incurring non-recoverable infrastructure processing costs.",
+        },
+        {
+          label: "Track Fee Breakdown:",
+          detail:
+            "₹100 (4 Weeks Track), ₹150 (6 Weeks Track), ₹200 (8 Weeks Track), ₹300 (12 Weeks Track), ₹500 (24 Weeks Track).",
+        },
+      ],
     },
     {
       id: "exception",
@@ -26,11 +50,20 @@ export default function RefundPolicy() {
       iconColor: "#10b981",
       badge: "Glitch Exception",
       title: "2. Payment Gateway Network Error Exception",
-      summary: "We protect candidates against unexpected payment gateway errors:",
+      summary:
+        "We protect candidates against unexpected payment gateway errors:",
       bullets: [
-        { label: "Duplicate Charge Refund:", detail: "In the rare event of a duplicate payment caused by a bank or payment gateway network error, duplicate charges will be refunded 100% upon verifying transaction IDs with our support desk." },
-        { label: "Resolution Timeline:", detail: "Verified duplicate transaction refunds are processed back to the original payment source within 3-5 business days." }
-      ]
+        {
+          label: "Duplicate Charge Refund:",
+          detail:
+            "In the rare event of a duplicate payment caused by a bank or payment gateway network error, duplicate charges will be refunded 100% upon verifying transaction IDs with our support desk.",
+        },
+        {
+          label: "Resolution Timeline:",
+          detail:
+            "Verified duplicate transaction refunds are processed back to the original payment source within 3-5 business days.",
+        },
+      ],
     },
     {
       id: "contact",
@@ -38,24 +71,51 @@ export default function RefundPolicy() {
       iconColor: "#4f46e5",
       badge: "Support Desk",
       title: "3. Direct Line Support & Payment Desk",
-      summary: "If you have transaction inquiries or need assistance with your UTR payment registration, reach out directly to our support desk:",
+      summary:
+        "If you have transaction inquiries or need assistance with your UTR payment registration, reach out directly to our support desk:",
       contactBoxes: [
-        { icon: Mail, label: "Official Support Email", val: "support@interndock.in", link: "mailto:support@interndock.in" },
-        { icon: Phone, label: "Direct Support Line", val: "+91 8808307121", link: "tel:+918808307121" },
-        { icon: MapPin, label: "Registered Operations", val: "Gorakhpur U.P. India", link: null }
-      ]
-    }
+        {
+          icon: Mail,
+          label: "Official Support Email",
+          val: "support@interndock.in",
+          link: "mailto:support@interndock.in",
+        },
+        {
+          icon: Phone,
+          label: "Direct Support Line",
+          val: "+91 8808307121",
+          link: "tel:+918808307121",
+        },
+        {
+          icon: MapPin,
+          label: "Registered Operations",
+          val: "Gorakhpur U.P. India",
+          link: null,
+        },
+      ],
+    },
   ];
 
-  const filteredSections = activeTab === "all" ? sections : sections.filter(s => s.id === activeTab);
+  const filteredSections =
+    activeTab === "all" ? sections : sections.filter((s) => s.id === activeTab);
 
   return (
     <div className="policy-redesign-wrapper">
-      <div className="policy-ambient-bg" aria-hidden="true" style={{ background: "radial-gradient(circle at 10% 20%, rgba(239, 68, 68, 0.06), transparent 40%), radial-gradient(circle at 90% 80%, rgba(79, 70, 229, 0.06), transparent 40%)" }} />
+      <div
+        className="policy-ambient-bg"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(circle at 10% 20%, rgba(239, 68, 68, 0.06), transparent 40%), radial-gradient(circle at 90% 80%, rgba(79, 70, 229, 0.06), transparent 40%)",
+        }}
+      />
 
       <div className="container policy-container">
         {/* Top Link */}
-        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
           <Link to="/" className="policy-back-btn">
             <ArrowLeft size={16} />
             <span>Back to Main Platform</span>
@@ -87,7 +147,10 @@ export default function RefundPolicy() {
           </h1>
 
           <p className="policy-hero-sub">
-            All program enrollment, domain registration, mentor evaluation, and document verification fees submitted to <strong>InternDock</strong> are non-refundable once an application is registered or credentials are unlocked.
+            All program enrollment, domain registration, mentor evaluation, and
+            document verification fees submitted to <strong>InternDock</strong>{" "}
+            are non-refundable once an application is registered or credentials
+            are unlocked.
           </p>
 
           <div className="policy-meta-row">
@@ -113,7 +176,7 @@ export default function RefundPolicy() {
           >
             <span>Overview &amp; Fee Terms</span>
           </button>
-          {sections.map(s => (
+          {sections.map((s) => (
             <button
               key={s.id}
               className={`policy-nav-tab ${activeTab === s.id ? "active" : ""}`}
@@ -142,11 +205,25 @@ export default function RefundPolicy() {
                     className="policy-card-block glass-panel"
                   >
                     <div className="card-top-header">
-                      <div className="icon-badge-box" style={{ background: `${sec.iconColor}15`, border: `1px solid ${sec.iconColor}30` }}>
-                        <IconComponent size={22} style={{ color: sec.iconColor }} />
+                      <div
+                        className="icon-badge-box"
+                        style={{
+                          background: `${sec.iconColor}15`,
+                          border: `1px solid ${sec.iconColor}30`,
+                        }}
+                      >
+                        <IconComponent
+                          size={22}
+                          style={{ color: sec.iconColor }}
+                        />
                       </div>
                       <div>
-                        <span className="card-tag" style={{ color: sec.iconColor }}>{sec.badge}</span>
+                        <span
+                          className="card-tag"
+                          style={{ color: sec.iconColor }}
+                        >
+                          {sec.badge}
+                        </span>
                         <h2 className="card-title">{sec.title}</h2>
                       </div>
                     </div>
@@ -176,7 +253,12 @@ export default function RefundPolicy() {
                               <div>
                                 <strong>{cb.label}</strong>
                                 {cb.link ? (
-                                  <a href={cb.link} className="contact-box-link">{cb.val}</a>
+                                  <a
+                                    href={cb.link}
+                                    className="contact-box-link"
+                                  >
+                                    {cb.val}
+                                  </a>
                                 ) : (
                                   <span>{cb.val}</span>
                                 )}
@@ -194,39 +276,67 @@ export default function RefundPolicy() {
 
           {/* Sidebar */}
           <div className="policy-sidebar-col">
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="sidebar-sticky">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="sidebar-sticky"
+            >
               {/* MSME Govt Badge Card */}
               <div className="glass-panel msme-sidebar-badge text-center">
                 <div className="msme-badge-header">
-                  <img src="/msme_logo.png" alt="Govt MSME Logo" className="sidebar-msme-img" />
+                  <img
+                    src="/msme_logo.png"
+                    alt="Govt MSME Logo"
+                    className="sidebar-msme-img"
+                  />
                   <div>
                     <h3>Govt. MSME Registered</h3>
-                    <span className="msme-reg-sub">Ministry of MSME, Govt. of India</span>
+                    <span className="msme-reg-sub">
+                      Ministry of MSME, Govt. of India
+                    </span>
                   </div>
                 </div>
                 <p className="msme-badge-desc">
-                  InternDock is an officially registered enterprise under the Govt. of India Ministry of MSME (Gorakhpur U.P. India).
+                  InternDock is an officially registered enterprise under the
+                  Govt. of India Ministry of MSME (Gorakhpur U.P. India).
                 </p>
               </div>
 
               {/* Direct Line Support */}
-              <div className="glass-panel help-sidebar-card" style={{ marginTop: "1.5rem" }}>
-                <div className="help-icon-wrapper" style={{ background: "rgba(239, 68, 68, 0.1)" }}>
+              <div
+                className="glass-panel help-sidebar-card"
+                style={{ marginTop: "1.5rem" }}
+              >
+                <div
+                  className="help-icon-wrapper"
+                  style={{ background: "rgba(239, 68, 68, 0.1)" }}
+                >
                   <Phone size={22} color="#ef4444" />
                 </div>
                 <h3>Direct Line Support</h3>
-                <p>Have UTR reference verification questions or payment submission issues?</p>
+                <p>
+                  Have UTR reference verification questions or payment
+                  submission issues?
+                </p>
                 <div className="help-contact-stack">
                   <a href="tel:+918808307121" className="contact-link-row">
                     <Phone size={16} />
                     <span>+91 8808307121</span>
                   </a>
-                  <a href="mailto:support@interndock.in" className="contact-link-row">
+                  <a
+                    href="mailto:support@interndock.in"
+                    className="contact-link-row"
+                  >
                     <Mail size={16} />
                     <span>support@interndock.in</span>
                   </a>
                 </div>
-                <a href="tel:+918808307121" className="btn btn-primary btn-glow full-width" style={{ marginTop: "1rem" }}>
+                <a
+                  href="tel:+918808307121"
+                  className="btn btn-primary btn-glow full-width"
+                  style={{ marginTop: "1rem" }}
+                >
                   <span>Call Direct Support</span>
                   <ChevronRight size={16} />
                 </a>
@@ -497,6 +607,36 @@ export default function RefundPolicy() {
           color: var(--text-muted);
           margin-bottom: 1rem;
         }
+        .help-contact-stack {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.65rem;
+          width: 100%;
+        }
+        .contact-link-row {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          min-width: 0;
+          color: var(--primary);
+          font-size: 0.85rem;
+          font-weight: 700;
+          line-height: 1.35;
+          text-decoration: none;
+        }
+        .contact-link-row svg {
+          flex: 0 0 auto;
+        }
+        .contact-link-row span {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+        .help-sidebar-card .btn {
+          min-width: 0;
+          white-space: normal;
+          text-align: center;
+        }
         @media (max-width: 900px) {
           .policy-layout-grid {
             grid-template-columns: 1fr;
@@ -504,6 +644,21 @@ export default function RefundPolicy() {
           .sidebar-sticky {
             position: static;
           }
+        }
+        @media (max-width: 640px) {
+          .policy-redesign-wrapper { padding: 2rem 0 3rem; }
+          .policy-hero-banner { padding: 1.5rem; border-left-width: 3px; }
+          .policy-hero-heading { font-size: clamp(1.8rem, 9vw, 2.35rem); }
+          .policy-hero-sub { font-size: 0.92rem; }
+          .policy-meta-row { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
+          .meta-divider { display: none; }
+          .policy-card-block { padding: 1.25rem; }
+          .card-top-header { align-items: flex-start; gap: 0.7rem; }
+          .card-title { font-size: 1.1rem; overflow-wrap: anywhere; }
+          .card-summary, .bullet-row-item, .contact-box-link { overflow-wrap: anywhere; }
+          .bullet-row-item { padding: 0.75rem; font-size: 0.87rem; }
+          .contact-box-item { align-items: flex-start; padding: 0.8rem; }
+          .msme-sidebar-badge, .help-sidebar-card { padding: 1.25rem; }
         }
       `}</style>
     </div>

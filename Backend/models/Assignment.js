@@ -13,4 +13,6 @@ const assignmentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+assignmentSchema.index({ domain: 1, week: 1 });
+
 module.exports = mongoose.model("Assignment", assignmentSchema);

@@ -11,11 +11,17 @@ const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
 // POST /api/applications  — student applies to a domain + duration
 router.post("/", protect, async (req, res) => {
   try {
-    const { domainId, durationId } = req.body;
+    const { domainId, durationId, startDate, endDate } = req.body;
     const domain = await Domain.findById(domainId).lean();
     const duration = await Duration.findById(durationId).lean();
     if (!domain || !domain.isActive) return res.status(404).json({ message: "Domain not found" });
     if (!duration || !duration.isActive) return res.status(404).json({ message: "Duration not found" });
+
+    const parsedStartDate = new Date(startDate);
+    const parsedEndDate = new Date(endDate);
+    if (!startDate || !endDate || Number.isNaN(parsedStartDate.getTime()) || Number.isNaN(parsedEndDate.getTime()) || parsedEndDate <= parsedStartDate) {
+      return res.status(400).json({ message: "Choose a valid internship start and end date" });
+    }
 
     const count = await Application.countDocuments();
     const applicationId = generateApplicationId(count + 1);
@@ -25,6 +31,8 @@ router.post("/", protect, async (req, res) => {
       student: req.user._id,
       domain: domain._id,
       duration: duration._id,
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
       status: "Submitted",
       statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
     });
@@ -36,6 +44,8 @@ router.post("/", protect, async (req, res) => {
       studentEmail: req.user.email,
       domainName: domain.name,
       durationWeeks: duration.weeks,
+      startDate: parsedStartDate.toISOString().slice(0, 10),
+      endDate: parsedEndDate.toISOString().slice(0, 10),
       fee: duration.fee,
       status: "Submitted",
     });

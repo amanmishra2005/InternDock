@@ -4,7 +4,7 @@ import "./DocumentPreview.css";
 
 export default function CertificatePreview({
   studentName = "Alex Rivera",
-  collegeName = "Shri Mata Vaishno Devi University",
+  collegeName = "Aston University",
   domainName = "Full Stack MERN Web Development",
   durationLabel = "4 Weeks Track",
   startDate = "Aug 01, 2026",
@@ -12,19 +12,26 @@ export default function CertificatePreview({
   certificateId = "CERT-IND-2026-9842",
   verificationId = "sample-cert-verify",
   orgName = "InternDock",
-  onDownload = null
+  onDownload = null,
 }) {
-  const issueDateStr = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const issueDateStr = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 
   return (
     <div className="doc-preview-wrapper">
       <div className="doc-preview-actions">
         <div className="doc-preview-badge">
           <ShieldCheck size={16} className="text-emerald-500" />
-          <span>Verified Official Credential</span>
+          <span>Preview of verified certificate</span>
         </div>
         {onDownload && (
-          <button className="btn btn-primary btn-sm flex items-center gap-1.5" onClick={onDownload}>
+          <button
+            className="btn btn-primary btn-sm flex items-center gap-1.5"
+            onClick={onDownload}
+          >
             <Download size={14} />
             <span>Download Official PDF</span>
           </button>
@@ -39,14 +46,18 @@ export default function CertificatePreview({
         <div className="doc-corner corner-br" />
 
         <div className="doc-inner-content">
-          <div className="doc-watermark" aria-hidden="true">
+          <div className="doc-company-watermark" aria-hidden="true">
             <img src="/logo_mark.png" alt="" />
           </div>
 
           {/* Top Header Row */}
           <div className="doc-header-row">
             <div className="doc-brand-block">
-              <img src="/logo.png" alt="InternDock" className="doc-logo-img" />
+              <img
+                src="/favicon.png"
+                alt="InternDock"
+                className="doc-logo-img"
+              />
               <div className="doc-brand-titles">
                 <span className="doc-brand-name">InternDock</span>
                 <span className="doc-brand-tagline">TECH TALENT PLATFORM</span>
@@ -54,7 +65,9 @@ export default function CertificatePreview({
             </div>
 
             <div className="doc-meta-top text-right">
-              <p className="doc-meta-label">Certificate ID: <strong>{certificateId}</strong></p>
+              <p className="doc-meta-label">
+                Certificate ID: <strong>{certificateId}</strong>
+              </p>
               <p className="doc-meta-sub">Issued: {issueDateStr}</p>
             </div>
           </div>
@@ -66,45 +79,52 @@ export default function CertificatePreview({
             <span className="cert-eyebrow">CERTIFICATE OF INTERNSHIP</span>
             <h1 className="cert-main-title">Certificate of Completion</h1>
             <p className="cert-certifies-line">This certifies that</p>
-            
+
             <h2 className="cert-student-name">{studentName}</h2>
             <div className="cert-name-underline" />
 
             <p className="cert-narrative-text">
-              student of <strong>{collegeName || "-"}</strong>, has successfully completed an internship<br />
-              in the field of <strong>{domainName}</strong>,<br />
-              contributing to real-world projects from <strong>{startDate}</strong> to <strong>{endDate}</strong> under the guidance of <strong>InternDock</strong>.
+              <span>
+                student of <strong>{collegeName || "-"}</strong>, has
+                successfully completed an internship
+              </span>
+              <span>
+                in the field of <strong>{domainName}</strong>,
+              </span>
+              <span>
+                contributing to real-world projects from{" "}
+                <strong>{startDate}</strong> to <strong>{endDate}</strong> under
+                the guidance of <strong>InternDock</strong>.
+              </span>
             </p>
           </div>
 
           {/* Bottom Row Block with Dual Seals */}
           <div className="doc-bottom-row">
-            <div className="doc-cid-block text-left">
-              <span className="doc-meta-label">REFERENCE</span>
-              <span className="doc-ref-val">{certificateId}</span>
+            <div className="doc-footer-seals" aria-label="Certification marks">
+              <img src="/official_seal.png" alt="Certified" />
+              <img src="/msme_logo.png" alt="MSME registered" />
             </div>
-
-            <div className="doc-center-seals">
-              <div className="doc-seal-badge doc-certified-badge" title="100% Official Certified Seal">
-                <img src="/official_seal.png" alt="Official Certified Seal" className="doc-seal-img" />
-              </div>
-              <div className="doc-seal-badge doc-msme-badge" title="Govt. of India MSME Registered Enterprise">
-                <img src="/msme_logo.png" alt="Govt. MSME Registered Enterprise" className="doc-msme-img" />
-              </div>
-            </div>
-
             <div className="doc-ceo-sig text-center">
               <div className="doc-sig-wrapper">
-                <img src="/ceo_signature.png" alt="Founder & CEO Signature" className="doc-sig-img" />
+                <img
+                  src="/ceo_signature.png"
+                  alt="Founder & CEO Signature"
+                  className="doc-sig-img"
+                />
                 <div className="doc-sig-line" />
               </div>
               <span className="doc-sig-name">Aman Mishra</span>
-              <span className="doc-sig-title">Founder &amp; CEO, InternDock</span>
+              <span className="doc-sig-title">
+                Founder &amp; CEO, InternDock
+              </span>
             </div>
           </div>
 
           <div className="doc-verified-footer">
-            <span>InternDock Verified   |   www.interndock.in   |   Govt. Registered</span>
+            <span>
+              InternDock Certified | www.interndock.in | Govt. Registered
+            </span>
           </div>
         </div>
       </div>

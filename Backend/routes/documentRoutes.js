@@ -160,6 +160,9 @@ router.post("/final-report", protect, async (req, res) => {
     const { applicationId, ...rest } = req.body;
     const application = await Application.findById(applicationId);
     if (!application) return res.status(404).json({ message: "Application not found" });
+    if (application.paymentStatus !== "Successful") {
+      return res.status(400).json({ message: "Complete the program fee payment before submitting the final report" });
+    }
 
     const studentId = application.student?._id ? application.student._id : application.student;
     if (String(studentId) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });

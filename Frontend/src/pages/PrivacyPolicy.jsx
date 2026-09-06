@@ -1,7 +1,21 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ShieldCheck, Lock, Eye, Server, FileText, Mail, Globe, Sparkles, CheckCircle2, ChevronRight, HelpCircle, Award } from "lucide-react";
+import {
+  ArrowLeft,
+  ShieldCheck,
+  Lock,
+  Eye,
+  Server,
+  FileText,
+  Mail,
+  Globe,
+  Sparkles,
+  CheckCircle2,
+  ChevronRight,
+  HelpCircle,
+  Award,
+} from "lucide-react";
 
 export default function PrivacyPolicy() {
   const [activeTab, setActiveTab] = useState("all");
@@ -13,13 +27,30 @@ export default function PrivacyPolicy() {
       iconColor: "#4f46e5",
       badge: "Data Ingestion",
       title: "1. Information We Collect",
-      summary: "When you register for an internship track or submit capstones on InternDock, we collect essential candidate information to administer your track:",
+      summary:
+        "When you register for an internship track or submit capstones on InternDock, we collect essential candidate information to administer your track:",
       bullets: [
-        { label: "Candidate Identity & Contact:", detail: "Legal Name, Email Address, Contact Number, Academic Institution, Degree Track, and Graduation Batch." },
-        { label: "Internship Activity & Capstones:", detail: "Enrolled Domain Track, Duration (4 to 24 Weeks), Weekly GitHub Project Links, and Mentor Ratings." },
-        { label: "Cryptographic Credentials:", detail: "Unique Verification IDs, Digital Hashes, Reference Numbers, and Issuance Ledger Records." },
-        { label: "Technical Session Logs:", detail: "IP Addresses, Device Fingerprints, Encrypted JWT Auth Tokens, and Security Audits." }
-      ]
+        {
+          label: "Candidate Identity & Contact:",
+          detail:
+            "Legal Name, Email Address, Contact Number, Academic Institution, Degree Track, and Graduation Batch.",
+        },
+        {
+          label: "Internship Activity & Capstones:",
+          detail:
+            "Enrolled Domain Track, Duration (4 to 24 Weeks), Weekly GitHub Project Links, and Mentor Ratings.",
+        },
+        {
+          label: "Cryptographic Credentials:",
+          detail:
+            "Unique Verification IDs, Digital Hashes, Reference Numbers, and Issuance Ledger Records.",
+        },
+        {
+          label: "Technical Session Logs:",
+          detail:
+            "IP Addresses, Device Fingerprints, Encrypted JWT Auth Tokens, and Security Audits.",
+        },
+      ],
     },
     {
       id: "processing",
@@ -27,12 +58,25 @@ export default function PrivacyPolicy() {
       iconColor: "#0284c7",
       badge: "Data Utilization",
       title: "2. How We Process Candidate Data",
-      summary: "Your data is strictly processed to fulfill academic, credentialing, and career verification services:",
+      summary:
+        "Your data is strictly processed to fulfill academic, credentialing, and career verification services:",
       cards: [
-        { icon: FileText, title: "Offer Letter & Certificate Issuance", text: "Generating cryptographically verifiable PDF Offer Letters & Completion Certificates signed by Founder & CEO Aman Mishra." },
-        { icon: ShieldCheck, title: "Employer & Recruiter Verification", text: "Allowing university partners and hiring managers to instantly authenticate credentials via /verify/certificate/:id." },
-        { icon: Globe, title: "Capstone & Code Evaluation", text: "Assessing weekly GitHub repositories, running code lint checks, and delivering detailed mentor feedback." }
-      ]
+        {
+          icon: FileText,
+          title: "Offer Letter & Certificate Issuance",
+          text: "Generating cryptographically verifiable PDF Offer Letters & Completion Certificates signed by Founder & CEO Aman Mishra.",
+        },
+        {
+          icon: ShieldCheck,
+          title: "Employer & Recruiter Verification",
+          text: "Allowing university partners and hiring managers to instantly authenticate credentials via /verify/certificate/:id.",
+        },
+        {
+          icon: Globe,
+          title: "Capstone & Code Evaluation",
+          text: "Assessing weekly GitHub repositories, running code lint checks, and delivering detailed mentor feedback.",
+        },
+      ],
     },
     {
       id: "security",
@@ -40,12 +84,25 @@ export default function PrivacyPolicy() {
       iconColor: "#10b981",
       badge: "Security & Zero-Sale",
       title: "3. Data Security & Zero-Sale Guarantee",
-      summary: "InternDock implements strict enterprise-grade security protocols to protect candidate records:",
+      summary:
+        "InternDock implements strict enterprise-grade security protocols to protect candidate records:",
       bullets: [
-        { label: "AES-256 / TLS 1.3 Encryption:", detail: "All data payloads in transit and at rest are secured with bank-grade encryption protocols." },
-        { label: "Zero-Sale Guarantee:", detail: "We NEVER sell, rent, or trade student personal data to third-party advertisers or data brokers." },
-        { label: "Immutable Ledger Storage:", detail: "Verification hashes are stored permanently to prevent academic document tampering or forgery." }
-      ]
+        {
+          label: "AES-256 / TLS 1.3 Encryption:",
+          detail:
+            "All data payloads in transit and at rest are secured with bank-grade encryption protocols.",
+        },
+        {
+          label: "Zero-Sale Guarantee:",
+          detail:
+            "We NEVER sell, rent, or trade student personal data to third-party advertisers or data brokers.",
+        },
+        {
+          label: "Immutable Ledger Storage:",
+          detail:
+            "Verification hashes are stored permanently to prevent academic document tampering or forgery.",
+        },
+      ],
     },
     {
       id: "rights",
@@ -53,15 +110,25 @@ export default function PrivacyPolicy() {
       iconColor: "#8b5cf6",
       badge: "Student Rights",
       title: "4. Candidate Rights & Data Control",
-      summary: "Students retain full transparency over their candidate records and public credentials:",
+      summary:
+        "Students retain full transparency over their candidate records and public credentials:",
       bullets: [
-        { label: "Permanent Verifiability:", detail: "Issued Selection Letters and Certificates remain permanently active on www.interndock.in for background checks." },
-        { label: "Profile Correction Requests:", detail: "Request name or institution corrections prior to certificate issuance via support desk." }
-      ]
-    }
+        {
+          label: "Permanent Verifiability:",
+          detail:
+            "Issued Selection Letters and Certificates remain permanently active on www.interndock.in for background checks.",
+        },
+        {
+          label: "Profile Correction Requests:",
+          detail:
+            "Request name or institution corrections prior to certificate issuance via support desk.",
+        },
+      ],
+    },
   ];
 
-  const filteredSections = activeTab === "all" ? sections : sections.filter(s => s.id === activeTab);
+  const filteredSections =
+    activeTab === "all" ? sections : sections.filter((s) => s.id === activeTab);
 
   return (
     <div className="policy-redesign-wrapper">
@@ -70,7 +137,10 @@ export default function PrivacyPolicy() {
 
       <div className="container policy-container">
         {/* Top Breadcrumb Link */}
-        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
           <Link to="/" className="policy-back-btn">
             <ArrowLeft size={16} />
             <span>Back to Main Platform</span>
@@ -101,7 +171,9 @@ export default function PrivacyPolicy() {
           </h1>
 
           <p className="policy-hero-sub">
-            InternDock ("InternDock", "we", "us") is dedicated to upholding candidate privacy, data security, and cryptographic credential integrity across all technology internship tracks.
+            InternDock ("InternDock", "we", "us") is dedicated to upholding
+            candidate privacy, data security, and cryptographic credential
+            integrity across all technology internship tracks.
           </p>
 
           <div className="policy-meta-row">
@@ -127,7 +199,7 @@ export default function PrivacyPolicy() {
           >
             <span>Overview &amp; All Sections</span>
           </button>
-          {sections.map(s => (
+          {sections.map((s) => (
             <button
               key={s.id}
               className={`policy-nav-tab ${activeTab === s.id ? "active" : ""}`}
@@ -156,11 +228,25 @@ export default function PrivacyPolicy() {
                     className="policy-card-block glass-panel"
                   >
                     <div className="card-top-header">
-                      <div className="icon-badge-box" style={{ background: `${sec.iconColor}15`, border: `1px solid ${sec.iconColor}30` }}>
-                        <IconComponent size={22} style={{ color: sec.iconColor }} />
+                      <div
+                        className="icon-badge-box"
+                        style={{
+                          background: `${sec.iconColor}15`,
+                          border: `1px solid ${sec.iconColor}30`,
+                        }}
+                      >
+                        <IconComponent
+                          size={22}
+                          style={{ color: sec.iconColor }}
+                        />
                       </div>
                       <div>
-                        <span className="card-tag" style={{ color: sec.iconColor }}>{sec.badge}</span>
+                        <span
+                          className="card-tag"
+                          style={{ color: sec.iconColor }}
+                        >
+                          {sec.badge}
+                        </span>
                         <h2 className="card-title">{sec.title}</h2>
                       </div>
                     </div>
@@ -185,7 +271,11 @@ export default function PrivacyPolicy() {
                         {sec.cards.map((c, i) => {
                           const CIcon = c.icon;
                           return (
-                            <motion.div whileHover={{ scale: 1.02 }} key={i} className="usage-subcard">
+                            <motion.div
+                              whileHover={{ scale: 1.02 }}
+                              key={i}
+                              className="usage-subcard"
+                            >
                               <CIcon size={20} color="#4f46e5" />
                               <h4>{c.title}</h4>
                               <p>{c.text}</p>
@@ -202,39 +292,70 @@ export default function PrivacyPolicy() {
 
           {/* Sidebar */}
           <div className="policy-sidebar-col">
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="sidebar-sticky">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="sidebar-sticky"
+            >
               {/* MSME Govt Badge Card */}
               <div className="glass-panel msme-sidebar-badge text-center">
                 <div className="msme-badge-header">
-                  <img src="/msme_logo.png" alt="Govt MSME Logo" className="sidebar-msme-img" />
+                  <img
+                    src="/msme_logo.png"
+                    alt="Govt MSME Logo"
+                    className="sidebar-msme-img"
+                  />
                   <div>
                     <h3>Govt. MSME Registered</h3>
-                    <span className="msme-reg-sub">Ministry of MSME, Govt. of India</span>
+                    <span className="msme-reg-sub">
+                      Ministry of MSME, Govt. of India
+                    </span>
                   </div>
                 </div>
                 <p className="msme-badge-desc">
-                  InternDock operates as an officially recognized technical enterprise under the Ministry of Micro, Small &amp; Medium Enterprises (Gorakhpur U.P. India).
+                  InternDock operates as an officially recognized technical
+                  enterprise under the Ministry of Micro, Small &amp; Medium
+                  Enterprises (Gorakhpur U.P. India).
                 </p>
               </div>
 
               {/* Data Protection Desk Widget */}
-              <div className="glass-panel help-sidebar-card" style={{ marginTop: "1.5rem" }}>
+              <div
+                className="glass-panel help-sidebar-card"
+                style={{ marginTop: "1.5rem" }}
+              >
                 <div className="help-icon-wrapper">
                   <Mail size={22} color="#10b981" />
                 </div>
                 <h3>Privacy Desk &amp; Support</h3>
-                <p>Have questions regarding candidate data protection or credential verification?</p>
+                <p>
+                  Have questions regarding candidate data protection or
+                  credential verification?
+                </p>
                 <div className="help-contact-stack">
-                  <a href="mailto:support@interndock.in" className="contact-link-row">
+                  <a
+                    href="mailto:support@interndock.in"
+                    className="contact-link-row"
+                  >
                     <Mail size={16} />
                     <span>support@interndock.in</span>
                   </a>
-                  <a href="https://www.interndock.in" target="_blank" rel="noreferrer" className="contact-link-row">
+                  <a
+                    href="https://www.interndock.in"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="contact-link-row"
+                  >
                     <Globe size={16} />
                     <span>www.interndock.in</span>
                   </a>
                 </div>
-                <a href="mailto:support@interndock.in" className="btn btn-primary btn-glow full-width" style={{ marginTop: "1rem" }}>
+                <a
+                  href="mailto:support@interndock.in"
+                  className="btn btn-primary btn-glow full-width"
+                  style={{ marginTop: "1rem" }}
+                >
                   <span>Contact Privacy Team</span>
                   <ChevronRight size={16} />
                 </a>
@@ -527,6 +648,20 @@ export default function PrivacyPolicy() {
           .sidebar-sticky {
             position: static;
           }
+        }
+        @media (max-width: 640px) {
+          .policy-redesign-wrapper { padding: 2rem 0 3rem; }
+          .policy-hero-banner { padding: 1.5rem; border-left-width: 3px; }
+          .policy-hero-heading { font-size: clamp(1.8rem, 9vw, 2.35rem); }
+          .policy-hero-sub { font-size: 0.92rem; }
+          .policy-meta-row { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
+          .meta-divider { display: none; }
+          .policy-card-block { padding: 1.25rem; }
+          .card-top-header { align-items: flex-start; gap: 0.7rem; }
+          .card-title { font-size: 1.1rem; overflow-wrap: anywhere; }
+          .card-summary, .bullet-row-item, .usage-subcard p { overflow-wrap: anywhere; }
+          .bullet-row-item { padding: 0.75rem; font-size: 0.87rem; }
+          .msme-sidebar-badge, .help-sidebar-card { padding: 1.25rem; }
         }
       `}</style>
     </div>

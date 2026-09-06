@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Award, Search, Check, X, Sparkles, ArrowRight, Lock, Zap, QrCode } from "lucide-react";
+import {
+  Award,
+  Search,
+  Check,
+  X,
+  Sparkles,
+  ArrowRight,
+  Lock,
+  Zap,
+  QrCode,
+} from "lucide-react";
 import axios from "axios";
 import confetti from "canvas-confetti";
 import CertificatePreview from "../components/CertificatePreview";
 
 export default function VerifyCertificate() {
   const { id } = useParams();
-  const [searchId, setSearchId] = useState(id || "");
+  const [searchId, setSearchId] = useState(id && id !== "sample" ? id : "");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,13 +29,17 @@ export default function VerifyCertificate() {
     setError("");
     setResult(null);
     try {
-      const { data } = await axios.get(`/api/documents/verify/certificate/${verificationId}`);
+      const { data } = await axios.get(
+        `/api/documents/verify/certificate/${verificationId}`,
+      );
       setResult(data);
       if (data.valid) {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid or unverified certificate ID");
+      setError(
+        err.response?.data?.message || "Invalid or unverified certificate ID",
+      );
     } finally {
       setLoading(false);
     }
@@ -73,12 +87,17 @@ export default function VerifyCertificate() {
               <Award size={30} />
             </motion.div>
             <h1 className="verify-title">Certificate Verification</h1>
-            <p className="verify-subtitle">Authenticate official InternDock completion &amp; merit certificates.</p>
+            <p className="verify-subtitle">
+              Authenticate official InternDock completion &amp; merit
+              certificates.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="verify-form">
             <div className="input-group">
-              <label className="input-label">Enter Certificate Verification ID</label>
+              <label className="input-label">
+                Enter Certificate Verification ID
+              </label>
               <div className="search-input-wrapper">
                 <input
                   type="text"
@@ -99,13 +118,22 @@ export default function VerifyCertificate() {
                   <Search size={16} />
                 </motion.button>
               </div>
-              <span className="verify-hint">Find this ID at the bottom of your certificate PDF, or in the QR code.</span>
+              <span className="verify-hint">
+                Find this ID at the bottom of your certificate PDF, or in the QR
+                code.
+              </span>
             </div>
           </form>
 
           {error && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="verify-status-banner banner-error">
-              <span className="status-icon icon-error"><X size={18} /></span>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="verify-status-banner banner-error"
+            >
+              <span className="status-icon icon-error">
+                <X size={18} />
+              </span>
               <div>
                 <strong>Verification Failed</strong>
                 <p>{error}</p>
@@ -114,32 +142,49 @@ export default function VerifyCertificate() {
           )}
 
           {result && result.valid && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="verify-status-banner banner-success">
-              <span className="status-icon icon-success"><Check size={18} /></span>
-              <div className="success-content" style={{ width: "100%" }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="verify-status-banner banner-success"
+            >
+              <span className="status-icon icon-success">
+                <Check size={18} />
+              </span>
+              <div className="success-content">
                 <h3>Verified Authentic Certificate</h3>
-                <p className="meta-text">This certificate of completion was earned &amp; verified by InternDock.</p>
+                <p className="meta-text">
+                  This certificate of completion was earned &amp; verified by
+                  InternDock.
+                </p>
 
                 <div className="doc-details-grid">
                   <div className="detail-item">
                     <span className="detail-label">Recipient Name</span>
-                    <span className="detail-val">{result.details?.studentName}</span>
+                    <span className="detail-val">
+                      {result.details?.studentName}
+                    </span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Completed Domain</span>
-                    <span className="detail-val">{result.details?.domainName}</span>
+                    <span className="detail-val">
+                      {result.details?.domainName}
+                    </span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Duration</span>
-                    <span className="detail-val">{result.details?.durationWeeks} Weeks</span>
+                    <span className="detail-val">
+                      {result.details?.durationWeeks} Weeks
+                    </span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-label">Completion Date</span>
-                    <span className="detail-val">{new Date(result.details?.issuedAt).toLocaleDateString()}</span>
+                    <span className="detail-val">
+                      {new Date(result.details?.issuedAt).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
 
-                <div style={{ marginTop: "1.75rem" }}>
+                <div className="verification-document-preview">
                   <CertificatePreview
                     studentName={result.details?.studentName}
                     domainName={result.details?.domainName}
@@ -154,7 +199,7 @@ export default function VerifyCertificate() {
 
           <div className="verify-footer-links text-center">
             <span>Looking to verify an offer letter instead?</span>{" "}
-            <Link to="/verify/offer/sample" className="verify-cross-link">
+            <Link to="/verify/offer" className="verify-cross-link">
               <span>Verify Offer Letter</span>
               <ArrowRight size={14} className="inline-icon" />
             </Link>
@@ -170,15 +215,21 @@ export default function VerifyCertificate() {
           className="verify-trust-row"
         >
           <div className="trust-chip">
-            <span className="trust-icon"><Lock size={16} /></span>
+            <span className="trust-icon">
+              <Lock size={16} />
+            </span>
             <span>Tamper-proof records</span>
           </div>
           <div className="trust-chip">
-            <span className="trust-icon"><Zap size={16} /></span>
+            <span className="trust-icon">
+              <Zap size={16} />
+            </span>
             <span>Instant lookup</span>
           </div>
           <div className="trust-chip">
-            <span className="trust-icon"><QrCode size={16} /></span>
+            <span className="trust-icon">
+              <QrCode size={16} />
+            </span>
             <span>QR code on every document</span>
           </div>
         </motion.div>

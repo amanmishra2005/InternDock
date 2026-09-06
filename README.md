@@ -30,6 +30,29 @@ InternDock brings the internship lifecycle into one place:
 - **Verify documents** publicly using certificate and offer identifiers.
 - **Send optional email notifications** through an SMTP provider.
 
+### Free-Tier Storage Strategy
+
+MongoDB remains the source of truth for live accounts, applications, payments, and credentials. The backend also writes an append-only CSV backup for important records. CSV writes are serialized so concurrent requests do not interleave rows, and the API returns a degraded `503` response instead of crashing when MongoDB is unavailable.
+
+The CSV ledgers are created in:
+
+```text
+Backend/uploads/spreadsheet_ledger/
+```
+
+Available files include `applications.csv`, `payments.csv`, `submissions.csv`, `final_reports.csv`, `offer_letters.csv`, and `certificates.csv` when those events have occurred. These files are server-local backups, so download them regularly or attach persistent storage to the server. They are not a replacement for MongoDB and should not be written from multiple app servers unless they share a proper persistent volume.
+
+To download a ledger from the running app, sign in as an administrator and request:
+
+```text
+GET /api/admin/ledgers/applications
+GET /api/admin/ledgers/certificates
+```
+
+Replace the filename with another allowed ledger name. The endpoint requires the normal admin Bearer token and returns a CSV download.
+
+For Google Sheets, configure `GOOGLE_SHEET_WEBHOOK_URL` with a Google Apps Script Web App URL. Each new ledger event is then posted as JSON with its `sheetName`; the local CSV is still written first as the backup. Do not use a Google Sheet as the live database for authentication, payments, or concurrent application writes.
+
 ## Product Flow
 
 ```mermaid
@@ -130,6 +153,7 @@ The complete template is in [`Backend/.env.example`](Backend/.env.example).
 | -------------------------------------------------- | ------------------------------------------------ |
 | `PORT`                                             | Backend port, default `5001`                     |
 | `MONGO_URI`                                        | MongoDB connection string                        |
+| `MONGO_MAX_POOL_SIZE`                              | Maximum MongoDB connections per API instance     |
 | `JWT_SECRET`                                       | Secret used to sign authentication tokens        |
 | `JWT_EXPIRES_IN`                                   | Token lifetime, such as `7d`                     |
 | `CLIENT_URL`                                       | Frontend origin allowed by CORS                  |
@@ -139,6 +163,7 @@ The complete template is in [`Backend/.env.example`](Backend/.env.example).
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Optional email delivery settings                 |
 | `EMAIL_FROM`                                       | Sender identity for email notifications          |
 | `ORG_NAME`, `ORG_SIGNATORY`                        | Organization details used in generated documents |
+| `GOOGLE_SHEET_WEBHOOK_URL`                         | Optional Google Apps Script URL for ledger sync  |
 
 ## Database Seeding
 
@@ -179,4 +204,5 @@ The administrator is created from `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWO
 ## License
 
 No open-source license has been selected yet. Add a license before distributing InternDock for reuse.
+
 # InternDock

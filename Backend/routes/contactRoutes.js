@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ContactQuery = require("../models/ContactQuery");
-const { sendEmail } = require("../utils/sendEmail");
+const { sendEmail, templates } = require("../utils/sendEmail");
 
 // POST /api/contact - Submit contact form query to support@interndock.in
 router.post("/", async (req, res) => {
@@ -12,31 +12,24 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Name, email, and message are required." });
     }
 
+    const supportTargetEmail = process.env.SUPPORT_EMAIL || "support@interndock.in";
+
     // 1. Save query to database
     const contactRecord = await ContactQuery.create({
       name,
       email,
       subject: subject || "General Inquiry",
       message,
-      recipientEmail: "support@interndock.in",
+      recipientEmail: supportTargetEmail,
     });
 
     // 2. Send notification email to support@interndock.in
+    const notifyTemplate = templates.newContactQueryNotification(name, email, subject, message);
     await sendEmail({
-      to: "support@interndock.in",
-      subject: `[New Website Inquiry] ${subject || "Inquiry from " + name}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
-          <h2 style="color: #0f172a; margin-top: 0;">New Contact Form Message Received</h2>
-          <p style="color: #475569; font-size: 14px;"><strong>From:</strong> ${name} (&lt;${email}&gt;)</p>
-          <p style="color: #475569; font-size: 14px;"><strong>Subject:</strong> ${subject || 'General Inquiry'}</p>
-          <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #4f46e5; border-radius: 4px; margin: 16px 0;">
-            <p style="margin: 0; color: #334155; white-space: pre-wrap; font-size: 15px;">${message}</p>
-          </div>
-          <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Target recipient: support@interndock.in | Sent via www.interndock.in contact portal</p>
-        </div>
-      `,
+      to: supportTargetEmail,
+      ...notifyTemplate,
     });
+
 
     // 3. Send auto-reply confirmation to the sender
     await sendEmail({

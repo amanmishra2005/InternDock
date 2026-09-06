@@ -50,10 +50,27 @@ router.post("/", protect, async (req, res) => {
       status: "Submitted",
     });
 
+    // Send confirmation email to student
     const t = templates.applicationSubmitted(req.user.fullName, applicationId, domain.name);
     sendEmail({ to: req.user.email, ...t }).catch(() => {});
 
+    // Send notification email to support@interndock.in
+    const adminNotificationEmail = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || "support@interndock.in";
+    const adminT = templates.newApplicationAdminNotification(
+      req.user.fullName,
+      req.user.email,
+      domain.name,
+      duration.weeks,
+      applicationId,
+      parsedStartDate.toISOString().slice(0, 10),
+      parsedEndDate.toISOString().slice(0, 10)
+    );
+    sendEmail({ to: adminNotificationEmail, ...adminT }).catch((err) => {
+      console.error("Failed to send new application notification to support email:", err.message);
+    });
+
     return res.status(201).json(application);
+
   } catch (err) {
     console.error("Application creation error:", err);
     return res.status(500).json({ message: "Unable to submit the application." });

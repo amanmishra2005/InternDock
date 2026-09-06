@@ -114,6 +114,20 @@ router.post("/confirm", protect, async (req, res) => {
     const t = templates.paymentSuccess(payerName || req.user.fullName, feeAmount);
     sendEmail({ to: emailTo, ...t }).catch(() => {});
 
+    // Send notification email to support@interndock.in
+    const adminNotificationEmail = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || "support@interndock.in";
+    const adminPaymentT = templates.newPaymentAdminNotification(
+      payerName || req.user.fullName,
+      emailTo,
+      feeAmount,
+      utrNumber || payment.utrNumber,
+      application.applicationId || application._id
+    );
+    sendEmail({ to: adminNotificationEmail, ...adminPaymentT }).catch((err) => {
+      console.error("Failed to send payment notification to support email:", err.message);
+    });
+
+
     res.json({
       success: true,
       message: "Payment confirmed successfully! Account verified and workspace activated.",

@@ -184,10 +184,10 @@ router.put("/applications/:id/status", async (req, res) => {
 
   if (status === "Selected" || status === "Active") {
     const t = templates.selected(application.student.fullName, application.domain.name);
-    sendEmail({ to: application.student.email, ...t }).catch(() => {});
+    await sendEmail({ to: application.student.email, ...t }).catch(() => {});
   } else if (status === "Rejected") {
     const t = templates.rejected(application.student.fullName, application.domain.name);
-    sendEmail({ to: application.student.email, ...t }).catch(() => {});
+    await sendEmail({ to: application.student.email, ...t }).catch(() => {});
   }
 
   res.json(application);
@@ -228,7 +228,7 @@ router.put("/applications/:id/mark-payment", async (req, res) => {
   await payment.save();
 
   const t = templates.paymentSuccess(application.student.fullName, application.duration?.fee || 100);
-  sendEmail({ to: application.student.email, ...t }).catch(() => {});
+  await sendEmail({ to: application.student.email, ...t }).catch(() => {});
 
   res.json({ success: true, application, payment });
 });
@@ -277,7 +277,7 @@ router.post("/applications/:id/issue-certificate", async (req, res) => {
   }
 
   const t = templates.certificateIssued(application.student.fullName);
-  sendEmail({ to: application.student.email, ...t }).catch(() => {});
+  await sendEmail({ to: application.student.email, ...t }).catch(() => {});
 
   res.json({ success: true, message: "Certificate issued successfully!", application, certificate: cert });
 });

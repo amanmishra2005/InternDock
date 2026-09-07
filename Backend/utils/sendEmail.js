@@ -1,13 +1,13 @@
 const nodemailer = require("nodemailer");
 
-let transporter = null;
-const smtpPort = Number(process.env.SMTP_PORT) || 587;
-const smtpConfigured = Boolean(
-  process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS,
-);
+function getTransporter() {
+  const smtpConfigured = Boolean(
+    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
+  );
+  if (!smtpConfigured) return null;
 
-if (smtpConfigured) {
-  transporter = nodemailer.createTransport({
+  const smtpPort = Number(process.env.SMTP_PORT) || 587;
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: smtpPort,
     secure: process.env.SMTP_SECURE === "true",
@@ -26,13 +26,16 @@ async function sendEmail({ to, subject, html }) {
   emailLog.unshift(entry);
 
   try {
+    const transporter = getTransporter();
     if (transporter) {
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: process.env.EMAIL_FROM || "InternDock <support@interndock.in>",
         to,
         subject,
         html,
       });
+      entry.status = "Sent";
+      entry.messageId = info.messageId;
     } else {
       entry.status = "Skipped";
       if (process.env.NODE_ENV !== "production") {
@@ -42,11 +45,10 @@ async function sendEmail({ to, subject, html }) {
       }
       return entry;
     }
-    entry.status = "Sent";
   } catch (err) {
     entry.status = "Failed";
     entry.error = err.message;
-    console.error("Email send failed:", err.message);
+    console.error(`Email send failed to ${to}:`, err.message);
   }
 
   return entry;

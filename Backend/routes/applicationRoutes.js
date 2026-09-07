@@ -50,12 +50,9 @@ router.post("/", protect, async (req, res) => {
       status: "Submitted",
     });
 
-    // Send confirmation email to student
-    const t = templates.applicationSubmitted(req.user.fullName, applicationId, domain.name);
-    sendEmail({ to: req.user.email, ...t }).catch(() => {});
-
-    // Send notification email to support@interndock.in
+    // Prepare and dispatch emails (student confirmation + support@interndock.in admin notification)
     const adminNotificationEmail = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || "support@interndock.in";
+    const studentT = templates.applicationSubmitted(req.user.fullName, applicationId, domain.name);
     const adminT = templates.newApplicationAdminNotification(
       req.user.fullName,
       req.user.email,
@@ -65,9 +62,11 @@ router.post("/", protect, async (req, res) => {
       parsedStartDate.toISOString().slice(0, 10),
       parsedEndDate.toISOString().slice(0, 10)
     );
-    sendEmail({ to: adminNotificationEmail, ...adminT }).catch((err) => {
-      console.error("Failed to send new application notification to support email:", err.message);
-    });
+
+    await Promise.allSettled([
+      sendEmail({ to: req.user.email, ...studentT }),
+      sendEmail({ to: adminNotificationEmail, ...adminT })
+    ]);
 
     return res.status(201).json(application);
 

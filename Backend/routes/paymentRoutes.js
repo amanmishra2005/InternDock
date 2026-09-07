@@ -109,12 +109,9 @@ router.post("/confirm", protect, async (req, res) => {
 
     await application.save();
 
-    // Trigger instant email confirmation to student
+    // Trigger instant email confirmation to student and support@interndock.in
     const emailTo = registeredEmail || req.user.email;
-    const t = templates.paymentSuccess(payerName || req.user.fullName, feeAmount);
-    sendEmail({ to: emailTo, ...t }).catch(() => {});
-
-    // Send notification email to support@interndock.in
+    const studentT = templates.paymentSuccess(payerName || req.user.fullName, feeAmount);
     const adminNotificationEmail = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || "support@interndock.in";
     const adminPaymentT = templates.newPaymentAdminNotification(
       payerName || req.user.fullName,
@@ -123,9 +120,11 @@ router.post("/confirm", protect, async (req, res) => {
       utrNumber || payment.utrNumber,
       application.applicationId || application._id
     );
-    sendEmail({ to: adminNotificationEmail, ...adminPaymentT }).catch((err) => {
-      console.error("Failed to send payment notification to support email:", err.message);
-    });
+
+    await Promise.allSettled([
+      sendEmail({ to: emailTo, ...studentT }),
+      sendEmail({ to: adminNotificationEmail, ...adminPaymentT })
+    ]);
 
 
     res.json({

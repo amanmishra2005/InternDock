@@ -29,7 +29,9 @@ router.post("/register", async (req, res) => {
 
     const user = await User.create({ fullName, email, password, phone, college, course, branch });
     const t = templates.welcome(user.fullName);
-    sendEmail({ to: user.email, ...t }).catch(() => {});
+    await sendEmail({ to: user.email, ...t }).catch((err) => {
+      console.error("Failed to send welcome email:", err.message);
+    });
 
     return res.status(201).json({ user: sanitize(user), token: signToken(user) });
   } catch (err) {

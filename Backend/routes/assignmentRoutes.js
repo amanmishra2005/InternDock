@@ -5,7 +5,7 @@ const Submission = require("../models/Submission");
 const Application = require("../models/Application");
 const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
-const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
+const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 
 function getTaskConfigForDuration(maxWeeks) {
   let count = 1;
@@ -61,7 +61,6 @@ router.get("/for-application/:applicationId", protect, async (req, res) => {
       return res.status(400).json({ message: "Internship workspace unlocks once you're selected and active." });
     }
 
-    // Filter assignments strictly matching the student's duration track
     let maxWeeks = application.duration?.weeks;
     if (!maxWeeks && application.duration) {
       try {
@@ -74,13 +73,9 @@ router.get("/for-application/:applicationId", protect, async (req, res) => {
     if (!maxWeeks) maxWeeks = 4;
 
     const { count: targetCount, weekSpan } = getTaskConfigForDuration(maxWeeks);
-
     const domainId = application.domain?._id || application.domain;
-    let rawAssignments = await Assignment.find({ domain: domainId })
-      .sort({ week: 1 })
-      .lean();
+    let rawAssignments = await Assignment.find({ domain: domainId }).sort({ week: 1 }).lean();
 
-    // Map to targetCount easy, beginner-friendly milestone tasks
     const assignments = rawAssignments.slice(0, targetCount).map((a, idx) => {
       const startW = idx * weekSpan + 1;
       const endW = idx === targetCount - 1 ? maxWeeks : (idx + 1) * weekSpan;
@@ -111,40 +106,31 @@ router.get("/for-application/:applicationId", protect, async (req, res) => {
   }
 });
 
-// POST /api/assignments/:assignmentId/submit
 router.post("/:assignmentId/submit", protect, async (req, res) => {
   try {
     const { applicationId, textContent, githubUrl, liveUrl, fileUrl } = req.body;
-    const application = await Application.findById(applicationId).lean();
+    const applicationRows = readSpreadsheet("applications");
+    const application = applicationRows.find((row) => row.applicationId === applicationId || row._id === applicationId);
     if (!application) return res.status(404).json({ message: "Application not found" });
-    if (String(application.student) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+    if (String(application.studentId) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
-    let submission = await Submission.findOne({ application: applicationId, assignment: req.params.assignmentId });
-    if (submission) {
-      Object.assign(submission, { textContent, githubUrl, liveUrl, fileUrl, status: "Submitted" });
-      await submission.save();
-    } else {
-      submission = await Submission.create({
-        application: applicationId,
-        assignment: req.params.assignmentId,
-        student: req.user._id,
-        textContent,
-        githubUrl,
-        liveUrl,
-        fileUrl,
-      });
-    }
+    const existingRows = readSpreadsheet("submissions");
+    const existing = existingRows.find((row) => row.applicationId === application.applicationId && row.assignmentId === req.params.assignmentId);
 
-    // Backup submission to hybrid spreadsheet ledger
-    appendToSpreadsheet("submissions", {
-      submissionId: submission._id,
+    const submission = {
+      submissionId: existing?.submissionId || `${req.params.assignmentId}-${Date.now()}`,
       applicationId: application.applicationId || applicationId,
       assignmentId: req.params.assignmentId,
       studentName: req.user.fullName,
       studentEmail: req.user.email,
       githubUrl: githubUrl || "",
-    });
+      liveUrl: liveUrl || "",
+      fileUrl: fileUrl || "",
+      textContent: textContent || "",
+      status: "Submitted",
+    };
 
+    appendToSpreadsheet("submissions", submission);
     return res.status(201).json(submission);
   } catch (err) {
     console.error("Assignment submission error:", err);

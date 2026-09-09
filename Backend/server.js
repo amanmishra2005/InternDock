@@ -23,6 +23,8 @@ const defaultOrigins = [
   "http://localhost:5173",
   "https://www.interndock.in",
   "https://interndock.in",
+  "https://interndock.vercel.app",
+  "https://www.interndock.vercel.app",
 ];
 
 const envOrigins = (process.env.CLIENT_URL || "")

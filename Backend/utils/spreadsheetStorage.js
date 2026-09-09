@@ -10,6 +10,7 @@ const ALLOWED_SHEETS = new Set([
   "offer_letters",
   "submissions",
   "payments",
+  "contact_queries",
 ]);
 if (!fs.existsSync(LEDGER_DIR)) {
   fs.mkdirSync(LEDGER_DIR, { recursive: true });
@@ -72,6 +73,41 @@ function getSpreadsheetPath(sheetName) {
   return path.join(LEDGER_DIR, `${sheetName}.csv`);
 }
 
+function writeSpreadsheetRecords(sheetName, records) {
+  if (!ALLOWED_SHEETS.has(sheetName)) return false;
+  const filePath = path.join(LEDGER_DIR, `${sheetName}.csv`);
+
+  const headers = Array.from(new Set(records.flatMap((record) => Object.keys(record))));
+  if (headers.length === 0) return false;
+
+  const lines = [headers.map((h) => `"${h}"`).join(",")];
+  records.forEach((record) => {
+    const row = headers.map((key) => {
+      const value = record[key] === null || record[key] === undefined ? "" : String(record[key]);
+      return `"${value.replace(/"/g, '""')}"`;
+    });
+    lines.push(row.join(","));
+  });
+
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, lines.join("\n") + "\n", "utf8");
+  return true;
+}
+
+function updateSpreadsheetRecord(sheetName, predicate, updateRecord) {
+  if (!ALLOWED_SHEETS.has(sheetName)) return false;
+  const filePath = path.join(LEDGER_DIR, `${sheetName}.csv`);
+  if (!fs.existsSync(filePath)) return false;
+
+  const rows = readSpreadsheet(sheetName);
+  const idx = rows.findIndex((row) => predicate(row));
+  if (idx < 0) return false;
+
+  rows[idx] = { ...rows[idx], ...updateRecord };
+  writeSpreadsheetRecords(sheetName, rows);
+  return true;
+}
+
 // Helper to read all records from a spreadsheet CSV
 function readSpreadsheet(sheetName) {
   try {
@@ -100,4 +136,11 @@ function readSpreadsheet(sheetName) {
   }
 }
 
-module.exports = { appendToSpreadsheet, readSpreadsheet, getSpreadsheetPath, ALLOWED_SHEETS };
+module.exports = {
+  appendToSpreadsheet,
+  readSpreadsheet,
+  updateSpreadsheetRecord,
+  getSpreadsheetPath,
+  ALLOWED_SHEETS,
+  writeSpreadsheetRecords,
+};

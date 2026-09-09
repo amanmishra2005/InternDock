@@ -9,7 +9,7 @@ const FinalReport = require("../models/FinalReport");
 const { protect } = require("../middleware/auth");
 const { generateOfferReferenceId, generateCertificateId, generateVerificationId } = require("../utils/generateIds");
 const { generateOfferLetterPdf, generateCertificatePdf, TEMPLATE_VERSION } = require("../utils/generatePdf");
-const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
+const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 
 async function downloadDocument(req, res, Model, label) {
   const document = await Model.findOne({ application: req.params.applicationId }).lean();
@@ -99,7 +99,6 @@ router.get("/offer-letter/:applicationId", protect, async (req, res) => {
         });
       }
 
-      // Hybrid Spreadsheet Ledger Backup
       appendToSpreadsheet("offer_letters", {
         offerId: offer._id,
         applicationId: application.applicationId || application._id,
@@ -172,7 +171,6 @@ router.get("/certificate/:applicationId", protect, async (req, res) => {
         });
       }
 
-      // Hybrid Spreadsheet Ledger Backup
       appendToSpreadsheet("certificates", {
         certificateId: cert.certificateId,
         applicationId: application.applicationId || application._id,
@@ -208,7 +206,6 @@ router.post("/final-report", protect, async (req, res) => {
     application.finalReportSubmitted = true;
     await application.save();
 
-    // Hybrid Spreadsheet Ledger Backup
     appendToSpreadsheet("final_reports", {
       reportId: report._id,
       applicationId: application.applicationId || applicationId,
@@ -244,7 +241,20 @@ router.get("/verify/offer/:id", async (req, res) => {
     });
   }
 
-  // 1. Search in OfferLetter collection
+  const offerRows = readSpreadsheet("offer_letters");
+  const offerRow = offerRows.find((row) => row.referenceId === query || row.verificationId === query || row.offerId === query);
+  if (offerRow) {
+    return res.json({
+      valid: true,
+      studentName: offerRow.studentName || "Intern Student",
+      domain: offerRow.domain || "Tech Internship Track",
+      duration: "4 Weeks Track",
+      referenceId: offerRow.referenceId,
+      issueDate: offerRow.timestamp ? new Date(offerRow.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
+      status: "Verified Official Selection Record",
+    });
+  }
+
   let offer = await OfferLetter.findOne({
     $or: [{ verificationId: query }, { referenceId: query }],
   })
@@ -310,7 +320,20 @@ router.get("/verify/certificate/:id", async (req, res) => {
     });
   }
 
-  // 1. Search in Certificate collection
+  const certRows = readSpreadsheet("certificates");
+  const certRow = certRows.find((row) => row.certificateId === query || row.verificationId === query);
+  if (certRow) {
+    return res.json({
+      valid: true,
+      studentName: certRow.studentName || "Intern Student",
+      domain: certRow.domain || "Tech Internship Track",
+      duration: "4 Weeks Track",
+      certificateId: certRow.certificateId,
+      issueDate: certRow.timestamp ? new Date(certRow.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
+      status: "Cryptographically Verified Certificate",
+    });
+  }
+
   let cert = await Certificate.findOne({
     $or: [{ verificationId: query }, { certificateId: query }],
   })

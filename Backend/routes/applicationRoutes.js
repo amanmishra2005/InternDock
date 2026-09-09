@@ -1,12 +1,31 @@
 const express = require("express");
 const router = express.Router();
-const Application = require("../models/Application");
 const Domain = require("../models/Domain");
 const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
 const { generateApplicationId } = require("../utils/generateIds");
 const { sendEmail, templates } = require("../utils/sendEmail");
-const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
+const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
+
+function rowsToApplications(rows) {
+  return rows
+    .map((row) => ({
+      _id: row.applicationId || row._id || row.applicationInternalId,
+      id: row.applicationId || row._id,
+      applicationId: row.applicationId || row._id,
+      student: { _id: row.studentId || row.studentEmail, email: row.studentEmail, fullName: row.studentName },
+      domain: { _id: row.domainId || row.domainName, name: row.domainName },
+      duration: { _id: row.durationId || row.durationWeeks, label: `${row.durationWeeks || 4} Weeks Track`, weeks: Number(row.durationWeeks || 4), fee: Number(row.fee || 0) },
+      status: row.status || "Submitted",
+      startDate: row.startDate || row.start_date,
+      endDate: row.endDate || row.end_date,
+      paymentStatus: row.paymentStatus || "Pending",
+      certificateIssued: Boolean(row.certificateIssued),
+      finalReportSubmitted: Boolean(row.finalReportSubmitted),
+      createdAt: row.timestamp || new Date().toISOString(),
+    }))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
 
 // POST /api/applications  — student applies to a domain + duration
 router.post("/", protect, async (req, res) => {
@@ -23,35 +42,47 @@ router.post("/", protect, async (req, res) => {
       return res.status(400).json({ message: "Choose a valid internship start and end date" });
     }
 
-    const count = await Application.countDocuments();
-    const applicationId = generateApplicationId(count + 1);
+    const ledgerRows = readSpreadsheet("applications");
+    const applicationId = generateApplicationId(ledgerRows.length + 1);
 
-    const application = await Application.create({
+    const ledgerRow = {
       applicationId,
-      student: req.user._id,
-      domain: domain._id,
-      duration: duration._id,
-      startDate: parsedStartDate,
-      endDate: parsedEndDate,
-      status: "Submitted",
-      statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
-    });
-
-    // Append application record to Spreadsheet CSV Ledger for hybrid storage & backup
-    appendToSpreadsheet("applications", {
-      applicationId,
+      studentId: String(req.user._id),
       studentName: req.user.fullName,
       studentEmail: req.user.email,
+      domainId: String(domain._id),
       domainName: domain.name,
+      durationId: String(duration._id),
       durationWeeks: duration.weeks,
       startDate: parsedStartDate.toISOString().slice(0, 10),
       endDate: parsedEndDate.toISOString().slice(0, 10),
       fee: duration.fee,
+      paymentStatus: "Pending",
       status: "Submitted",
-    });
+      statusHistory: "Submitted",
+    };
+
+    appendToSpreadsheet("applications", ledgerRow);
+
+    const application = {
+      _id: applicationId,
+      applicationId,
+      student: { _id: req.user._id, fullName: req.user.fullName, email: req.user.email },
+      domain: { _id: domain._id, name: domain.name },
+      duration: { _id: duration._id, weeks: duration.weeks, fee: duration.fee, label: duration.label },
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
+      status: "Submitted",
+      paymentStatus: "Pending",
+      statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
+    };
 
     // Prepare and dispatch emails (student confirmation + support@interndock.in admin notification)
-    const adminNotificationEmail = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || "support@interndock.in";
+    const adminNotificationEmail = (process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || "support@interndock.in")
+      .split(",")
+      .map((val) => val.trim())
+      .filter(Boolean)
+      .join(",");
     const studentT = templates.applicationSubmitted(req.user.fullName, applicationId, domain.name);
     const adminT = templates.newApplicationAdminNotification(
       req.user.fullName,
@@ -76,24 +107,22 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// GET /api/applications/mine — all of the logged in student's applications
 router.get("/mine", protect, async (req, res) => {
-  const applications = await Application.find({ student: req.user._id })
-    .populate("domain")
-    .populate("duration")
-    .sort({ createdAt: -1 })
-    .lean();
+  const rows = readSpreadsheet("applications");
+  const applications = rowsToApplications(rows.filter((row) => row.studentEmail === req.user.email || row.studentId === String(req.user._id)));
   return res.json(applications);
 });
 
-// GET /api/applications/:id — single application (must belong to the student, or be admin)
 router.get("/:id", protect, async (req, res) => {
-  const application = await Application.findById(req.params.id).populate("domain").populate("duration").populate("student", "fullName email college").lean();
-  if (!application) return res.status(404).json({ message: "Not found" });
-  if (String(application.student._id) !== String(req.user._id) && !["admin", "superadmin"].includes(req.user.role)) {
+  const rows = readSpreadsheet("applications");
+  const row = rows.find((r) => r.applicationId === req.params.id || r._id === req.params.id);
+  if (!row) return res.status(404).json({ message: "Not found" });
+
+  if (String(row.studentId) !== String(req.user._id) && !["admin", "superadmin"].includes(req.user.role)) {
     return res.status(403).json({ message: "Forbidden" });
   }
-  return res.json(application);
+
+  return res.json(rowsToApplications([row])[0]);
 });
 
 module.exports = router;

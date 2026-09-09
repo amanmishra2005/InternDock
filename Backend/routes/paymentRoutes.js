@@ -26,6 +26,17 @@ router.post("/create-order", protect, async (req, res) => {
       status: "Pending",
     });
 
+    appendToSpreadsheet("payments", {
+      paymentId: payment._id,
+      orderId,
+      applicationId: application.applicationId || String(application._id),
+      studentId: String(req.user._id),
+      amount: application.duration?.fee || 100,
+      currency: application.duration?.currency || "INR",
+      utrNumber: "",
+      status: "Pending",
+    });
+
     res.status(201).json(payment);
   } catch (err) {
     console.error("Payment order error:", err);

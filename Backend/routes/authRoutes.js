@@ -61,9 +61,9 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const cleanEmail = String(email || "").trim().toLowerCase();
-    const cleanPassword = String(password || "");
+    const cleanPassword = String(password || "").trim();
 
-    if (!cleanEmail || !cleanPassword) {
+    if (!cleanEmail || !cleanPassword || cleanEmail.length > 254 || cleanPassword.length < 8) {
       return res.status(400).json({ message: "Email and password are required" });
     }
 

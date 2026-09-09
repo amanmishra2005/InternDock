@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Sparkles, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ShieldCheck,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import Logo from "../components/Logo";
 
@@ -20,10 +29,14 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      localStorage.setItem("user", JSON.stringify(user));
-      navigate(["admin", "superadmin"].includes(user.role) ? "/admin" : "/dashboard");
+      navigate(
+        ["admin", "superadmin"].includes(user.role) ? "/admin" : "/dashboard",
+      );
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid credentials. Please check your email and password.");
+      setError(
+        err.response?.data?.message ||
+          "Invalid credentials. Please check your email and password.",
+      );
     } finally {
       setLoading(false);
     }
@@ -33,13 +46,13 @@ export default function Login() {
     <div className="auth-split-wrapper">
       <div className="container auth-split-grid grid-2 align-center">
         {/* Left Visual Illustration Card */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
           className="auth-visual-side glass-panel"
         >
-          <motion.div 
+          <motion.div
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             className="badge-pill badge-pill-cyan"
@@ -49,21 +62,29 @@ export default function Login() {
             <span>Candidate & Admin Portal</span>
           </motion.div>
           <h1 className="auth-visual-title">
-            Accelerate Your Tech Career on <span className="gradient-text">InternDock</span>
+            Accelerate Your Tech Career on{" "}
+            <span className="gradient-text">InternDock</span>
           </h1>
           <p className="auth-visual-sub">
-            Log in to access your capstone assignments, submit weekly code projects, view mentor evaluations, and download verified certificates.
+            Log in to access your capstone assignments, submit weekly code
+            projects, view mentor evaluations, and download verified
+            certificates.
           </p>
 
           <div className="auth-illustration-box">
-            <img 
-              src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80" 
-              alt="InternDock Tech Candidate Workspace" 
-              className="auth-art-img" 
+            <img
+              src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80"
+              alt="InternDock Tech Candidate Workspace"
+              className="auth-art-img"
             />
-            <motion.div 
+            <motion.div
               animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+              transition={{
+                duration: 3.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.5,
+              }}
               className="auth-art-badge"
             >
               <span className="pulse-dot"></span>
@@ -85,7 +106,7 @@ export default function Login() {
         </motion.div>
 
         {/* Right Form Card */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
@@ -142,26 +163,35 @@ export default function Login() {
             </div>
 
             {error && (
-              <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="error-alert-box">
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="error-alert-box"
+              >
                 {error}
               </motion.div>
             )}
 
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              type="submit" 
-              className="btn btn-primary btn-glow full-width btn-lg" 
+              type="submit"
+              className="btn btn-primary btn-glow full-width btn-lg"
               disabled={loading}
             >
-              <span>{loading ? "Authenticating..." : "Sign In to Workspace"}</span>
+              <span>
+                {loading ? "Authenticating..." : "Sign In to Workspace"}
+              </span>
               <ArrowRight size={18} />
             </motion.button>
           </form>
 
           <div className="auth-card-footer text-center">
             <p>New candidate on InternDock?</p>
-            <Link to="/register" className="gradient-text font-weight-700 footer-link">
+            <Link
+              to="/register"
+              className="gradient-text font-weight-700 footer-link"
+            >
               <span>Create Free Student Account</span>
               <ArrowRight size={15} />
             </Link>

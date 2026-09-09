@@ -221,21 +221,8 @@ async function seed() {
     await Assignment.insertMany(assignmentData);
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (adminEmail && adminPassword) {
-    let admin = await User.findOne({ email: adminEmail });
-    if (!admin) {
-      admin = new User({
-        fullName: process.env.ADMIN_NAME || "Program Admin",
-        email: adminEmail,
-        password: adminPassword,
-        role: "admin",
-      });
-      await admin.save();
-      console.log(`Created admin user -> email: ${adminEmail}`);
-    }
-  }
+const { ensureAdminAccount } = require('../config/db');
+await ensureAdminAccount();
 
   console.log("Seed complete:", DOMAINS.length, "domains,", DURATIONS.length, "durations.");
   await mongoose.disconnect();

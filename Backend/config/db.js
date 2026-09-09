@@ -1,6 +1,67 @@
 const mongoose = require("mongoose");
+const User = require("../models/User");
 
 let mongoServer = null;
+
+async function ensureAdminAccount(options = {}) {
+  const UserModel = options.User || User;
+  const env = options.env || process.env;
+  const logger = options.logger || console;
+
+  const adminEmail = String(env.ADMIN_EMAIL || "").trim().toLowerCase();
+  const adminPassword = String(env.ADMIN_PASSWORD || "");
+  const adminName = String(env.ADMIN_NAME || "Program Admin").trim() || "Program Admin";
+
+  if (!adminEmail || !adminPassword) {
+    logger.warn("ADMIN_EMAIL and ADMIN_PASSWORD must be set to create or repair the configured admin account.");
+    return null;
+  }
+
+  let admin = await UserModel.findOne({ email: adminEmail });
+  if (!admin) {
+    admin = await UserModel.create({
+      fullName: adminName,
+      email: adminEmail,
+      password: adminPassword,
+      role: "admin",
+      isActive: true,
+    });
+    logger.log(`Created admin user -> email: ${adminEmail}`);
+    return admin;
+  }
+
+  let changed = false;
+  if (admin.role !== "admin") {
+    admin.role = "admin";
+    changed = true;
+  }
+
+  if (admin.fullName !== adminName) {
+    admin.fullName = adminName;
+    changed = true;
+  }
+
+  if (admin.email !== adminEmail) {
+    admin.email = adminEmail;
+    changed = true;
+  }
+
+  if (!admin.isActive) {
+    admin.isActive = true;
+    changed = true;
+  }
+
+  if (!String(admin.password || "").startsWith("$2")) {
+    admin.password = adminPassword;
+    changed = true;
+  }
+
+  if (changed) {
+    await admin.save();
+  }
+
+  return admin;
+}
 
 // Domain-tailored, beginner-friendly weekly assignments generator for tech and non-tech domains
 function generateWeeklyAssignments(domainName, maxWeeks = 24) {
@@ -616,20 +677,7 @@ async function autoSeed() {
         await Assignment.insertMany(assignmentsData);
       }
 
-      const adminEmail = process.env.ADMIN_EMAIL;
-      const adminPassword = process.env.ADMIN_PASSWORD;
-      if (adminEmail && adminPassword) {
-        const existingAdmin = await User.findOne({ email: adminEmail });
-        if (!existingAdmin) {
-          await User.create({
-            fullName: process.env.ADMIN_NAME || "Program Admin",
-            email: adminEmail,
-            password: adminPassword,
-            role: "admin",
-          });
-          console.log(`Created admin user -> email: ${adminEmail}`);
-        }
-      }
+      await ensureAdminAccount();
       console.log(`Auto-seeding completed: ${DOMAINS.length} tech & non-tech domains successfully seeded.`);
     }
   } catch (err) {
@@ -670,8 +718,13 @@ async function connectDB() {
     }
   }
 
-  if (mongoose.connection.readyState === 1) await autoSeed();
+  if (mongoose.connection.readyState === 1) {
+    await ensureAdminAccount();
+    await autoSeed();
+  }
   return mongoose.connection.readyState === 1;
 }
 
 module.exports = connectDB;
+module.exports.connectDB = connectDB;
+module.exports.ensureAdminAccount = ensureAdminAccount;

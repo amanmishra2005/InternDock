@@ -125,8 +125,16 @@ app.use((req, res, next) => {
 app.use(cors(corsOptions));
 app.options("(.*)", cors(corsOptions));
 
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "1mb", strict: true }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(morgan(isProduction ? "combined" : "dev"));
+
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    return res.status(400).json({ message: "Malformed JSON payload" });
+  }
+  return next(err);
+});
 
 app.get("/api/health", (req, res) => {
   const databaseReady = mongoose.connection.readyState === 1;

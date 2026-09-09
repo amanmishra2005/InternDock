@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Domain = require("../models/Domain");
 const Duration = require("../models/Duration");
+const Application = require("../models/Application");
 const { protect } = require("../middleware/auth");
 const { generateApplicationId } = require("../utils/generateIds");
 const { sendEmail, templates } = require("../utils/sendEmail");
@@ -62,10 +63,24 @@ router.post("/", protect, async (req, res) => {
       statusHistory: "Submitted",
     };
 
+    const applicationDoc = await Application.create({
+      applicationId,
+      student: req.user._id,
+      domain: domain._id,
+      duration: duration._id,
+      status: "Submitted",
+      statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
+      paymentStatus: "Pending",
+      finalReportSubmitted: false,
+      certificateIssued: false,
+    });
+
     appendToSpreadsheet("applications", ledgerRow);
 
     const application = {
-      _id: applicationId,
+      _id: applicationDoc._id,
       applicationId,
       student: { _id: req.user._id, fullName: req.user.fullName, email: req.user.email },
       domain: { _id: domain._id, name: domain.name },

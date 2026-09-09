@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
 const Payment = require("../models/Payment");
 const Application = require("../models/Application");
@@ -8,13 +9,26 @@ const { protect } = require("../middleware/auth");
 const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
 
+async function findApplicationByIdentifier(identifier) {
+  if (!identifier) return null;
+
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    return Application.findById(identifier).populate("duration").populate("domain").populate("student");
+  }
+
+  return Application.findOne({ applicationId: identifier })
+    .populate("duration")
+    .populate("domain")
+    .populate("student");
+}
+
 // POST /api/payments/create-order
 router.post("/create-order", protect, async (req, res) => {
   try {
     const { applicationId } = req.body;
-    const application = await Application.findById(applicationId).populate("duration");
+    const application = await findApplicationByIdentifier(applicationId);
     if (!application) return res.status(404).json({ message: "Application not found" });
-    if (String(application.student) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+    if (String(application.student?._id || application.student) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
     const orderId = `order_${uuidv4().slice(0, 12)}`;
     const payment = await Payment.create({
@@ -52,13 +66,13 @@ router.post("/confirm", protect, async (req, res) => {
     let payment = null;
 
     if (applicationId) {
-      application = await Application.findById(applicationId).populate("duration").populate("domain");
+      application = await findApplicationByIdentifier(applicationId);
     }
 
     if (orderId) {
       payment = await Payment.findOne({ orderId });
       if (payment && !application) {
-        application = await Application.findById(payment.application).populate("duration").populate("domain");
+        application = await findApplicationByIdentifier(payment.application?.toString?.() || payment.application);
       }
     }
 
@@ -66,7 +80,7 @@ router.post("/confirm", protect, async (req, res) => {
       return res.status(404).json({ message: "Application record not found for payment confirmation." });
     }
 
-    if (String(application.student) !== String(req.user._id)) {
+    if (String(application.student?._id || application.student) !== String(req.user._id)) {
       return res.status(403).json({ message: "Forbidden" });
     }
 

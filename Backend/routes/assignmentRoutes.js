@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Assignment = require("../models/Assignment");
 const Submission = require("../models/Submission");
@@ -6,6 +7,23 @@ const Application = require("../models/Application");
 const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
+const { supportTargetEmail } = require("../utils/emailTargets");
+
+async function findApplicationByIdentifier(identifier) {
+  if (!identifier) return null;
+
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    return Application.findById(identifier)
+      .populate("duration")
+      .populate("domain", "name")
+      .populate("student", "fullName email college");
+  }
+
+  return Application.findOne({ applicationId: identifier })
+    .populate("duration")
+    .populate("domain", "name")
+    .populate("student", "fullName email college");
+}
 
 function getTaskConfigForDuration(maxWeeks) {
   let count = 1;
@@ -50,7 +68,7 @@ function getTaskGuide(assignment, domainName) {
 // Returns a smaller milestone set matching the duration track (1 for 4w, 2 for 6-8w, 3 for 12w, 4 for 24w).
 router.get("/for-application/:applicationId", protect, async (req, res) => {
   try {
-    const application = await Application.findById(req.params.applicationId).populate("duration").populate("domain", "name").lean();
+    const application = await findApplicationByIdentifier(req.params.applicationId);
     if (!application) return res.status(404).json({ message: "Application not found" });
 
     const studentId = application.student?._id ? application.student._id : application.student;
@@ -109,18 +127,41 @@ router.get("/for-application/:applicationId", protect, async (req, res) => {
 router.post("/:assignmentId/submit", protect, async (req, res) => {
   try {
     const { applicationId, textContent, githubUrl, liveUrl, fileUrl } = req.body;
-    const applicationRows = await readSpreadsheet("applications");
-    const application = applicationRows.find((row) => row.applicationId === applicationId || row._id === applicationId);
-    if (!application) return res.status(404).json({ message: "Application not found" });
-    if (String(application.studentId) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+    const application = await findApplicationByIdentifier(applicationId);
 
-    const existingRows = await readSpreadsheet("submissions");
-    const existing = existingRows.find((row) => row.applicationId === application.applicationId && row.assignmentId === req.params.assignmentId);
+    if (!application) return res.status(404).json({ message: "Application not found" });
+    if (String(application.student?._id || application.student) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const assignment = await Assignment.findById(req.params.assignmentId);
+    if (!assignment) return res.status(404).json({ message: "Assignment not found" });
+
+    const existing = await Submission.findOne({
+      application: application._id,
+      assignment: assignment._id,
+      student: req.user._id,
+    });
+
+    const payload = {
+      application: application._id,
+      assignment: assignment._id,
+      student: req.user._id,
+      githubUrl: githubUrl || "",
+      liveUrl: liveUrl || "",
+      fileUrl: fileUrl || "",
+      textContent: textContent || "",
+      status: "Submitted",
+    };
+
+    const submissionDoc = existing
+      ? await Submission.findByIdAndUpdate(existing._id, payload, { new: true })
+      : await Submission.create(payload);
 
     const submission = {
-      submissionId: existing?.submissionId || `${req.params.assignmentId}-${Date.now()}`,
+      submissionId: submissionDoc._id,
       applicationId: application.applicationId || applicationId,
-      assignmentId: req.params.assignmentId,
+      assignmentId: String(assignment._id),
       studentName: req.user.fullName,
       studentEmail: req.user.email,
       githubUrl: githubUrl || "",

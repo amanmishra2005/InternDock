@@ -6,6 +6,7 @@ const path = require("path");
 const connectDB = require("./config/db");
 const mongoose = require("mongoose");
 const { createRateLimiter } = require("./utils/rateLimit");
+const { pruneRejectedApplications } = require("./utils/applicationCleanup");
 
 const authRoutes = require("./routes/authRoutes");
 const domainRoutes = require("./routes/domainRoutes");
@@ -176,7 +177,12 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5001;
 
 connectDB()
-  .then(() => {
+  .then(async () => {
+    await pruneRejectedApplications();
+    setInterval(() => {
+      pruneRejectedApplications().catch((err) => console.error("Rejected application cleanup failed:", err.message));
+    }, 24 * 60 * 60 * 1000);
+
     app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
   })
   .catch((error) => {

@@ -8,6 +8,7 @@ const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
 const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
+const { supportTargetEmail } = require("../utils/emailTargets");
 
 async function findApplicationByIdentifier(identifier) {
   if (!identifier) return null;
@@ -134,10 +135,10 @@ router.post("/confirm", protect, async (req, res) => {
 
     await application.save();
 
-    // Trigger instant email confirmation to student and support@interndock.in
+    // Trigger instant email confirmation to student and the configured support inbox
     const emailTo = registeredEmail || req.user.email;
     const studentT = templates.paymentSuccess(payerName || req.user.fullName, feeAmount);
-    const adminNotificationEmail = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || "support@interndock.in";
+    const adminNotificationEmail = supportTargetEmail();
     const adminPaymentT = templates.newPaymentAdminNotification(
       payerName || req.user.fullName,
       emailTo,

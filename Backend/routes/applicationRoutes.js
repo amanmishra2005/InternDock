@@ -7,6 +7,36 @@ const { protect } = require("../middleware/auth");
 const { generateApplicationId } = require("../utils/generateIds");
 const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
+const { supportTargetEmail } = require("../utils/emailTargets");
+
+function serializeApplication(application) {
+  if (!application) return null;
+
+  return {
+    _id: application._id,
+    applicationId: application.applicationId,
+    student: {
+      _id: application.student?._id || application.student,
+      fullName: application.student?.fullName || "",
+      email: application.student?.email || "",
+    },
+    domain: { _id: application.domain?._id || application.domain, name: application.domain?.name || "" },
+    duration: {
+      _id: application.duration?._id || application.duration,
+      label: application.duration?.label || `${application.duration?.weeks || 4} Weeks Track`,
+      weeks: application.duration?.weeks || 4,
+      fee: application.duration?.fee || 0,
+    },
+    status: application.status,
+    paymentStatus: application.paymentStatus,
+    startDate: application.startDate,
+    endDate: application.endDate,
+    certificateIssued: application.certificateIssued,
+    finalReportSubmitted: application.finalReportSubmitted,
+    statusHistory: application.statusHistory,
+    createdAt: application.createdAt,
+  };
+}
 
 function rowsToApplications(rows) {
   return rows
@@ -92,12 +122,8 @@ router.post("/", protect, async (req, res) => {
       statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
     };
 
-    // Prepare and dispatch emails (student confirmation + support@interndock.in admin notification)
-    const adminNotificationEmail = (process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || "support@interndock.in")
-      .split(",")
-      .map((val) => val.trim())
-      .filter(Boolean)
-      .join(",");
+    // Prepare and dispatch emails (student confirmation + configured support inbox)
+    const adminNotificationEmail = supportTargetEmail();
     const studentT = templates.applicationSubmitted(req.user.fullName, applicationId, domain.name);
     const adminT = templates.newApplicationAdminNotification(
       req.user.fullName,
@@ -123,21 +149,35 @@ router.post("/", protect, async (req, res) => {
 });
 
 router.get("/mine", protect, async (req, res) => {
-  const rows = await readSpreadsheet("applications");
-  const applications = rowsToApplications(rows.filter((row) => row.studentEmail === req.user.email || row.studentId === String(req.user._id)));
-  return res.json(applications);
+  const applications = await Application.find({ student: req.user._id })
+    .populate("domain", "name")
+    .populate("duration", "label weeks fee")
+    .populate("student", "fullName email")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return res.json(applications.map((app) => serializeApplication(app)));
 });
 
 router.get("/:id", protect, async (req, res) => {
-  const rows = await readSpreadsheet("applications");
-  const row = rows.find((r) => r.applicationId === req.params.id || r._id === req.params.id);
-  if (!row) return res.status(404).json({ message: "Not found" });
+  const app = await Application.findOne({
+    $or: [
+      { _id: req.params.id },
+      { applicationId: req.params.id },
+    ],
+  })
+    .populate("student", "fullName email college")
+    .populate("domain", "name")
+    .populate("duration", "label weeks fee")
+    .lean();
 
-  if (String(row.studentId) !== String(req.user._id) && !["admin", "superadmin"].includes(req.user.role)) {
+  if (!app) return res.status(404).json({ message: "Not found" });
+
+  if (String(app.student?._id || app.student) !== String(req.user._id) && !["admin", "superadmin"].includes(req.user.role)) {
     return res.status(403).json({ message: "Forbidden" });
   }
 
-  return res.json(rowsToApplications([row])[0]);
+  return res.json(serializeApplication(app));
 });
 
 module.exports = router;

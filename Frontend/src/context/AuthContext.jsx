@@ -3,29 +3,40 @@ import api from "../api/axios";
 
 const AuthContext = createContext(null);
 
+function readCachedUser() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    localStorage.removeItem("user");
+    return null;
+  }
+
+  try {
+    const cached = localStorage.getItem("user");
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    localStorage.removeItem("user");
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const cached = localStorage.getItem("user");
-      return cached ? JSON.parse(cached) : null;
-    } catch {
-      localStorage.removeItem("user");
-      return null;
-    }
-  });
+  const [user, setUser] = useState(readCachedUser);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
+      setUser(null);
       setLoading(false);
       return;
     }
+
     api
       .get("/auth/me")
       .then((res) => {
-        setUser(res.data.user);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
+        const nextUser = res.data.user;
+        setUser(nextUser);
+        localStorage.setItem("user", JSON.stringify(nextUser));
       })
       .catch(() => {
         localStorage.removeItem("token");

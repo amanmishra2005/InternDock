@@ -15,22 +15,21 @@ import {
   Mail,
 } from "lucide-react";
 import Logo from "./Logo";
+import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    logout();
     navigate("/login");
   };
 
   const isActive = (path) => location.pathname === path;
+  const isAdmin = user && ["admin", "superadmin"].includes(user.role);
 
   return (
     <header className="sticky-header">
@@ -87,7 +86,7 @@ export default function Header() {
               <span>Workspace</span>
             </Link>
           )}
-          {user && user.role === "admin" && (
+          {isAdmin && (
             <Link
               to="/admin"
               className={`nav-link admin-nav-pill ${location.pathname.includes("/admin") ? "active" : ""}`}
@@ -100,7 +99,7 @@ export default function Header() {
 
         {/* Header Actions */}
         <div className="header-actions">
-          {token && user ? (
+          {user ? (
             <div className="user-profile-menu">
               <div className="user-info-chip">
                 <span className="user-avatar-circle">
@@ -217,7 +216,7 @@ export default function Header() {
                   <LayoutDashboard size={18} />
                   <span>My Dashboard</span>
                 </Link>
-                {user.role === "admin" && (
+                {isAdmin && (
                   <Link
                     to="/admin"
                     onClick={() => setMobileOpen(false)}

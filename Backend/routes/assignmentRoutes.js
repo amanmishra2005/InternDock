@@ -109,12 +109,12 @@ router.get("/for-application/:applicationId", protect, async (req, res) => {
 router.post("/:assignmentId/submit", protect, async (req, res) => {
   try {
     const { applicationId, textContent, githubUrl, liveUrl, fileUrl } = req.body;
-    const applicationRows = readSpreadsheet("applications");
+    const applicationRows = await readSpreadsheet("applications");
     const application = applicationRows.find((row) => row.applicationId === applicationId || row._id === applicationId);
     if (!application) return res.status(404).json({ message: "Application not found" });
     if (String(application.studentId) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
-    const existingRows = readSpreadsheet("submissions");
+    const existingRows = await readSpreadsheet("submissions");
     const existing = existingRows.find((row) => row.applicationId === application.applicationId && row.assignmentId === req.params.assignmentId);
 
     const submission = {

@@ -241,7 +241,7 @@ router.get("/verify/offer/:id", async (req, res) => {
     });
   }
 
-  const offerRows = readSpreadsheet("offer_letters");
+  const offerRows = await readSpreadsheet("offer_letters");
   const offerRow = offerRows.find((row) => row.referenceId === query || row.verificationId === query || row.offerId === query);
   if (offerRow) {
     return res.json({
@@ -320,7 +320,7 @@ router.get("/verify/certificate/:id", async (req, res) => {
     });
   }
 
-  const certRows = readSpreadsheet("certificates");
+  const certRows = await readSpreadsheet("certificates");
   const certRow = certRows.find((row) => row.certificateId === query || row.verificationId === query);
   if (certRow) {
     return res.json({

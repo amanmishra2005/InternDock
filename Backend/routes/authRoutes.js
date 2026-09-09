@@ -24,10 +24,26 @@ router.post("/register", async (req, res) => {
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "fullName, email and password are required" });
     }
-    const existing = await User.findOne({ email: email.toLowerCase() });
+
+    const cleanFullName = String(fullName).trim();
+    const cleanEmail = String(email).trim().toLowerCase();
+    if (!cleanFullName || !cleanEmail || !String(password).trim()) {
+      return res.status(400).json({ message: "fullName, email and password are required" });
+    }
+
+    const existing = await User.findOne({ email: cleanEmail });
     if (existing) return res.status(409).json({ message: "Email already registered" });
 
-    const user = await User.create({ fullName, email, password, phone, college, course, branch });
+    const user = await User.create({
+      fullName: cleanFullName,
+      email: cleanEmail,
+      password,
+      phone,
+      college,
+      course,
+      branch,
+    });
+
     const t = templates.welcome(user.fullName);
     await sendEmail({ to: user.email, ...t }).catch((err) => {
       console.error("Failed to send welcome email:", err.message);
@@ -44,8 +60,15 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email: (email || "").toLowerCase() }).select("+password");
-    if (!user || !(await user.comparePassword(password))) {
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const cleanPassword = String(password || "");
+
+    if (!cleanEmail || !cleanPassword) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email: cleanEmail }).select("+password");
+    if (!user || !(await user.comparePassword(cleanPassword))) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
     if (!user.isActive) return res.status(403).json({ message: "Account disabled" });

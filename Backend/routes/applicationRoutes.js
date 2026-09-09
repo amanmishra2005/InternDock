@@ -108,13 +108,13 @@ router.post("/", protect, async (req, res) => {
 });
 
 router.get("/mine", protect, async (req, res) => {
-  const rows = readSpreadsheet("applications");
+  const rows = await readSpreadsheet("applications");
   const applications = rowsToApplications(rows.filter((row) => row.studentEmail === req.user.email || row.studentId === String(req.user._id)));
   return res.json(applications);
 });
 
 router.get("/:id", protect, async (req, res) => {
-  const rows = readSpreadsheet("applications");
+  const rows = await readSpreadsheet("applications");
   const row = rows.find((r) => r.applicationId === req.params.id || r._id === req.params.id);
   if (!row) return res.status(404).json({ message: "Not found" });
 

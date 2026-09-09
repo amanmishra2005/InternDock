@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const ContactQuery = require("../models/ContactQuery");
 const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
 
@@ -19,18 +18,16 @@ router.post("/", async (req, res) => {
       .filter(Boolean)
       .join(",");
 
-    // Persist only the highest-value authentication / account records in MongoDB.
-    // Contact and public inquiry traffic is safely low-volume and should stay on the spreadsheet ledger.
-    const contactRecord = await ContactQuery.create({
+    const contactRecord = {
       name,
       email,
       subject: subject || "General Inquiry",
       message,
       recipientEmail: supportTargetEmail,
-    });
+    };
 
     appendToSpreadsheet("contact_queries", {
-      contactId: contactRecord._id,
+      contactId: `contact_${Date.now()}`,
       name,
       email,
       subject: subject || "General Inquiry",
@@ -61,7 +58,7 @@ router.post("/", async (req, res) => {
     return res.json({
       success: true,
       message: "Message received! Sent to support@interndock.in",
-      contactId: contactRecord._id,
+      contactId: contactRecord.contactId || `contact_${Date.now()}`,
     });
   } catch (err) {
     console.error("Contact API error:", err);

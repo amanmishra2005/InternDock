@@ -1,20 +1,19 @@
 function normalizeSupportEmails(value) {
-  const fallback = 'support@interndock.in';
-  const raw = String(value || fallback)
-    .split(',')
+  const canonical = ['support@interndock.in', 'support.interndock@gmail.com'];
+  const raw = String(value || '')
+    .split(/[\s,;]+/)
     .map((entry) => entry.trim().toLowerCase())
     .filter(Boolean);
 
-  if (raw.length === 0) return fallback;
+  const allowed = new Set(canonical);
+  const filtered = raw.filter((entry) => allowed.has(entry));
 
-  const unique = Array.from(new Set(raw));
-  return unique.join(', ');
+  return Array.from(new Set([...filtered, ...canonical])).join(', ');
 }
 
 function supportTargetEmail() {
-  return normalizeSupportEmails(
-    process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || 'support@interndock.in'
-  );
+  const configured = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || 'support@interndock.in';
+  return normalizeSupportEmails(configured);
 }
 
 module.exports = { normalizeSupportEmails, supportTargetEmail };

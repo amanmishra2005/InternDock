@@ -1,5 +1,27 @@
 const nodemailer = require("nodemailer");
 
+const BLOCKED_RECIPIENTS = new Set([
+  "amanmishra15.08.2005@gmail.com",
+]);
+
+function normalizeRecipientsForDispatch(to) {
+  if (!to) return [];
+
+  const parsed = String(to)
+    .split(/[;,]/)
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+
+  const recipientSet = new Set();
+  parsed.forEach((entry) => {
+    if (!BLOCKED_RECIPIENTS.has(entry)) {
+      recipientSet.add(entry);
+    }
+  });
+
+  return Array.from(recipientSet);
+}
+
 function escapeHtml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -31,15 +53,25 @@ function getTransporter() {
 const emailLog = [];
 
 async function sendEmail({ to, subject, html }) {
-  const entry = { to, subject, html, sentAt: new Date(), status: "Pending" };
+  const recipients = normalizeRecipientsForDispatch(to);
+  const safeTo = recipients.join(", ");
+
+  const entry = { to: safeTo, subject, html, sentAt: new Date(), status: "Pending" };
   emailLog.unshift(entry);
+
+  if (!safeTo) {
+    entry.status = "Blocked";
+    entry.error = "Blocked personal mailbox recipient";
+    return entry;
+  }
 
   try {
     const transporter = getTransporter();
     if (transporter) {
+      const from = process.env.EMAIL_FROM || process.env.SMTP_USER || "InternDock <support.interndock@gmail.com>";
       const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM || "InternDock <support@interndock.in>",
-        to,
+        from,
+        to: safeTo,
         subject,
         html,
       });
@@ -49,7 +81,7 @@ async function sendEmail({ to, subject, html }) {
       entry.status = "Skipped";
       if (process.env.NODE_ENV !== "production") {
         console.log(`\n----- EMAIL (not sent, no SMTP configured) -----`);
-        console.log(`To: ${to}\nSubject: ${subject}\n${html}`);
+        console.log(`To: ${safeTo}\nSubject: ${subject}\n${html}`);
         console.log(`--------------------------------------------------\n`);
       }
       return entry;
@@ -57,7 +89,7 @@ async function sendEmail({ to, subject, html }) {
   } catch (err) {
     entry.status = "Failed";
     entry.error = err.message;
-    console.error(`Email send failed to ${to}:`, err.message);
+    console.error(`Email send failed to ${safeTo}:`, err.message);
   }
 
   return entry;
@@ -138,6 +170,10 @@ const templates = {
   paymentSuccess: (name, amount) => ({
     subject: "Payment successful",
     html: `<p>Hi ${escapeHtml(name)},</p><p>We've received your payment of ₹${escapeHtml(amount)}. You now have full access to your internship workspace.</p>`,
+  }),
+  finalReportSubmitted: (studentName, applicationId, domainName) => ({
+    subject: "Final report submitted after payment",
+    html: `<p>Hi InternDock Support,</p><p><b>${escapeHtml(studentName)}</b> has submitted the final report for application <b>${escapeHtml(applicationId)}</b> in <b>${escapeHtml(domainName)}</b> after the payment confirmation.</p><p>Please review the final report and complete the closure workflow.</p>`,
   }),
   certificateIssued: (name) => ({
     subject: "Your internship certificate is ready",

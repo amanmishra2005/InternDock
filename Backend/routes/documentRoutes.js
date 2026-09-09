@@ -10,6 +10,8 @@ const { protect } = require("../middleware/auth");
 const { generateOfferReferenceId, generateCertificateId, generateVerificationId } = require("../utils/generateIds");
 const { generateOfferLetterPdf, generateCertificatePdf, TEMPLATE_VERSION } = require("../utils/generatePdf");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
+const { sendEmail, templates } = require("../utils/sendEmail");
+const { supportTargetEmail } = require("../utils/emailTargets");
 
 async function downloadDocument(req, res, Model, label) {
   const document = await Model.findOne({ application: req.params.applicationId }).lean();
@@ -214,6 +216,17 @@ router.post("/final-report", protect, async (req, res) => {
       projectTitle: rest.title || "",
       githubUrl: rest.githubUrl || "",
     });
+
+    const notifyTarget = supportTargetEmail();
+    const domainName = application.domain?.name || "Internship domain";
+    const finalReportTemplate = templates.finalReportSubmitted(
+      req.user.fullName,
+      application.applicationId || applicationId,
+      domainName
+    );
+    await Promise.allSettled([
+      sendEmail({ to: notifyTarget, ...finalReportTemplate }),
+    ]);
 
     res.status(201).json(report);
   } catch (err) {

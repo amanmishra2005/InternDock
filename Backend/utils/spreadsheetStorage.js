@@ -16,6 +16,36 @@ if (!fs.existsSync(LEDGER_DIR)) {
   fs.mkdirSync(LEDGER_DIR, { recursive: true });
 }
 
+async function syncToGoogleSheet(sheetName, recordData) {
+  const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL || "";
+  if (!webhookUrl) return { ok: false, reason: "missing webhook URL" };
+
+  const webhookToken = process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || undefined;
+  const timeoutMs = Number(process.env.GOOGLE_SHEET_SYNC_TIMEOUT_MS) || 10000;
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sheetName,
+        ...recordData,
+        webhookToken,
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      return { ok: false, reason: `HTTP ${response.status}: ${text}` };
+    }
+
+    return { ok: true, reason: "synced" };
+  } catch (err) {
+    return { ok: false, reason: err.message };
+  }
+}
+
 // Convert object payload to a clean CSV line
 function formatCsvLine(dataObject) {
   return Object.values(dataObject)
@@ -27,7 +57,8 @@ function formatCsvLine(dataObject) {
     .join(",");
 }
 
-// Append a record to a spreadsheet CSV file safely
+// Append a record to a spreadsheet record path. Prefer the configured Google Apps Script webhook.
+// Keep the local CSV ledger as a fallback mirror only when the cloud sheet sync endpoint is missing or fails.
 function appendToSpreadsheet(sheetName, recordData) {
   if (!ALLOWED_SHEETS.has(sheetName)) return false;
 
@@ -35,10 +66,16 @@ function appendToSpreadsheet(sheetName, recordData) {
   const write = previous
     .catch(() => {})
     .then(async () => {
-      await fs.promises.mkdir(LEDGER_DIR, { recursive: true });
-      const filePath = path.join(LEDGER_DIR, `${sheetName}.csv`);
       const timestamp = new Date().toISOString();
       const enrichedRecord = { timestamp, ...recordData };
+
+      const cloudResult = await syncToGoogleSheet(sheetName, enrichedRecord);
+      if (!cloudResult.ok) {
+        console.warn(`Google Sheets sync failed for ${sheetName}: ${cloudResult.reason}. Falling back to local CSV ledger.`);
+      }
+
+      await fs.promises.mkdir(LEDGER_DIR, { recursive: true });
+      const filePath = path.join(LEDGER_DIR, `${sheetName}.csv`);
       const fileExists = fs.existsSync(filePath);
 
       if (!fileExists) {
@@ -47,20 +84,6 @@ function appendToSpreadsheet(sheetName, recordData) {
       }
 
       await fs.promises.appendFile(filePath, formatCsvLine(enrichedRecord) + "\n", "utf8");
-
-      if (process.env.GOOGLE_SHEET_WEBHOOK_URL && typeof fetch === "function") {
-        const timeoutMs = Number(process.env.GOOGLE_SHEET_SYNC_TIMEOUT_MS) || 10000;
-        await fetch(process.env.GOOGLE_SHEET_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sheetName,
-            ...enrichedRecord,
-            webhookToken: process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || undefined,
-          }),
-          signal: AbortSignal.timeout(timeoutMs),
-        }).catch((err) => console.error("Google Sheets sync error:", err.message));
-      }
     })
     .catch((err) => console.error(`Spreadsheet append error for ${sheetName}:`, err.message));
 

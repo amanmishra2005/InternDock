@@ -12,6 +12,8 @@ const { generateOfferLetterPdf, generateCertificatePdf, TEMPLATE_VERSION } = req
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 const { sendEmail, templates } = require("../utils/sendEmail");
 const { supportTargetEmail } = require("../utils/emailTargets");
+const { isSampleVerificationLookup } = require("../utils/documentVerification");
+const { getCache, setCache } = require("../utils/cache");
 
 async function downloadDocument(req, res, Model, label) {
   const document = await Model.findOne({ application: req.params.applicationId }).lean();
@@ -240,24 +242,19 @@ router.post("/final-report", protect, async (req, res) => {
 // GET /api/documents/verify/offer/:id
 router.get("/verify/offer/:id", async (req, res) => {
   const query = req.params.id;
+  const cacheKey = `verify_offer_${query}`;
+  const cached = getCache(cacheKey);
+  if (cached) return res.json(cached);
 
-  // Sample Demo Check
-  if (!query || query === "sample" || query.toLowerCase().includes("sample")) {
-    return res.json({
-      valid: true,
-      studentName: "Alex Rivera",
-      domain: "Full Stack MERN Web Development",
-      duration: "4 Weeks Track",
-      referenceId: "OFFER-IND-2026-7731",
-      issueDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      status: "Verified Selection Offer Letter",
-    });
+  if (isSampleVerificationLookup(query)) {
+    const reply = { valid: false, message: "No matching offer letter record found in InternDock Public Ledger." };
+    return res.status(404).json(reply);
   }
 
   const offerRows = await readSpreadsheet("offer_letters");
   const offerRow = offerRows.find((row) => row.referenceId === query || row.verificationId === query || row.offerId === query);
   if (offerRow) {
-    return res.json({
+    const payload = {
       valid: true,
       studentName: offerRow.studentName || "Intern Student",
       domain: offerRow.domain || "Tech Internship Track",
@@ -265,7 +262,10 @@ router.get("/verify/offer/:id", async (req, res) => {
       referenceId: offerRow.referenceId,
       issueDate: offerRow.timestamp ? new Date(offerRow.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
       status: "Verified Official Selection Record",
-    });
+      pdfUrl: offerRow.pdfUrl || "",
+    };
+    setCache(cacheKey, payload, 60);
+    return res.json(payload);
   }
 
   let offer = await OfferLetter.findOne({
@@ -276,7 +276,7 @@ router.get("/verify/offer/:id", async (req, res) => {
     .lean();
 
   if (offer) {
-    return res.json({
+    const payload = {
       valid: true,
       studentName: offer.student?.fullName || "Intern Student",
       domain: offer.application?.domain?.name || "Tech Internship Track",
@@ -284,7 +284,10 @@ router.get("/verify/offer/:id", async (req, res) => {
       referenceId: offer.referenceId,
       issueDate: offer.issueDate ? new Date(offer.issueDate).toLocaleDateString() : new Date().toLocaleDateString(),
       status: "Cryptographically Verified",
-    });
+      pdfUrl: offer.pdfUrl || "",
+    };
+    setCache(cacheKey, payload, 60);
+    return res.json(payload);
   }
 
   // 2. Fallback search in Application collection by ID or applicationId
@@ -302,7 +305,7 @@ router.get("/verify/offer/:id", async (req, res) => {
   }
 
   if (app && ["Selected", "Active", "Completed"].includes(app.status)) {
-    return res.json({
+    const payload = {
       valid: true,
       studentName: app.student?.fullName || "Intern Student",
       domain: app.domain?.name || "Tech Internship Track",
@@ -310,33 +313,33 @@ router.get("/verify/offer/:id", async (req, res) => {
       referenceId: app.offerLetterRef || `OFFER-${app._id.toString().slice(-6)}`,
       issueDate: new Date().toLocaleDateString(),
       status: "Verified Official Selection Record",
-    });
+      pdfUrl: "",
+    };
+    setCache(cacheKey, payload, 60);
+    return res.json(payload);
   }
 
-  return res.status(404).json({ valid: false, message: "No matching offer letter record found in InternDock Public Ledger." });
+  const reply = { valid: false, message: "No matching offer letter record found in InternDock Public Ledger." };
+  setCache(cacheKey, reply, 60);
+  return res.status(404).json(reply);
 });
 
 // GET /api/documents/verify/certificate/:id
 router.get("/verify/certificate/:id", async (req, res) => {
   const query = req.params.id;
+  const cacheKey = `verify_certificate_${query}`;
+  const cached = getCache(cacheKey);
+  if (cached) return res.json(cached);
 
-  // Sample Demo Check
-  if (!query || query === "sample" || query.toLowerCase().includes("sample")) {
-    return res.json({
-      valid: true,
-      studentName: "Alex Rivera",
-      domain: "Full Stack MERN Web Development",
-      duration: "4 Weeks Track",
-      certificateId: "CERT-IND-2026-9842",
-      issueDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      status: "Verified Completion Certificate",
-    });
+  if (isSampleVerificationLookup(query)) {
+    const reply = { valid: false, message: "No matching completion certificate found in InternDock Public Ledger." };
+    return res.status(404).json(reply);
   }
 
   const certRows = await readSpreadsheet("certificates");
   const certRow = certRows.find((row) => row.certificateId === query || row.verificationId === query);
   if (certRow) {
-    return res.json({
+    const payload = {
       valid: true,
       studentName: certRow.studentName || "Intern Student",
       domain: certRow.domain || "Tech Internship Track",
@@ -344,7 +347,10 @@ router.get("/verify/certificate/:id", async (req, res) => {
       certificateId: certRow.certificateId,
       issueDate: certRow.timestamp ? new Date(certRow.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
       status: "Cryptographically Verified Certificate",
-    });
+      pdfUrl: certRow.pdfUrl || "",
+    };
+    setCache(cacheKey, payload, 60);
+    return res.json(payload);
   }
 
   let cert = await Certificate.findOne({
@@ -355,7 +361,7 @@ router.get("/verify/certificate/:id", async (req, res) => {
     .lean();
 
   if (cert) {
-    return res.json({
+    const payload = {
       valid: true,
       studentName: cert.student?.fullName || "Intern Student",
       domain: cert.application?.domain?.name || "Tech Internship Track",
@@ -363,7 +369,10 @@ router.get("/verify/certificate/:id", async (req, res) => {
       certificateId: cert.certificateId,
       issueDate: cert.issueDate ? new Date(cert.issueDate).toLocaleDateString() : new Date().toLocaleDateString(),
       status: "Cryptographically Verified Certificate",
-    });
+      pdfUrl: cert.pdfUrl || "",
+    };
+    setCache(cacheKey, payload, 60);
+    return res.json(payload);
   }
 
   // 2. Fallback search in Application collection
@@ -381,7 +390,7 @@ router.get("/verify/certificate/:id", async (req, res) => {
   }
 
   if (app && app.certificateIssued) {
-    return res.json({
+    const payload = {
       valid: true,
       studentName: app.student?.fullName || "Intern Student",
       domain: app.domain?.name || "Tech Internship Track",
@@ -389,10 +398,15 @@ router.get("/verify/certificate/:id", async (req, res) => {
       certificateId: `CERT-${app._id.toString().slice(-8).toUpperCase()}`,
       issueDate: new Date().toLocaleDateString(),
       status: "Verified Completion Certificate",
-    });
+      pdfUrl: "",
+    };
+    setCache(cacheKey, payload, 60);
+    return res.json(payload);
   }
 
-  return res.status(404).json({ valid: false, message: "No matching completion certificate found in InternDock Public Ledger." });
+  const reply = { valid: false, message: "No matching completion certificate found in InternDock Public Ledger." };
+  setCache(cacheKey, reply, 60);
+  return res.status(404).json(reply);
 });
 
 module.exports = router;

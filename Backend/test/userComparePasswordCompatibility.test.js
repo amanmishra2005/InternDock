@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const User = require('../models/User');
 const { ensureAdminAccount } = require('../config/db');
+const { canIssueCertificate } = require('../utils/certificateEligibility');
+const { isSampleVerificationLookup } = require('../utils/documentVerification');
 
 test('comparePassword accepts legacy plain-text password and migrates it to a bcrypt hash', async () => {
   const user = new User({
@@ -46,4 +48,17 @@ test('ensureAdminAccount creates or repairs the configured admin account without
   assert.equal(created.doc.role, 'admin');
   assert.equal(created.doc.fullName, 'Program Admin');
   assert.equal(created.doc.password, 'StrongPassword123!');
+});
+
+test('canIssueCertificate blocks issuance until payment is successful, the final report is submitted, and all tracked tasks are represented by submissions', () => {
+  assert.equal(canIssueCertificate({ paymentStatus: 'Successful', finalReportSubmitted: true }, 2, 2), true);
+  assert.equal(canIssueCertificate({ paymentStatus: 'Pending', finalReportSubmitted: true }, 2, 2), false);
+  assert.equal(canIssueCertificate({ paymentStatus: 'Successful', finalReportSubmitted: false }, 2, 2), false);
+  assert.equal(canIssueCertificate({ paymentStatus: 'Successful', finalReportSubmitted: true }, 1, 2), false);
+});
+
+test('verification sample lookups are detected and genuine IDs are not mistaken for demo samples', () => {
+  assert.equal(isSampleVerificationLookup('sample'), true);
+  assert.equal(isSampleVerificationLookup('CERT-IND-2026-0001'), false);
+  assert.equal(isSampleVerificationLookup('OFFER-IND-2026-7731'), false);
 });

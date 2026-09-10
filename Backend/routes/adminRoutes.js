@@ -15,6 +15,8 @@ const { generateCertificateId, generateVerificationId } = require("../utils/gene
 const { generateCertificatePdf } = require("../utils/generatePdf");
 const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
 const { getSpreadsheetPath, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
+const { canIssueCertificate, getRequiredTaskCount } = require("../utils/certificateEligibility");
+const Submission = require("../models/Submission");
 
 router.use(protect, adminOnly);
 
@@ -237,6 +239,19 @@ router.put("/applications/:id/mark-payment", async (req, res) => {
 router.post("/applications/:id/issue-certificate", async (req, res) => {
   const application = await Application.findById(req.params.id).populate("domain").populate("duration").populate("student");
   if (!application) return res.status(404).json({ message: "Application record not found." });
+
+  const durationWeeks = Number(application.duration?.weeks || 4);
+  const requiredTasks = getRequiredTaskCount(durationWeeks);
+  const submissionCount = await Submission.countDocuments({
+    application: application._id,
+    status: { $in: ["Submitted", "Under Review", "Approved", "Needs Revision"] },
+  });
+
+  if (!canIssueCertificate(application, submissionCount, requiredTasks)) {
+    return res.status(400).json({
+      message: "Certificate can only be issued after the payment is successful, the final report is submitted, and all required task submissions are complete.",
+    });
+  }
 
   // Update application state
   application.paymentStatus = "Successful";

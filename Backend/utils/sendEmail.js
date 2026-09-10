@@ -22,6 +22,25 @@ function normalizeRecipientsForDispatch(to) {
   return Array.from(recipientSet);
 }
 
+async function sendRecipientBatch(transporter, from, recipients, subject, html) {
+  if (!Array.isArray(recipients) || recipients.length === 0) {
+    return [];
+  }
+
+  const deliveryResults = await Promise.allSettled(
+    recipients.map((recipient) =>
+      transporter.sendMail({
+        from,
+        to: recipient,
+        subject,
+        html,
+      })
+    )
+  );
+
+  return deliveryResults;
+}
+
 function escapeHtml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -69,14 +88,18 @@ async function sendEmail({ to, subject, html }) {
     const transporter = getTransporter();
     if (transporter) {
       const from = process.env.EMAIL_FROM || process.env.SMTP_USER || "InternDock <support.interndock@gmail.com>";
-      const info = await transporter.sendMail({
-        from,
-        to: safeTo,
-        subject,
-        html,
-      });
-      entry.status = "Sent";
-      entry.messageId = info.messageId;
+      const results = await sendRecipientBatch(transporter, from, recipients, subject, html);
+      const failures = results.filter((result) => result.status === "rejected");
+      const successes = results.filter((result) => result.status === "fulfilled");
+
+      if (successes.length > 0) {
+        entry.status = "Sent";
+        entry.messageId = successes[0]?.value?.messageId || "";
+        entry.sentTo = recipients;
+      } else {
+        entry.status = "Failed";
+        entry.error = failures.map((r) => r.reason?.message || String(r.reason)).join(" | ");
+      }
     } else {
       entry.status = "Skipped";
       if (process.env.NODE_ENV !== "production") {
@@ -182,4 +205,4 @@ const templates = {
 };
 
 
-module.exports = { sendEmail, getEmailLog, templates };
+module.exports = { sendEmail, getEmailLog, templates, normalizeRecipientsForDispatch };

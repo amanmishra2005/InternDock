@@ -11,6 +11,12 @@ function generateApplicationId(sequence) {
   return `INT-${year}-${pad(sequence, 5)}`;
 }
 
+function generateApplicationIdFromCounts(spreadsheetCount = 0, databaseCount = 0) {
+  const year = new Date().getFullYear();
+  const sequence = Math.max(Number(spreadsheetCount) || 0, Number(databaseCount) || 0) + 1;
+  return `INT-${year}-${pad(sequence, 5)}`;
+}
+
 function generateCertificateId(sequence) {
   const year = new Date().getFullYear();
   return `CERT-${year}-${pad(sequence, 8)}`;
@@ -27,6 +33,7 @@ function generateVerificationId() {
 
 module.exports = {
   generateApplicationId,
+  generateApplicationIdFromCounts,
   generateCertificateId,
   generateOfferReferenceId,
   generateVerificationId,

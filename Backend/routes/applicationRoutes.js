@@ -4,7 +4,7 @@ const Domain = require("../models/Domain");
 const Duration = require("../models/Duration");
 const Application = require("../models/Application");
 const { protect } = require("../middleware/auth");
-const { generateApplicationId } = require("../utils/generateIds");
+const { generateApplicationIdFromCounts } = require("../utils/generateIds");
 const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 const { supportTargetEmail } = require("../utils/emailTargets");
@@ -74,7 +74,8 @@ router.post("/", protect, async (req, res) => {
     }
 
     const ledgerRows = readSpreadsheet("applications");
-    const applicationId = generateApplicationId(ledgerRows.length + 1);
+    const dbApplicationCount = await Application.countDocuments({});
+    const applicationId = generateApplicationIdFromCounts(ledgerRows.length, dbApplicationCount);
 
     const ledgerRow = {
       applicationId,
@@ -93,21 +94,48 @@ router.post("/", protect, async (req, res) => {
       statusHistory: "Submitted",
     };
 
-    const applicationDoc = await Application.create({
-      applicationId,
-      student: req.user._id,
-      domain: domain._id,
-      duration: duration._id,
-      status: "Submitted",
-      statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
-      startDate: parsedStartDate,
-      endDate: parsedEndDate,
-      paymentStatus: "Pending",
-      finalReportSubmitted: false,
-      certificateIssued: false,
-    });
+    let applicationDoc;
+    try {
+      applicationDoc = await Application.create({
+        applicationId,
+        student: req.user._id,
+        domain: domain._id,
+        duration: duration._id,
+        status: "Submitted",
+        statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
+        startDate: parsedStartDate,
+        endDate: parsedEndDate,
+        paymentStatus: "Pending",
+        finalReportSubmitted: false,
+        certificateIssued: false,
+      });
+    } catch (err) {
+      if (err?.code === 11000 && err?.keyPattern?.applicationId) {
+        const dbApplicationCount = await Application.countDocuments({});
+        const retryApplicationId = generateApplicationIdFromCounts(readSpreadsheet("applications").length, dbApplicationCount);
+        applicationDoc = await Application.create({
+          applicationId: retryApplicationId,
+          student: req.user._id,
+          domain: domain._id,
+          duration: duration._id,
+          status: "Submitted",
+          statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
+          startDate: parsedStartDate,
+          endDate: parsedEndDate,
+          paymentStatus: "Pending",
+          finalReportSubmitted: false,
+          certificateIssued: false,
+        });
+      } else {
+        throw err;
+      }
+    }
 
-    appendToSpreadsheet("applications", ledgerRow);
+    try {
+      await appendToSpreadsheet("applications", { ...ledgerRow, applicationId: applicationDoc.applicationId });
+    } catch (err) {
+      console.warn("Application ledger append failed after application was created:", err.message);
+    }
 
     const application = {
       _id: applicationDoc._id,

@@ -4,6 +4,11 @@ const BLOCKED_RECIPIENTS = new Set([
   "amanmishra15.08.2005@gmail.com",
 ]);
 
+const CANONICAL_EMAIL_ALIASES = {
+  "support@interndock.in": "support.interndock@gmail.com",
+  "support.interndock@gmail.com": "support.interndock@gmail.com",
+};
+
 function normalizeRecipientsForDispatch(to) {
   if (!to) return [];
 
@@ -14,8 +19,9 @@ function normalizeRecipientsForDispatch(to) {
 
   const recipientSet = new Set();
   parsed.forEach((entry) => {
-    if (!BLOCKED_RECIPIENTS.has(entry)) {
-      recipientSet.add(entry);
+    const canonical = CANONICAL_EMAIL_ALIASES[entry] || entry;
+    if (!BLOCKED_RECIPIENTS.has(canonical)) {
+      recipientSet.add(canonical);
     }
   });
 
@@ -53,7 +59,13 @@ function getPreferredFromAddress() {
     ? configuredFrom.slice(0, configuredFrom.indexOf("<")).trim().replace(/^"|"$/g, "") || "InternDock"
     : configuredFrom || "InternDock";
 
-  return `${configuredDisplay} <${smtpUser}>`;
+  const display = configuredDisplay || "InternDock";
+  const safeSmtpUser = smtpUser.toLowerCase();
+  if (safeSmtpUser === "support.interndock@gmail.com") {
+    return `${display} <support.interndock@gmail.com>`;
+  }
+
+  return `${display} <${smtpUser}>`;
 }
 
 function escapeHtml(value = "") {
@@ -79,6 +91,7 @@ function getTransporter() {
     requireTLS: process.env.SMTP_REQUIRE_TLS !== "false",
     connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 10000,
     socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000,
+    tls: { rejectUnauthorized: false },
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
 }

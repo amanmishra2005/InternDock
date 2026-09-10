@@ -60,7 +60,7 @@ function formatCsvLine(dataObject) {
 // Append a record to a spreadsheet record path. Prefer the configured Google Apps Script webhook.
 // Keep the local CSV ledger as a fallback mirror only when the cloud sheet sync endpoint is missing or fails.
 function appendToSpreadsheet(sheetName, recordData) {
-  if (!ALLOWED_SHEETS.has(sheetName)) return false;
+  if (!ALLOWED_SHEETS.has(sheetName)) return Promise.resolve(false);
 
   const previous = writeQueues.get(sheetName) || Promise.resolve();
   const write = previous
@@ -84,11 +84,15 @@ function appendToSpreadsheet(sheetName, recordData) {
       }
 
       await fs.promises.appendFile(filePath, formatCsvLine(enrichedRecord) + "\n", "utf8");
+      return true;
     })
-    .catch((err) => console.error(`Spreadsheet append error for ${sheetName}:`, err.message));
+    .catch((err) => {
+      console.error(`Spreadsheet append error for ${sheetName}:`, err.message);
+      return false;
+    });
 
   writeQueues.set(sheetName, write);
-  return true;
+  return write;
 }
 
 function getSpreadsheetPath(sheetName) {

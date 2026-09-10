@@ -139,7 +139,7 @@ function generateOfferLetterPdf({ studentName = "Intern Student", collegeName = 
       doc.fontSize(17).font("Helvetica-Bold").fillColor(NAVY).text("InternDock", 94, y + 1);
       doc.fontSize(7.5).font("Helvetica").fillColor(GRAY).text("TECH TALENT PLATFORM", 94, y + 21, { characterSpacing: 1 });
 
-      doc.fontSize(9).font("Helvetica").fillColor(GRAY).text("support@interndock.in", 0, y + 2, { width: w - 46, align: "right" });
+      doc.fontSize(9).font("Helvetica").fillColor(GRAY).text("support.interndock@gmail.com", 0, y + 2, { width: w - 46, align: "right" });
       doc.text("+91 8808307121", 0, y + 14, { width: w - 46, align: "right" });
       doc.text("Gorakhpur U.P. India", 0, y + 26, { width: w - 46, align: "right" });
 

@@ -175,7 +175,7 @@ const templates = {
           <p style="margin: 4px 0;"><strong>Start Date:</strong> ${escapeHtml(startDate || "Immediate")}</p>
           <p style="margin: 4px 0;"><strong>End Date:</strong> ${escapeHtml(endDate || "Standard")}</p>
         </div>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in | InternDock Admissions & Support System</p>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support.interndock@gmail.com | InternDock Admissions & Support System</p>
       </div>
     `,
   }),
@@ -189,7 +189,7 @@ const templates = {
         <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #4f46e5; border-radius: 4px; margin: 16px 0;">
           <p style="margin: 0; color: #334155; white-space: pre-wrap; font-size: 15px;">${escapeHtml(message)}</p>
         </div>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Recipient: support@interndock.in | Sent via www.interndock.in contact portal</p>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Recipient: support.interndock@gmail.com | Sent via www.interndock.in contact portal</p>
       </div>
     `,
   }),
@@ -206,7 +206,7 @@ const templates = {
           <p style="margin: 4px 0;"><strong>UTR / Reference No:</strong> ${escapeHtml(utrNumber || "N/A")}</p>
           <p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>
         </div>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in | InternDock Finance & Accounts</p>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support.interndock@gmail.com | InternDock Finance & Accounts</p>
       </div>
     `,
   }),

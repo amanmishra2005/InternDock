@@ -41,6 +41,21 @@ async function sendRecipientBatch(transporter, from, recipients, subject, html) 
   return deliveryResults;
 }
 
+function getPreferredFromAddress() {
+  const configuredFrom = String(process.env.EMAIL_FROM || "").trim();
+  const smtpUser = String(process.env.SMTP_USER || "").trim();
+
+  if (!smtpUser) {
+    return configuredFrom || "InternDock <support.interndock@gmail.com>";
+  }
+
+  const configuredDisplay = configuredFrom.includes("<")
+    ? configuredFrom.slice(0, configuredFrom.indexOf("<")).trim().replace(/^"|"$/g, "") || "InternDock"
+    : configuredFrom || "InternDock";
+
+  return `${configuredDisplay} <${smtpUser}>`;
+}
+
 function escapeHtml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -87,7 +102,7 @@ async function sendEmail({ to, subject, html }) {
   try {
     const transporter = getTransporter();
     if (transporter) {
-      const from = process.env.EMAIL_FROM || process.env.SMTP_USER || "InternDock <support.interndock@gmail.com>";
+      const from = getPreferredFromAddress();
       const results = await sendRecipientBatch(transporter, from, recipients, subject, html);
       const failures = results.filter((result) => result.status === "rejected");
       const successes = results.filter((result) => result.status === "fulfilled");
@@ -205,4 +220,4 @@ const templates = {
 };
 
 
-module.exports = { sendEmail, getEmailLog, templates, normalizeRecipientsForDispatch };
+module.exports = { sendEmail, getEmailLog, templates, normalizeRecipientsForDispatch, getPreferredFromAddress };

@@ -7,7 +7,13 @@ const OfferLetter = require("../models/OfferLetter");
 const Certificate = require("../models/Certificate");
 const FinalReport = require("../models/FinalReport");
 const { protect } = require("../middleware/auth");
-const { generateOfferReferenceId, generateCertificateId, generateVerificationId } = require("../utils/generateIds");
+const {
+  generateOfferReferenceId,
+  generateCertificateId,
+  generateVerificationId,
+  getNextOfferReferenceSequence,
+  getNextCertificateSequence,
+} = require("../utils/generateIds");
 const { generateOfferLetterPdf, generateCertificatePdf, TEMPLATE_VERSION } = require("../utils/generatePdf");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 const { sendEmail, templates } = require("../utils/sendEmail");
@@ -72,7 +78,7 @@ router.get("/offer-letter/:applicationId", protect, async (req, res) => {
 
     if (isStale) {
       // Keep the same reference/verification IDs if this offer letter already existed
-      const referenceId = offer?.referenceId || generateOfferReferenceId((await OfferLetter.countDocuments()) + 1);
+      const referenceId = offer?.referenceId || generateOfferReferenceId(await getNextOfferReferenceSequence(OfferLetter));
       const verificationId = offer?.verificationId || generateVerificationId();
 
       const pdfUrl = await generateOfferLetterPdf({
@@ -145,7 +151,7 @@ router.get("/certificate/:applicationId", protect, async (req, res) => {
     const isStale = !cert || cert.templateVersion !== TEMPLATE_VERSION;
 
     if (isStale) {
-      const certificateId = cert?.certificateId || generateCertificateId((await Certificate.countDocuments()) + 1);
+      const certificateId = cert?.certificateId || generateCertificateId(await getNextCertificateSequence(Certificate));
       const verificationId = cert?.verificationId || generateVerificationId();
 
       const pdfUrl = await generateCertificatePdf({

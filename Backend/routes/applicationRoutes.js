@@ -4,7 +4,7 @@ const Domain = require("../models/Domain");
 const Duration = require("../models/Duration");
 const Application = require("../models/Application");
 const { protect } = require("../middleware/auth");
-const { generateApplicationIdFromCounts } = require("../utils/generateIds");
+const { generateApplicationId, generateApplicationIdFromCounts, getNextApplicationSequence } = require("../utils/generateIds");
 const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 const { supportTargetEmail } = require("../utils/emailTargets");
@@ -74,8 +74,45 @@ router.post("/", protect, async (req, res) => {
     }
 
     const ledgerRows = readSpreadsheet("applications");
-    const dbApplicationCount = await Application.countDocuments({});
-    const applicationId = generateApplicationIdFromCounts(ledgerRows.length, dbApplicationCount);
+    let candidateSeq = await getNextApplicationSequence(Application, ledgerRows);
+
+    let applicationDoc;
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    while (attempts < maxAttempts) {
+      const candidateId = generateApplicationId(candidateSeq);
+      try {
+        applicationDoc = await Application.create({
+          applicationId: candidateId,
+          student: req.user._id,
+          domain: domain._id,
+          duration: duration._id,
+          status: "Submitted",
+          statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
+          startDate: parsedStartDate,
+          endDate: parsedEndDate,
+          paymentStatus: "Pending",
+          finalReportSubmitted: false,
+          certificateIssued: false,
+        });
+        break;
+      } catch (err) {
+        const isDuplicateKey = err?.code === 11000 || (err?.message && err.message.includes("E11000"));
+        if (isDuplicateKey) {
+          candidateSeq++;
+          attempts++;
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    if (!applicationDoc) {
+      throw new Error("Unable to allocate a unique Application ID after multiple attempts.");
+    }
+
+    const applicationId = applicationDoc.applicationId;
 
     const ledgerRow = {
       applicationId,
@@ -93,43 +130,6 @@ router.post("/", protect, async (req, res) => {
       status: "Submitted",
       statusHistory: "Submitted",
     };
-
-    let applicationDoc;
-    try {
-      applicationDoc = await Application.create({
-        applicationId,
-        student: req.user._id,
-        domain: domain._id,
-        duration: duration._id,
-        status: "Submitted",
-        statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
-        startDate: parsedStartDate,
-        endDate: parsedEndDate,
-        paymentStatus: "Pending",
-        finalReportSubmitted: false,
-        certificateIssued: false,
-      });
-    } catch (err) {
-      if (err?.code === 11000 && err?.keyPattern?.applicationId) {
-        const dbApplicationCount = await Application.countDocuments({});
-        const retryApplicationId = generateApplicationIdFromCounts(readSpreadsheet("applications").length, dbApplicationCount);
-        applicationDoc = await Application.create({
-          applicationId: retryApplicationId,
-          student: req.user._id,
-          domain: domain._id,
-          duration: duration._id,
-          status: "Submitted",
-          statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
-          startDate: parsedStartDate,
-          endDate: parsedEndDate,
-          paymentStatus: "Pending",
-          finalReportSubmitted: false,
-          certificateIssued: false,
-        });
-      } else {
-        throw err;
-      }
-    }
 
     try {
       await appendToSpreadsheet("applications", { ...ledgerRow, applicationId: applicationDoc.applicationId });

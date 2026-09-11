@@ -11,7 +11,7 @@ const Assignment = require("../models/Assignment");
 const User = require("../models/User");
 const Payment = require("../models/Payment");
 const Certificate = require("../models/Certificate");
-const { generateCertificateId, generateVerificationId } = require("../utils/generateIds");
+const { generateCertificateId, generateVerificationId, getNextCertificateSequence } = require("../utils/generateIds");
 const { generateCertificatePdf } = require("../utils/generatePdf");
 const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
 const { getSpreadsheetPath, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
@@ -268,8 +268,7 @@ router.post("/applications/:id/issue-certificate", async (req, res) => {
   // Create or retrieve Certificate document
   let cert = await Certificate.findOne({ application: application._id });
   if (!cert) {
-    const count = await Certificate.countDocuments();
-    const certificateId = generateCertificateId(count + 1);
+    const certificateId = generateCertificateId(await getNextCertificateSequence(Certificate));
     const verificationId = generateVerificationId();
     const pdfUrl = await generateCertificatePdf({
       studentName: application.student.fullName,

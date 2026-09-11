@@ -81,6 +81,20 @@ function escapeHtml(value = "") {
 
 let cachedTransporter = null;
 
+function createTransporter(port, secure) {
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    requireTLS: !secure,
+    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 7000,
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 12000,
+    tls: { rejectUnauthorized: false },
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  });
+}
+
 function getTransporter() {
   const smtpConfigured = Boolean(
     process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
@@ -92,16 +106,8 @@ function getTransporter() {
 
   if (!cachedTransporter) {
     const smtpPort = Number(process.env.SMTP_PORT) || 587;
-    cachedTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: smtpPort,
-      secure: process.env.SMTP_SECURE === "true",
-      requireTLS: process.env.SMTP_REQUIRE_TLS !== "false",
-      connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 10000,
-      socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000,
-      tls: { rejectUnauthorized: false },
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
+    const isSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
+    cachedTransporter = createTransporter(smtpPort, isSecure);
   }
 
   return cachedTransporter;
@@ -127,9 +133,36 @@ async function sendEmail({ to, subject, html, replyTo }) {
     const transporter = getTransporter();
     if (transporter) {
       const from = getPreferredFromAddress();
-      const results = await sendRecipientBatch(transporter, from, recipients, subject, html, replyTo);
-      const failures = results.filter((result) => result.status === "rejected");
-      const successes = results.filter((result) => result.status === "fulfilled");
+      let results = await sendRecipientBatch(transporter, from, recipients, subject, html, replyTo);
+      let failures = results.filter((result) => result.status === "rejected");
+      let successes = results.filter((result) => result.status === "fulfilled");
+
+      // Auto-fallback: if all dispatches failed due to network timeout or socket errors,
+      // failover to the alternative SMTP port (587 STARTTLS <-> 465 direct SSL)
+      if (successes.length === 0 && failures.length > 0) {
+        const isNetworkFailure = failures.some((f) => {
+          const msg = (f.reason?.message || "").toLowerCase();
+          return msg.includes("timeout") || msg.includes("econn") || msg.includes("enetunreach") || msg.includes("esocket");
+        });
+
+        if (isNetworkFailure) {
+          const currentPort = Number(process.env.SMTP_PORT) || 587;
+          const altPort = currentPort === 465 ? 587 : 465;
+          const altSecure = altPort === 465;
+          console.warn(`[SMTP FAILOVER] Primary dispatch on port ${currentPort} timed out. Retrying on port ${altPort} (secure: ${altSecure})...`);
+
+          const altTransporter = createTransporter(altPort, altSecure);
+          const altResults = await sendRecipientBatch(altTransporter, from, recipients, subject, html, replyTo);
+          const altSuccesses = altResults.filter((result) => result.status === "fulfilled");
+
+          if (altSuccesses.length > 0) {
+            cachedTransporter = altTransporter; // Switch to the active port for subsequent emails
+            results = altResults;
+            successes = altSuccesses;
+            failures = altResults.filter((result) => result.status === "rejected");
+          }
+        }
+      }
 
       if (successes.length > 0) {
         entry.status = "Sent";

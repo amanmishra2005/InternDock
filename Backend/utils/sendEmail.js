@@ -28,18 +28,18 @@ async function sendRecipientBatch(transporter, from, recipients, subject, html) 
     return [];
   }
 
-  const deliveryResults = await Promise.allSettled(
-    recipients.map((recipient) =>
-      transporter.sendMail({
-        from,
-        to: recipient,
-        subject,
-        html,
-      })
-    )
-  );
-
-  return deliveryResults;
+  try {
+    const recipientHeader = recipients.join(", ");
+    const info = await transporter.sendMail({
+      from,
+      to: recipientHeader,
+      subject,
+      html,
+    });
+    return [{ status: "fulfilled", value: info }];
+  } catch (err) {
+    return [{ status: "rejected", reason: err }];
+  }
 }
 
 function getPreferredFromAddress() {

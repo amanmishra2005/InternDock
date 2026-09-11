@@ -116,6 +116,59 @@ function getTransporter() {
 // Simple in-memory email log, exposed for the admin "email logs" view.
 const emailLog = [];
 
+async function sendViaHttpApi(recipients, subject, html, replyTo) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    const from = process.env.EMAIL_FROM || "InternDock <onboarding@resend.dev>";
+    const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: recipients,
+        subject,
+        html,
+        reply_to: effectiveReplyTo,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(`Resend API error (${res.status}): ${data.message || JSON.stringify(data)}`);
+    }
+    return { status: "fulfilled", value: { messageId: data.id } };
+  }
+
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  if (brevoApiKey) {
+    const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": brevoApiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: { name: "InternDock", email: "support.interndock@gmail.com" },
+        to: recipients.map((r) => ({ email: r })),
+        subject,
+        htmlContent: html,
+        replyTo: { email: effectiveReplyTo },
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(`Brevo API error (${res.status}): ${data.message || JSON.stringify(data)}`);
+    }
+    return { status: "fulfilled", value: { messageId: data.messageId } };
+  }
+
+  return null;
+}
+
 async function sendEmail({ to, subject, html, replyTo }) {
   const recipients = normalizeRecipientsForDispatch(to);
   const safeTo = recipients.join(", ");
@@ -130,6 +183,24 @@ async function sendEmail({ to, subject, html, replyTo }) {
   }
 
   try {
+    // 1. If an HTTP email provider API key is configured (Resend or Brevo), use it directly over HTTPS (Port 443).
+    // This bypasses cloud provider SMTP port blocks (Render, AWS, DigitalOcean block 587/465 on free instances).
+    if (process.env.RESEND_API_KEY || process.env.BREVO_API_KEY) {
+      try {
+        const httpResult = await sendViaHttpApi(recipients, subject, html, replyTo);
+        if (httpResult) {
+          entry.status = "Sent";
+          entry.messageId = httpResult.value?.messageId || "";
+          entry.sentTo = recipients;
+          console.log(`[HTTP EMAIL SUCCESS] Email sent to ${safeTo} via HTTP API | MessageID: ${entry.messageId}`);
+          return entry;
+        }
+      } catch (httpErr) {
+        console.error("[HTTP EMAIL ERROR] Failed to send via HTTP API:", httpErr.message);
+        // Fall through to SMTP if configured
+      }
+    }
+
     const transporter = getTransporter();
     if (transporter) {
       const from = getPreferredFromAddress();

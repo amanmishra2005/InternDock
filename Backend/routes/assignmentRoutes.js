@@ -95,6 +95,60 @@ router.get("/for-application/:applicationId", protect, async (req, res) => {
     const domainId = application.domain?._id || application.domain;
     let rawAssignments = await Assignment.find({ domain: domainId }).sort({ week: 1 }).lean();
 
+    // Self-healing: if domain has no assignments, dynamically generate and seed full 24-week curriculum
+    if (!rawAssignments || rawAssignments.length === 0) {
+      const domainName = application.domain?.name || "Internship Track";
+      const fallbackTasks = [
+        {
+          week: 1,
+          title: "Week 1: Setup & Project Roadmap",
+          description: `Configure workspace for ${domainName}, initialize project repository, and outline goals.`,
+          instructions: `1. Install required development tools and libraries for ${domainName}.\n2. Create a clean project folder and Git repository.\n3. Write initial code structure and verify execution.\n4. Commit to GitHub and submit your repository link below.`,
+          submissionType: "github",
+        },
+        {
+          week: 2,
+          title: "Week 2: Core Foundations & Module Logic",
+          description: `Build foundational logic, core algorithms, and primary modules for ${domainName}.`,
+          instructions: `1. Implement core features and business logic.\n2. Handle basic edge cases and input validation.\n3. Test with sample inputs.\n4. Commit to GitHub and submit link below.`,
+          submissionType: "github",
+        },
+        {
+          week: 3,
+          title: "Week 3: Applied Feature Mini-Project",
+          description: `Develop a functional, applied module with integration testing for ${domainName}.`,
+          instructions: `1. Connect modular components together.\n2. Add clean error handling and documentation.\n3. Verify all features run without errors.\n4. Commit to GitHub and submit link below.`,
+          submissionType: "github",
+        },
+        {
+          week: 4,
+          title: "Week 4: Final Capstone Project & Mentor Demo",
+          description: `Polish code architecture, prepare demo links, and submit capstone deliverables for ${domainName}.`,
+          instructions: `1. Write comprehensive project documentation and README.\n2. Ensure code is clean and properly formatted.\n3. Verify deployment or live demo URL.\n4. Submit your completed repository link below.`,
+          submissionType: "github",
+        },
+      ];
+
+      const full24 = [];
+      for (let w = 1; w <= 24; w++) {
+        const base = fallbackTasks[(w - 1) % fallbackTasks.length];
+        full24.push({
+          ...base,
+          week: w,
+          title: `Week ${w}: ${base.title.replace(/^Week \d+:\s*/, "")}`,
+          domain: domainId,
+        });
+      }
+
+      try {
+        await Assignment.insertMany(full24);
+        rawAssignments = await Assignment.find({ domain: domainId }).sort({ week: 1 }).lean();
+      } catch (insertErr) {
+        console.warn("Auto-healing assignments insert failed:", insertErr.message);
+        rawAssignments = full24;
+      }
+    }
+
     const assignments = rawAssignments.slice(0, targetCount).map((a, idx) => {
       const startW = idx * weekSpan + 1;
       const endW = idx === targetCount - 1 ? maxWeeks : (idx + 1) * weekSpan;

@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Domain = require("../models/Domain");
 const Duration = require("../models/Duration");
@@ -188,12 +189,10 @@ router.get("/mine", protect, async (req, res) => {
 });
 
 router.get("/:id", protect, async (req, res) => {
-  const app = await Application.findOne({
-    $or: [
-      { _id: req.params.id },
-      { applicationId: req.params.id },
-    ],
-  })
+  const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+  const query = isObjectId ? { _id: req.params.id } : { applicationId: req.params.id };
+
+  const app = await Application.findOne(query)
     .populate("student", "fullName email college")
     .populate("domain", "name")
     .populate("duration", "label weeks fee")

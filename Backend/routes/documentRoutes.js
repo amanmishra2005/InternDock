@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path");
 const router = express.Router();
@@ -22,7 +23,13 @@ const { isSampleVerificationLookup } = require("../utils/documentVerification");
 const { getCache, setCache } = require("../utils/cache");
 
 async function downloadDocument(req, res, Model, label) {
-  const document = await Model.findOne({ application: req.params.applicationId }).lean();
+  const isObjectId = mongoose.Types.ObjectId.isValid(req.params.applicationId);
+  let appId = req.params.applicationId;
+  if (!isObjectId) {
+    const appDoc = await Application.findOne({ applicationId: req.params.applicationId }).lean();
+    if (appDoc) appId = appDoc._id;
+  }
+  const document = await Model.findOne({ application: appId }).lean();
   if (!document) return res.status(404).json({ message: `${label} not found` });
   if (String(document.student) !== String(req.user._id) && !["admin", "superadmin"].includes(req.user.role)) {
     return res.status(403).json({ message: "Forbidden" });
@@ -57,7 +64,9 @@ router.get("/certificate/:applicationId/download", protect, async (req, res, nex
 // GET /api/documents/offer-letter/:applicationId — student fetches (generates if missing)
 router.get("/offer-letter/:applicationId", protect, async (req, res) => {
   try {
-    const application = await Application.findById(req.params.applicationId)
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.applicationId);
+    const query = isObjectId ? { _id: req.params.applicationId } : { applicationId: req.params.applicationId };
+    const application = await Application.findOne(query)
       .populate("domain")
       .populate("duration")
       .populate("student")
@@ -131,7 +140,9 @@ router.get("/offer-letter/:applicationId", protect, async (req, res) => {
 // GET /api/documents/certificate/:applicationId
 router.get("/certificate/:applicationId", protect, async (req, res) => {
   try {
-    const application = await Application.findById(req.params.applicationId)
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.applicationId);
+    const query = isObjectId ? { _id: req.params.applicationId } : { applicationId: req.params.applicationId };
+    const application = await Application.findOne(query)
       .populate("domain")
       .populate("duration")
       .populate("student")
@@ -202,8 +213,9 @@ router.get("/certificate/:applicationId", protect, async (req, res) => {
 // POST /api/documents/final-report
 router.post("/final-report", protect, async (req, res) => {
   try {
-    const { applicationId, ...rest } = req.body;
-    const application = await Application.findById(applicationId).populate("domain", "name");
+    const isObjectId = mongoose.Types.ObjectId.isValid(applicationId);
+    const query = isObjectId ? { _id: applicationId } : { applicationId };
+    const application = await Application.findOne(query).populate("domain", "name");
     if (!application) return res.status(404).json({ message: "Application not found" });
     if (application.paymentStatus !== "Successful") {
       return res.status(400).json({ message: "Complete the program fee payment before submitting the final report" });
@@ -212,7 +224,7 @@ router.post("/final-report", protect, async (req, res) => {
     const studentId = application.student?._id ? application.student._id : application.student;
     if (String(studentId) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
-    const report = await FinalReport.create({ application: applicationId, student: req.user._id, ...rest });
+    const report = await FinalReport.create({ application: application._id, student: req.user._id, ...rest });
     application.finalReportSubmitted = true;
     await application.save();
 

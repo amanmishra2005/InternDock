@@ -17,6 +17,7 @@ const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
 const { getSpreadsheetPath, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
 const { canIssueCertificate, getRequiredTaskCount } = require("../utils/certificateEligibility");
 const Submission = require("../models/Submission");
+const { clearCache } = require("../utils/cache");
 
 router.use(protect, adminOnly);
 
@@ -63,18 +64,53 @@ router.get("/domains", async (req, res) => {
 });
 
 router.post("/domains", async (req, res) => {
-  const domain = await Domain.create(req.body);
-  res.status(201).json(domain);
+  try {
+    const durationDocs = await Duration.find({});
+    const domainData = {
+      ...req.body,
+      availableDurations: req.body.availableDurations?.length ? req.body.availableDurations : durationDocs.map((d) => d._id),
+      isActive: req.body.isActive !== undefined ? req.body.isActive : true,
+    };
+    const domain = await Domain.create(domainData);
+
+    const baseAssignments = [
+      { week: 1, title: "Week 1: Setup & Project Roadmap", description: `Initialize ${domain.name} environment and task plan.`, instructions: "1. Install development tools.\n2. Create project repository.\n3. Verify initial execution.\n4. Submit GitHub repo link below.", submissionType: "github" },
+      { week: 2, title: "Week 2: Core Foundations", description: `Implement foundational components and syntax for ${domain.name}.`, instructions: "1. Implement core features.\n2. Write unit tests or test inputs.\n3. Commit changes.\n4. Submit GitHub repo link below.", submissionType: "github" },
+      { week: 3, title: "Week 3: Applied Feature Module", description: `Build practical working module for ${domain.name}.`, instructions: "1. Integrate application components.\n2. Add error handling and documentation.\n3. Commit to GitHub.\n4. Submit repo link below.", submissionType: "github" },
+      { week: 4, title: "Week 4: Capstone & Final Evaluation", description: `Complete capstone project and prepare demo for ${domain.name}.`, instructions: "1. Polish code and UI.\n2. Write comprehensive documentation.\n3. Prepare deployment or demo URL.\n4. Submit final repository link below.", submissionType: "github" },
+    ];
+
+    const full24 = [];
+    for (let w = 1; w <= 24; w++) {
+      const base = baseAssignments[(w - 1) % baseAssignments.length];
+      full24.push({
+        ...base,
+        week: w,
+        title: `Week ${w}: ${base.title.replace(/^Week \d+:\s*/, "")}`,
+        domain: domain._id,
+      });
+    }
+
+    await Assignment.insertMany(full24);
+    clearCache();
+
+    res.status(201).json(domain);
+  } catch (err) {
+    console.error("Admin create domain error:", err);
+    res.status(500).json({ message: err.message || "Failed to create domain" });
+  }
 });
 
 router.put("/domains/:id", async (req, res) => {
   const domain = await Domain.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!domain) return res.status(404).json({ message: "Not found" });
+  clearCache();
   res.json(domain);
 });
 
 router.delete("/domains/:id", async (req, res) => {
   const domain = await Domain.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+  clearCache();
   res.json(domain);
 });
 

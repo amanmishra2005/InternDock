@@ -48,8 +48,8 @@ router.post("/", async (req, res) => {
     `;
 
     await Promise.allSettled([
-      sendEmail({ to: supportTarget, ...notifyTemplate }),
-      sendEmail({ to: email, subject: "We received your message - InternDock Support", html: autoReplyHtml })
+      sendEmail({ to: supportTarget, ...notifyTemplate, replyTo: email }),
+      sendEmail({ to: email, subject: "We received your message - InternDock Support", html: autoReplyHtml, replyTo: "support@interndock.in" })
     ]);
 
     return res.json({

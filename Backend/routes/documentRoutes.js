@@ -203,7 +203,7 @@ router.get("/certificate/:applicationId", protect, async (req, res) => {
 router.post("/final-report", protect, async (req, res) => {
   try {
     const { applicationId, ...rest } = req.body;
-    const application = await Application.findById(applicationId);
+    const application = await Application.findById(applicationId).populate("domain", "name");
     if (!application) return res.status(404).json({ message: "Application not found" });
     if (application.paymentStatus !== "Successful") {
       return res.status(400).json({ message: "Complete the program fee payment before submitting the final report" });
@@ -229,11 +229,24 @@ router.post("/final-report", protect, async (req, res) => {
     const domainName = application.domain?.name || "Internship domain";
     const finalReportTemplate = templates.finalReportSubmitted(
       req.user.fullName,
+      req.user.email,
       application.applicationId || applicationId,
-      domainName
+      domainName,
+      rest.title || "",
+      rest.githubUrl || "",
+      rest.hostedUrl || "",
+      rest.executiveSummary || ""
     );
+    const studentReportConfirmation = templates.finalReportStudentConfirmation(
+      req.user.fullName,
+      application.applicationId || applicationId,
+      domainName,
+      rest.title || ""
+    );
+
     await Promise.allSettled([
-      sendEmail({ to: notifyTarget, ...finalReportTemplate }),
+      sendEmail({ to: notifyTarget, replyTo: req.user.email, ...finalReportTemplate }),
+      sendEmail({ to: req.user.email, replyTo: "support@interndock.in", ...studentReportConfirmation }),
     ]);
 
     res.status(201).json(report);

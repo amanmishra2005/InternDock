@@ -8,6 +8,7 @@ const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 const { supportTargetEmail } = require("../utils/emailTargets");
+const { sendEmail, templates } = require("../utils/sendEmail");
 
 async function findApplicationByIdentifier(identifier) {
   if (!identifier) return null;
@@ -172,6 +173,22 @@ router.post("/:assignmentId/submit", protect, async (req, res) => {
     };
 
     appendToSpreadsheet("submissions", submission);
+
+    // Notify support desk of milestone task submission
+    const notifyTarget = supportTargetEmail();
+    const assignmentEmailTemplate = templates.assignmentSubmitted(
+      req.user.fullName,
+      req.user.email,
+      application.applicationId || applicationId,
+      assignment.title,
+      githubUrl || liveUrl || fileUrl || ""
+    );
+    sendEmail({
+      to: notifyTarget,
+      replyTo: req.user.email,
+      ...assignmentEmailTemplate,
+    }).catch((emailErr) => console.error("Assignment submission email error:", emailErr));
+
     return res.status(201).json(submission);
   } catch (err) {
     console.error("Assignment submission error:", err);

@@ -23,23 +23,29 @@ function normalizeRecipientsForDispatch(to) {
   return Array.from(recipientSet);
 }
 
-async function sendRecipientBatch(transporter, from, recipients, subject, html) {
+async function sendRecipientBatch(transporter, from, recipients, subject, html, replyTo) {
   if (!Array.isArray(recipients) || recipients.length === 0) {
     return [];
   }
 
-  try {
-    const recipientHeader = recipients.join(", ");
-    const info = await transporter.sendMail({
-      from,
-      to: recipientHeader,
-      subject,
-      html,
-    });
-    return [{ status: "fulfilled", value: info }];
-  } catch (err) {
-    return [{ status: "rejected", reason: err }];
-  }
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+
+  // Dispatch to each recipient individually to guarantee independent delivery
+  // to both primary support (support@interndock.in) and backup/student inboxes.
+  const results = await Promise.allSettled(
+    recipients.map(async (recipient) => {
+      const mailOptions = {
+        from,
+        to: recipient,
+        replyTo: effectiveReplyTo,
+        subject,
+        html,
+      };
+      return transporter.sendMail(mailOptions);
+    })
+  );
+
+  return results;
 }
 
 function getPreferredFromAddress() {
@@ -103,7 +109,7 @@ function getTransporter() {
 // Simple in-memory email log, exposed for the admin "email logs" view.
 const emailLog = [];
 
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, replyTo }) {
   const recipients = normalizeRecipientsForDispatch(to);
   const safeTo = recipients.join(", ");
 
@@ -120,7 +126,7 @@ async function sendEmail({ to, subject, html }) {
     const transporter = getTransporter();
     if (transporter) {
       const from = getPreferredFromAddress();
-      const results = await sendRecipientBatch(transporter, from, recipients, subject, html);
+      const results = await sendRecipientBatch(transporter, from, recipients, subject, html, replyTo);
       const failures = results.filter((result) => result.status === "rejected");
       const successes = results.filter((result) => result.status === "fulfilled");
 
@@ -229,9 +235,77 @@ const templates = {
     subject: "Payment successful",
     html: `<p>Hi ${escapeHtml(name)},</p><p>We've received your payment of ₹${escapeHtml(amount)}. You now have full access to your internship workspace.</p>`,
   }),
-  finalReportSubmitted: (studentName, applicationId, domainName) => ({
-    subject: "Final report submitted after payment",
-    html: `<p>Hi InternDock Support,</p><p><b>${escapeHtml(studentName)}</b> has submitted the final report for application <b>${escapeHtml(applicationId)}</b> in <b>${escapeHtml(domainName)}</b> after the payment confirmation.</p><p>Please review the final report and complete the closure workflow.</p><p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in & support.interndock@gmail.com | InternDock Evaluation Team</p>`,
+  finalReportSubmitted: (studentName, arg2, arg3, arg4, arg5, arg6, arg7, arg8) => {
+    let studentEmail = "";
+    let applicationId = "";
+    let domainName = "";
+    let projectTitle = "";
+    let githubUrl = "";
+    let hostedUrl = "";
+    let summary = "";
+
+    if (arg4 !== undefined) {
+      studentEmail = arg2 || "";
+      applicationId = arg3 || "";
+      domainName = arg4 || "";
+      projectTitle = arg5 || "";
+      githubUrl = arg6 || "";
+      hostedUrl = arg7 || "";
+      summary = arg8 || "";
+    } else {
+      applicationId = arg2 || "";
+      domainName = arg3 || "";
+    }
+
+    return {
+      subject: `[Final Capstone Submission] ${escapeHtml(studentName)} - ${escapeHtml(applicationId)} (${escapeHtml(domainName || "Internship Track")})`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 620px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+          <h2 style="color: #0f172a; margin-top: 0;">📋 Capstone Final Report Submitted</h2>
+          <p style="color: #334155; font-size: 15px;">A student candidate has completed and submitted their final internship capstone report for evaluation.</p>
+          <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #10b981; border-radius: 4px; margin: 16px 0; font-size: 14px; color: #334155;">
+            <p style="margin: 4px 0;"><strong>Student Name:</strong> ${escapeHtml(studentName)}</p>
+            ${studentEmail ? `<p style="margin: 4px 0;"><strong>Student Email:</strong> ${escapeHtml(studentEmail)}</p>` : ""}
+            <p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>
+            <p style="margin: 4px 0;"><strong>Domain Track:</strong> ${escapeHtml(domainName)}</p>
+            ${projectTitle ? `<p style="margin: 4px 0;"><strong>Project Title:</strong> ${escapeHtml(projectTitle)}</p>` : ""}
+            ${githubUrl ? `<p style="margin: 4px 0;"><strong>GitHub Repository:</strong> <a href="${escapeHtml(githubUrl)}" target="_blank" style="color: #4f46e5; word-break: break-all;">${escapeHtml(githubUrl)}</a></p>` : ""}
+            ${hostedUrl ? `<p style="margin: 4px 0;"><strong>Live Demo:</strong> <a href="${escapeHtml(hostedUrl)}" target="_blank" style="color: #0284c7; word-break: break-all;">${escapeHtml(hostedUrl)}</a></p>` : ""}
+            ${summary ? `<p style="margin: 8px 0 4px 0;"><strong>Executive Summary:</strong></p><p style="margin: 0; color: #475569; font-size: 13px; white-space: pre-wrap;">${escapeHtml(summary)}</p>` : ""}
+          </div>
+          <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in & support.interndock@gmail.com | InternDock Evaluation Team</p>
+        </div>
+      `,
+    };
+  },
+  finalReportStudentConfirmation: (name, applicationId, domainName, projectTitle) => ({
+    subject: "Capstone Final Report Received - InternDock",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <h2 style="color: #0f172a; margin-top: 0;">✓ Final Capstone Report Received</h2>
+        <p style="color: #334155; font-size: 15px;">Hi ${escapeHtml(name)},</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.6;">Thank you for submitting your final capstone report${projectTitle ? ` for "<strong>${escapeHtml(projectTitle)}</strong>"` : ""} in the <strong>${escapeHtml(domainName)}</strong> track (Application ID: <strong>${escapeHtml(applicationId)}</strong>).</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.6;">Our mentor evaluation team is reviewing your project. Once evaluated, your verified certificate will be generated and made available on your dashboard.</p>
+        <p style="font-size: 13px; color: #64748b; margin-top: 20px;">Need assistance? Contact us anytime at <a href="mailto:support@interndock.in" style="color: #4f46e5;">support@interndock.in</a>.</p>
+      </div>
+    `,
+  }),
+  assignmentSubmitted: (studentName, studentEmail, applicationId, assignmentTitle, githubUrl) => ({
+    subject: `[Milestone Submission] ${escapeHtml(studentName)} submitted ${escapeHtml(assignmentTitle)} (${escapeHtml(applicationId)})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <h2 style="color: #0f172a; margin-top: 0;">📌 Milestone Task Submission</h2>
+        <p style="color: #334155; font-size: 15px;">A student candidate has submitted milestone task deliverables.</p>
+        <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #0284c7; border-radius: 4px; margin: 16px 0; font-size: 14px; color: #334155;">
+          <p style="margin: 4px 0;"><strong>Student Name:</strong> ${escapeHtml(studentName)}</p>
+          <p style="margin: 4px 0;"><strong>Student Email:</strong> ${escapeHtml(studentEmail)}</p>
+          <p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>
+          <p style="margin: 4px 0;"><strong>Task Title:</strong> ${escapeHtml(assignmentTitle)}</p>
+          ${githubUrl ? `<p style="margin: 4px 0;"><strong>GitHub URL:</strong> <a href="${escapeHtml(githubUrl)}" target="_blank" style="color: #4f46e5; word-break: break-all;">${escapeHtml(githubUrl)}</a></p>` : ""}
+        </div>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in & support.interndock@gmail.com | InternDock Evaluation Team</p>
+      </div>
+    `,
   }),
   certificateIssued: (name) => ({
     subject: "Your internship certificate is ready",

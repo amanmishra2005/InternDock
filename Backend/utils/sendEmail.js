@@ -1,8 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const BLOCKED_RECIPIENTS = new Set([
-  "amanmishra15.08.2005@gmail.com",
-]);
+const BLOCKED_RECIPIENTS = new Set();
 
 const CANONICAL_EMAIL_ALIASES = {};
 

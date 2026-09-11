@@ -7,9 +7,7 @@ function normalizeSupportEmails(value) {
 
   const seen = new Set();
   raw.forEach((entry) => {
-    if (entry !== 'amanmishra15.08.2005@gmail.com') {
-      seen.add(entry);
-    }
+    seen.add(entry);
   });
 
   defaultTargets.forEach((target) => seen.add(target));

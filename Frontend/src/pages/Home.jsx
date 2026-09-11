@@ -572,10 +572,10 @@ export default function Home() {
                     color="#059669"
                     style={{ marginBottom: "1rem" }}
                   />
-                  <h3>Message Dispatched to support@interndock.in &amp; support.interndock@gmail.com!</h3>
+                  <h3>Message Dispatched to support@interndock.in!</h3>
                   <p>
                     Thank you for reaching out to InternDock. Your inquiry has
-                    been sent directly to <strong>support@interndock.in &amp; support.interndock@gmail.com</strong>{" "}
+                    been sent directly to <strong>support@interndock.in</strong>{" "}
                     and a confirmation has been emailed to you.
                   </p>
                   <button

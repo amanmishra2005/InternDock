@@ -301,4 +301,20 @@ router.get("/email-logs", async (req, res) => {
   res.json(getEmailLog());
 });
 
+// POST /api/admin/test-email - Send a test email to verify SMTP delivery
+router.post("/test-email", async (req, res) => {
+  const target = req.body.to || "support@interndock.in";
+  try {
+    const result = await sendEmail({
+      to: target,
+      subject: `[InternDock System Test] SMTP Verification (${new Date().toISOString()})`,
+      html: `<div style="font-family: Arial, sans-serif; padding: 16px;"><h3>SMTP Test Successful</h3><p>Your email service is operating normally over IPv4.</p></div>`,
+      replyTo: "support@interndock.in",
+    });
+    return res.json({ success: result.status === "Sent", result });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

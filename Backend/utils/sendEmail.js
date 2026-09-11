@@ -1,3 +1,4 @@
+require("./networkFix");
 const nodemailer = require("nodemailer");
 
 const BLOCKED_RECIPIENTS = new Set();

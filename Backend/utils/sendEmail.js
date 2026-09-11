@@ -72,23 +72,32 @@ function escapeHtml(value = "") {
     .replace(/'/g, "&#39;");
 }
 
+let cachedTransporter = null;
+
 function getTransporter() {
   const smtpConfigured = Boolean(
     process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
   );
-  if (!smtpConfigured) return null;
+  if (!smtpConfigured) {
+    console.warn("[SMTP WARNING] SMTP configuration missing in process.env (SMTP_HOST, SMTP_USER, or SMTP_PASS).");
+    return null;
+  }
 
-  const smtpPort = Number(process.env.SMTP_PORT) || 587;
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: smtpPort,
-    secure: process.env.SMTP_SECURE === "true",
-    requireTLS: process.env.SMTP_REQUIRE_TLS !== "false",
-    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 10000,
-    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000,
-    tls: { rejectUnauthorized: false },
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
+  if (!cachedTransporter) {
+    const smtpPort = Number(process.env.SMTP_PORT) || 587;
+    cachedTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: smtpPort,
+      secure: process.env.SMTP_SECURE === "true",
+      requireTLS: process.env.SMTP_REQUIRE_TLS !== "false",
+      connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 10000,
+      socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000,
+      tls: { rejectUnauthorized: false },
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+  }
+
+  return cachedTransporter;
 }
 
 // Simple in-memory email log, exposed for the admin "email logs" view.
@@ -119,12 +128,15 @@ async function sendEmail({ to, subject, html }) {
         entry.status = "Sent";
         entry.messageId = successes[0]?.value?.messageId || "";
         entry.sentTo = recipients;
+        console.log(`[EMAIL SUCCESS] Email sent to ${safeTo} | Subject: "${subject}" | MessageID: ${entry.messageId}`);
       } else {
         entry.status = "Failed";
         entry.error = failures.map((r) => r.reason?.message || String(r.reason)).join(" | ");
+        console.error(`[EMAIL ERROR] Failed to send email to ${safeTo}:`, entry.error);
       }
     } else {
       entry.status = "Skipped";
+      console.warn(`[EMAIL SKIPPED] SMTP not configured. Could not send email to ${safeTo}`);
       if (process.env.NODE_ENV !== "production") {
         console.log(`\n----- EMAIL (not sent, no SMTP configured) -----`);
         console.log(`To: ${safeTo}\nSubject: ${subject}\n${html}`);
@@ -135,7 +147,7 @@ async function sendEmail({ to, subject, html }) {
   } catch (err) {
     entry.status = "Failed";
     entry.error = err.message;
-    console.error(`Email send failed to ${safeTo}:`, err.message);
+    console.error(`[EMAIL FATAL EXCEPTION] Email send failed to ${safeTo}:`, err.message);
   }
 
   return entry;

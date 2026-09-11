@@ -67,7 +67,7 @@ export default function OfferLetterPreview({
 
             <div className="doc-contact-info text-right">
               <p>support@interndock.in</p>
-              <p>+91 8808307121</p>
+              <p>www.interndock.in</p>
               <p>Gorakhpur U.P. India</p>
             </div>
           </div>

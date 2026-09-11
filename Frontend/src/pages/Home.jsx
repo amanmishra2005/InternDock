@@ -15,7 +15,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Mail,
-  Phone,
   MapPin,
   Send,
   MessageSquare,
@@ -532,20 +531,6 @@ export default function Home() {
                         style={{ color: "inherit", textDecoration: "none" }}
                       >
                         support@interndock.in
-                      </a>
-                    </p>
-                  </div>
-                </div>
-                <div className="contact-detail-item">
-                  <Phone className="c-icon" size={20} />
-                  <div>
-                    <strong>Direct Line</strong>
-                    <p>
-                      <a
-                        href="tel:+918808307121"
-                        style={{ color: "inherit", textDecoration: "none" }}
-                      >
-                        +91 8808307121
                       </a>
                     </p>
                   </div>

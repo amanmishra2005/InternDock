@@ -40,7 +40,6 @@ router.post("/", async (req, res) => {
         <p style="color: #334155; font-size: 15px; line-height: 1.6;">We have received your message regarding "<strong>${subject || 'General Inquiry'}</strong>". Our support and admissions team will review your inquiry and get back to you shortly at ${supportTarget}.</p>
         <div style="background: #f8fafc; padding: 14px; border-radius: 6px; margin: 16px 0; font-size: 14px; color: #475569;">
           <strong>Support Desk Email:</strong> ${supportTarget}<br />
-          <strong>Direct Support Line:</strong> +91 8808307121<br />
           <strong>Website:</strong> <a href="https://www.interndock.in" style="color: #0284c7;">www.interndock.in</a>
         </div>
         <p style="color: #334155; font-size: 14px;">Best regards,<br /><strong>InternDock Admissions &amp; Support Team</strong></p>

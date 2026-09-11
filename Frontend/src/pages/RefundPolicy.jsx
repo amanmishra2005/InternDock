@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   ShieldCheck,
   Mail,
-  Phone,
   MapPin,
   CheckCircle2,
   Sparkles,
@@ -67,10 +66,10 @@ export default function RefundPolicy() {
     },
     {
       id: "contact",
-      icon: Phone,
+      icon: Mail,
       iconColor: "#4f46e5",
       badge: "Support Desk",
-      title: "3. Direct Line Support & Payment Desk",
+      title: "3. Official Support & Payment Desk",
       summary:
         "If you have transaction inquiries or need assistance with your UTR payment registration, reach out directly to our support desk:",
       contactBoxes: [
@@ -79,12 +78,6 @@ export default function RefundPolicy() {
           label: "Official Support Email",
           val: "support@interndock.in",
           link: "mailto:support@interndock.in",
-        },
-        {
-          icon: Phone,
-          label: "Direct Support Line",
-          val: "+91 8808307121",
-          link: "tel:+918808307121",
         },
         {
           icon: MapPin,
@@ -303,27 +296,23 @@ export default function RefundPolicy() {
                 </p>
               </div>
 
-              {/* Direct Line Support */}
+              {/* Official Support Desk */}
               <div
                 className="glass-panel help-sidebar-card"
                 style={{ marginTop: "1.5rem" }}
               >
                 <div
                   className="help-icon-wrapper"
-                  style={{ background: "rgba(239, 68, 68, 0.1)" }}
+                  style={{ background: "rgba(79, 70, 229, 0.1)" }}
                 >
-                  <Phone size={22} color="#ef4444" />
+                  <Mail size={22} color="#4f46e5" />
                 </div>
-                <h3>Direct Line Support</h3>
+                <h3>Official Support Desk</h3>
                 <p>
                   Have UTR reference verification questions or payment
                   submission issues?
                 </p>
                 <div className="help-contact-stack">
-                  <a href="tel:+918808307121" className="contact-link-row">
-                    <Phone size={16} />
-                    <span>+91 8808307121</span>
-                  </a>
                   <a
                     href="mailto:support@interndock.in"
                     className="contact-link-row"
@@ -333,11 +322,11 @@ export default function RefundPolicy() {
                   </a>
                 </div>
                 <a
-                  href="tel:+918808307121"
+                  href="mailto:support@interndock.in"
                   className="btn btn-primary btn-glow full-width"
                   style={{ marginTop: "1rem" }}
                 >
-                  <span>Call Direct Support</span>
+                  <span>Email Support Desk</span>
                   <ChevronRight size={16} />
                 </a>
               </div>

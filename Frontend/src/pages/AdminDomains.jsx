@@ -153,7 +153,7 @@ export default function AdminDomains() {
               {domains.map((dom) => (
                 <div key={dom._id} className="domain-admin-item">
                   <div>
-                    <strong style={{ fontSize: "1.05rem", color: "#ffffff" }}>{dom.name}</strong>
+                    <strong style={{ fontSize: "1.05rem", color: "#0f172a" }}>{dom.name}</strong>
                     <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                       {dom.category}
                     </div>
@@ -176,8 +176,13 @@ export default function AdminDomains() {
         .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: #475569 !important; font-weight: 700; margin-bottom: 1.5rem; text-decoration: none; }
         .back-link:hover, .back-link:focus, .back-link:active, .back-link:visited { color: #1e3a8a !important; text-decoration: none; }
         .domains-admin-list { display: flex; flex-direction: column; gap: 0.75rem; max-height: 520px; overflow-y: auto; }
-        .domain-admin-item { display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
+        .domain-admin-item { display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); }
         .full-width { width: 100%; }
+        @media (max-width: 768px) {
+          .admin-container { padding: 2rem 0.85rem; }
+          .domain-admin-item { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+          .domain-admin-item button { width: 100%; }
+        }
       `}</style>
     </div>
   );

@@ -305,17 +305,18 @@ export default function Domains() {
         .domains-hero-subtitle { color: var(--text-muted); font-size: 1.1rem; max-width: 720px; margin: 0 auto 2.5rem auto; }
         .domains-search-panel { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; max-width: 980px; margin: 0 auto; }
         .search-input-group { position: relative; width: 100%; }
-        .search-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-        .domains-search-input { width: 100%; padding: 0.95rem 3rem 0.95rem 3.25rem; background: #060810; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #ffffff; font-size: 1rem; }
-        .domains-search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
-        .clear-btn { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; }
-        .categories-scroll-row { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; }
-        .cat-pill-btn { padding: 0.45rem 1.1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: var(--radius-full); color: var(--text-muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: var(--transition-fast); }
-        .cat-pill-btn:hover, .cat-pill-btn.active { background: rgba(99, 102, 241, 0.2); border-color: var(--primary); color: #ffffff; }
+        .search-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: #64748b; }
+        .domains-search-input { width: 100%; padding: 0.95rem 3rem 0.95rem 3.25rem; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: var(--radius-sm); color: #0f172a !important; font-size: 1rem; }
+        .domains-search-input:focus { outline: none; border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important; }
+        .clear-btn { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; }
+        .categories-scroll-row { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; }
+        .cat-pill-btn { padding: 0.45rem 1.1rem; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: var(--radius-full); color: #475569; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: var(--transition-fast); }
+        .cat-pill-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .cat-pill-btn.active { background: rgba(79, 70, 229, 0.12); border-color: var(--primary); color: #4f46e5; font-weight: 700; }
         .domains-grid-section { padding: 3rem 0 5rem 0; }
         .domains-section-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
         .results-count { color: var(--text-muted); font-weight: 600; font-size: 0.95rem; }
-        .custom-domain-banner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%); border: 1px solid rgba(99, 102, 241, 0.3); }
+        .custom-domain-banner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-lg); }
         .custom-domain-banner h2 { font-size: 1.8rem; font-weight: 800; margin: 0.75rem 0 0.5rem 0; }
         .custom-domain-banner p { color: var(--text-muted); max-width: 700px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
@@ -323,7 +324,22 @@ export default function Domains() {
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         .close-modal-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
-        @media (max-width: 900px) { .custom-domain-banner { flex-direction: column; align-items: flex-start; } }
+        @media (max-width: 900px) {
+          .custom-domain-banner { flex-direction: column; align-items: flex-start; }
+          .custom-domain-banner a, .custom-domain-banner button { width: 100%; }
+        }
+        @media (max-width: 640px) {
+          .domains-hero-banner { padding: 2.5rem 0 1.5rem 0; }
+          .domains-hero-title { font-size: clamp(1.85rem, 6.5vw, 2.5rem); }
+          .domains-hero-subtitle { font-size: 0.95rem; margin-bottom: 1.5rem; }
+          .domains-search-panel { padding: 1rem; }
+          .domains-section-top { flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.5rem; }
+          .custom-domain-banner { padding: 1.5rem 1.25rem; border-radius: var(--radius-md); }
+          .custom-domain-banner h2 { font-size: 1.45rem; }
+          .modal-card { padding: 1.35rem 1rem; max-height: 90dvh; overflow-y: auto; border-radius: var(--radius-md); }
+          .modal-actions { flex-direction: column-reverse; gap: 0.65rem; }
+          .modal-actions button { width: 100%; }
+        }
       `}</style>
     </div>
   );

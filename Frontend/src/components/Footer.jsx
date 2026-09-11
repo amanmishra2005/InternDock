@@ -438,8 +438,29 @@ export default function Footer() {
           }
         }
         @media (max-width: 640px) {
+          .main-footer {
+            padding: 2.5rem 0 1.5rem 0;
+            margin-top: 3rem;
+          }
+          .footer-newsletter-card {
+            padding: 1.35rem 1rem;
+            margin-bottom: 2.5rem;
+            border-radius: var(--radius-md);
+          }
+          .newsletter-text h3 {
+            font-size: 1.15rem;
+          }
+          .newsletter-text p {
+            font-size: 0.85rem;
+            line-height: 1.5;
+          }
           .footer-grid {
             grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+          }
+          .footer-col-title {
+            margin-bottom: 0.75rem;
           }
           .footer-bottom-bar {
             flex-direction: column;

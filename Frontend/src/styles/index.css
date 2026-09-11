@@ -78,6 +78,9 @@
 }
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
 }
 
 body {
@@ -87,6 +90,15 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
+#root,
+.app-shell {
+  max-width: 100%;
+  width: 100%;
   overflow-x: hidden;
 }
 
@@ -222,9 +234,12 @@ main {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-@media (max-width: 560px) {
+@media (max-width: 768px) {
+  .grid-2,
+  .grid-3,
   .grid-4 {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 }
 
@@ -1292,4 +1307,102 @@ textarea.input-field,
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+/* ---------- Comprehensive Mobile Phone System (< 768px & < 480px) ---------- */
+@media (max-width: 768px) {
+  /* Prevent iOS Safari auto-zoom on inputs */
+  input,
+  select,
+  textarea,
+  .input,
+  .input-field,
+  .select-field,
+  .textarea-field,
+  .domains-search-input {
+    font-size: 16px !important;
+  }
+
+  /* Safe container gutters */
+  .container {
+    padding: 0 1.15rem;
+  }
+
+  .section {
+    padding: 2.75rem 0;
+  }
+
+  /* Touch-friendly buttons (min 44px tap target) */
+  .btn {
+    min-height: 44px;
+    padding: 0.65rem 1.25rem;
+  }
+  .btn-sm {
+    min-height: 38px;
+    padding: 0.45rem 0.85rem;
+  }
+  .btn-lg {
+    min-height: 48px;
+    padding: 0.85rem 1.4rem;
+  }
+
+  /* Fluid typography */
+  h1 {
+    font-size: clamp(1.85rem, 6.5vw, 2.6rem);
+  }
+  h2 {
+    font-size: clamp(1.5rem, 5.5vw, 2.1rem);
+  }
+  h3 {
+    font-size: clamp(1.2rem, 4.5vw, 1.5rem);
+  }
+  .section-title {
+    font-size: clamp(1.65rem, 5.5vw, 2.2rem);
+  }
+  .section-header-title {
+    font-size: 1.6rem;
+  }
+
+  /* Card padding on phones */
+  .card,
+  .glass-card,
+  .feature {
+    padding: 1.25rem;
+  }
+  .glass-panel {
+    padding: 1.35rem;
+    border-radius: var(--radius-md);
+  }
+
+  /* Tables horizontal scroll support */
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Horizontal tab bars */
+  .categories-scroll-row,
+  .dashboard-nav-tabs {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .categories-scroll-row::-webkit-scrollbar,
+  .dashboard-nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.85rem;
+  }
+  .section {
+    padding: 2.25rem 0;
+  }
+
+  .btn {
+    white-space: normal;
+    text-align: center;
+  }
 }

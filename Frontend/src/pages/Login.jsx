@@ -361,6 +361,12 @@ export default function Login() {
         @media (max-width: 900px) {
           .auth-visual-side { display: none; }
         }
+        @media (max-width: 600px) {
+          .auth-split-wrapper { padding: 2rem 0; }
+          .auth-form-side { padding: 1.5rem 1.15rem; border-radius: var(--radius-md); }
+          .auth-form-header h2 { font-size: 1.55rem; }
+          .auth-form-header p { font-size: 0.85rem; margin-bottom: 1.25rem; }
+        }
       `}</style>
     </div>
   );

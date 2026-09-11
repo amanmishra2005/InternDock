@@ -248,6 +248,14 @@ export default function AdminApplications() {
         .payment-details-panel span { font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #94a3b8; letter-spacing: 0.03em; }
         .payment-details-panel strong { font-size: 0.9rem; color: #0f172a; font-weight: 700; }
         .payment-details-panel.empty { display: block; padding: 1rem 1.5rem; color: #b45309; background: #fffbeb; font-size: 0.85rem; font-weight: 600; }
+        @media (max-width: 768px) {
+          .admin-container { padding: 2rem 0.85rem; }
+          .admin-header { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.35rem 1rem; }
+          .admin-title { font-size: 1.6rem; }
+          .filter-select-wrapper { width: 100%; }
+          .table-card { padding: 0.75rem; }
+          .payment-details-panel { grid-template-columns: 1fr; gap: 0.65rem; padding: 0.85rem 1rem; }
+        }
       `}</style>
     </div>
   );

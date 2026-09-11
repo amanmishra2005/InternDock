@@ -276,9 +276,15 @@ export default function VerifyCertificate() {
         .trust-chip { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.7); border: 1px solid var(--border-color); padding: 0.55rem 1rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 600; color: var(--text-muted); backdrop-filter: blur(8px); }
         .trust-icon { display: inline-flex; color: var(--primary); }
         @media (max-width: 600px) {
-          .verify-card { padding: 2rem 1.5rem; }
-          .search-input-wrapper { flex-direction: column; }
-          .doc-details-grid { grid-template-columns: 1fr; }
+          .verify-page { padding: 2.5rem 0 3.5rem; }
+          .verify-card { padding: 1.5rem 1rem; border-radius: var(--radius-md); }
+          .verify-title { font-size: 1.6rem; }
+          .search-input-wrapper { flex-direction: column; gap: 0.65rem; }
+          .search-input-wrapper button { width: 100%; }
+          .doc-details-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+          .verify-status-banner { padding: 1rem 1.15rem; flex-direction: column; }
+          .verify-trust-row { gap: 0.5rem; margin-top: 1.5rem; }
+          .trust-chip { font-size: 0.75rem; padding: 0.4rem 0.75rem; }
         }
       `}</style>
     </div>

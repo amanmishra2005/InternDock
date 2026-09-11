@@ -967,11 +967,61 @@ export default function ApplicationWorkspace() {
         .payment-confirm-form { display: flex; flex-direction: column; gap: 1.1rem; }
         .payment-notice-box { display: flex; align-items: center; gap: 0.65rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.65rem 0.85rem; border-radius: 6px; font-size: 0.825rem; color: #059669; font-weight: 600; }
         @media (max-width: 640px) {
-          .workspace-banner { flex-direction: column; align-items: center; gap: 1.25rem; text-align: center; }
-          .banner-status-box { width: min(100%, 260px); }
-          .linkedin-certificate-prompt { align-items: flex-start; flex-direction: column; }
-          .modal-qr-grid { grid-template-columns: 1fr; }
-          .payment-action-box { flex-direction: column; align-items: flex-start; }
+          .workspace-container { padding: 2rem 0.85rem; }
+          .workspace-banner { flex-direction: column; align-items: flex-start; gap: 1rem; text-align: left; padding: 1.35rem 1rem; }
+          .workspace-title { font-size: 1.6rem; }
+          .banner-status-box { width: 100%; align-items: flex-start; }
+          .workspace-stepper-card { padding: 1.25rem 1rem; margin-bottom: 1.5rem; }
+          .workspace-stepper {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.85rem;
+          }
+          .stepper-step {
+            width: 100%;
+            flex: none;
+            gap: 0.75rem;
+          }
+          .step-line {
+            display: none;
+          }
+          .offer-unlocked-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.25rem 1rem;
+          }
+          .offer-unlocked-card a,
+          .offer-unlocked-card button {
+            width: 100%;
+          }
+          .assignments-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
+          .assignment-card-item {
+            padding: 1.25rem 1rem;
+          }
+          .curriculum-panel,
+          .payment-panel,
+          .pricing-panel,
+          .final-report-panel {
+            padding: 1.25rem 1rem;
+          }
+          .linkedin-certificate-prompt {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          .linkedin-certificate-prompt a,
+          .linkedin-certificate-prompt button {
+            width: 100%;
+          }
+          .modal-qr-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+          .payment-action-box { flex-direction: column; align-items: stretch; gap: 1rem; }
+          .payment-action-box button { width: 100%; }
+          .payment-qr-modal { padding: 1.25rem 1rem; }
+          .qr-frame { width: 180px; height: 180px; }
         }
       `}</style>
     </div>

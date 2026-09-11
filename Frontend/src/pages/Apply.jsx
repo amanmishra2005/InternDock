@@ -298,7 +298,17 @@ export default function Apply() {
         .summary-fee { color: #059669 !important; font-size: 1.1rem; }
         .deliverables-text { color: #059669 !important; font-weight: 700; font-size: 0.875rem; }
         .error-message-box { padding: 0.85rem 1.1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-weight: 600; font-size: 0.875rem; border-radius: var(--radius-sm); }
-        @media (max-width: 560px) { .apply-card { padding: 1.5rem; } .date-fields-grid { grid-template-columns: 1fr; } .duration-card-header, .duration-card-body { align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; } }
+        @media (max-width: 560px) {
+          .apply-page-container { padding: 2rem 0.85rem; }
+          .apply-card { padding: 1.35rem 1rem; border-radius: var(--radius-md); }
+          .apply-title { font-size: clamp(1.6rem, 6vw, 2rem); margin: 0.5rem 0 0.35rem 0; }
+          .apply-subtitle { margin-bottom: 1.5rem; font-size: 0.9rem; }
+          .selected-duration-badge-card { padding: 1rem 1.15rem; }
+          .date-fields-grid { grid-template-columns: 1fr; }
+          .duration-card-header, .duration-card-body { align-items: flex-start; gap: 0.6rem; flex-wrap: wrap; }
+          .summary-row { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
+          .apply-form .btn-lg { white-space: normal; text-align: center; line-height: 1.35; padding: 0.85rem 1rem; font-size: 0.92rem; }
+        }
       `}</style>
     </div>
   );

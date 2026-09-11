@@ -101,7 +101,18 @@ export default function AdminDashboard() {
         .stat-card { padding: 1.75rem; display: flex; flex-direction: column; gap: 0.75rem; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05); }
         .stat-header { display: flex; align-items: center; justify-content: space-between; }
         .stat-value { font-family: var(--font-heading); font-size: 2.4rem; font-weight: 900; color: #0f172a !important; margin: 0.25rem 0 0 0; }
-        @media (max-width: 900px) { .admin-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; } }
+        @media (max-width: 900px) {
+          .admin-header { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+          .admin-quick-actions { width: 100%; flex-direction: column; gap: 0.75rem; }
+          .admin-quick-actions a, .admin-quick-actions button { width: 100%; }
+        }
+        @media (max-width: 600px) {
+          .admin-container { padding: 2rem 0.85rem; }
+          .admin-header { padding: 1.35rem 1rem; border-radius: var(--radius-md); }
+          .admin-title { font-size: 1.6rem; }
+          .stats-grid { grid-template-columns: 1fr; gap: 1rem; }
+          .stat-card { padding: 1.25rem 1rem; }
+        }
       `}</style>
     </div>
   );

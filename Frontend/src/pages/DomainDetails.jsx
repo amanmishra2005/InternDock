@@ -237,6 +237,19 @@ export default function DomainDetails() {
         .step-num { font-weight: 800; font-size: 0.875rem; color: #4f46e5 !important; background: rgba(79, 70, 229, 0.1); padding: 0.35rem 0.75rem; border-radius: var(--radius-full); height: fit-content; flex-shrink: 0; }
         .timeline-item h4 { font-size: 1.05rem; font-weight: 700; color: #0f172a !important; margin-bottom: 0.25rem; }
         .timeline-item p { font-size: 0.875rem; color: #475569 !important; line-height: 1.5; }
+        @media (max-width: 640px) {
+          .domain-detail-container { padding: 2rem 0.85rem; }
+          .domain-detail-hero { padding: 1.35rem 1rem; border-radius: var(--radius-md); }
+          .domain-title { font-size: clamp(1.75rem, 6.5vw, 2.3rem); margin-bottom: 0.75rem; }
+          .domain-desc { font-size: 0.95rem; margin-bottom: 1.5rem; }
+          .pricing-panel, .curriculum-panel { padding: 1.35rem 1rem; border-radius: var(--radius-md); }
+          .detail-content-grid { gap: 1.25rem; }
+          .duration-row { padding: 0.95rem 1rem; }
+          .pricing-panel .btn-lg { white-space: normal; text-align: center; line-height: 1.35; padding: 0.85rem 1rem; font-size: 0.92rem; }
+        }
+        @media (max-width: 380px) {
+          .duration-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+        }
       `}</style>
     </div>
   );

@@ -416,27 +416,46 @@ export default function Header() {
           background: none;
           border: none;
           cursor: pointer;
-          padding: 0.4rem;
+          padding: 0.5rem;
+          min-width: 44px;
+          min-height: 44px;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          border-radius: var(--radius-xs);
+        }
+        .mobile-toggle-btn:focus-visible {
+          outline: 2px solid var(--primary);
         }
         .mobile-drawer {
-          overflow: hidden;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          max-height: calc(100dvh - 72px);
           background: #ffffff;
           border-bottom: 1px solid var(--border-color);
-          padding: 1.5rem;
+          padding: 1.25rem 1.25rem 2rem;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+          gap: 0.75rem;
+          box-shadow: 0 16px 32px rgba(15, 23, 42, 0.1);
         }
         .mobile-nav-item {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          font-size: 1rem;
+          font-size: 0.95rem;
           font-weight: 600;
           color: var(--text-main);
-          padding: 0.6rem 0;
+          padding: 0.75rem 0.5rem;
+          min-height: 44px;
           border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+          border-radius: var(--radius-xs);
+          transition: var(--transition-fast);
+        }
+        .mobile-nav-item:hover, .mobile-nav-item:active {
+          background: rgba(79, 70, 229, 0.05);
+          color: var(--primary);
+          padding-left: 0.75rem;
         }
         .full-width {
           width: 100%;
@@ -450,6 +469,30 @@ export default function Header() {
           }
           .auth-buttons-group, .user-profile-menu {
             display: none;
+          }
+        }
+        @media (max-width: 560px) {
+          .header-container {
+            height: 68px;
+          }
+          .brand-icon {
+            width: 38px;
+            height: 38px;
+          }
+          .brand-name {
+            font-size: 1.2rem;
+          }
+          .brand-tagline {
+            font-size: 0.6rem;
+            letter-spacing: 0.05em;
+          }
+        }
+        @media (max-width: 360px) {
+          .brand-tagline {
+            display: none;
+          }
+          .brand-name {
+            font-size: 1.15rem;
           }
         }
       `}</style>

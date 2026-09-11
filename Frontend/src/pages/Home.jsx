@@ -797,20 +797,90 @@ export default function Home() {
         .doc-preview-container { margin-top: 2rem; }
 
         @media (max-width: 900px) {
-          .hero-heading { font-size: 2.5rem; }
-          .metrics-row { flex-direction: column; gap: 1rem; }
-          .contact-card-wrapper { padding: 2rem; }
-          .contact-card-wrapper { grid-template-columns: 1fr; }
+          .hero-heading { font-size: clamp(2.2rem, 5vw, 2.75rem); }
+          .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            text-align: center;
+          }
+          .metric-num { font-size: 1.5rem; }
+          .metric-txt { font-size: 0.75rem; }
+          .contact-card-wrapper { padding: 2rem; grid-template-columns: 1fr; }
           .badge-top-right, .badge-bottom-left { display: none; }
           .slider-card-item { width: 300px; }
-          .horizontal-stepper-container { flex-direction: column; }
+          .horizontal-stepper-container { flex-direction: column; gap: 1rem; }
           .step-horizontal-arrow-connector { display: none; }
         }
         @media (max-width: 560px) {
-          .contact-section { padding: 3rem 0 4rem; }
-          .contact-card-wrapper { padding: 1.25rem; gap: 2rem; }
-          .contact-info-col h2 { font-size: 1.8rem; }
-          .contact-details-stack { gap: 0.9rem; }
+          .hero-section { padding: 2.5rem 0 2rem 0; }
+          .hero-heading { font-size: clamp(1.85rem, 7.5vw, 2.3rem); line-height: 1.22; margin: 1rem 0 0.75rem 0; }
+          .hero-subheading { font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.55; }
+          .hero-cta-group {
+            flex-direction: column;
+            width: 100%;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+          }
+          .hero-cta-group a,
+          .hero-cta-group button {
+            width: 100%;
+          }
+          .hero-main-img {
+            height: 220px;
+            border-radius: var(--radius-md);
+          }
+          .metrics-row {
+            gap: 0.5rem;
+            padding-top: 1.25rem;
+          }
+          .metric-num { font-size: 1.3rem; }
+          .metric-txt { font-size: 0.7rem; }
+          .features-section,
+          .stepper-section,
+          .horizontal-domains-section,
+          .doc-preview-section {
+            padding: 2.5rem 0;
+          }
+          .feature-card-item {
+            padding: 1.35rem 1.2rem;
+          }
+          .horizontal-step-card {
+            padding: 1.35rem 1.2rem;
+          }
+          .slider-card-item {
+            width: min(290px, calc(100vw - 3rem));
+          }
+          .doc-tab-switcher {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            border-radius: var(--radius-sm);
+            padding: 0.4rem;
+            gap: 0.35rem;
+          }
+          .doc-tab-btn {
+            width: 100%;
+            justify-content: center;
+            border-radius: var(--radius-xs);
+            padding: 0.55rem 1rem;
+          }
+          .section-header-flex {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          .contact-section { padding: 2.5rem 0 3.5rem; }
+          .contact-card-wrapper { padding: 1.25rem 1rem; gap: 1.75rem; border-radius: var(--radius-md); }
+          .contact-info-col h2 { font-size: 1.6rem; }
+          .contact-details-stack { gap: 0.85rem; }
+        }
+        @media (max-width: 380px) {
+          .metrics-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            text-align: left;
+          }
         }
       `}</style>
     </div>

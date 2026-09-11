@@ -555,7 +555,29 @@ export default function StudentDashboard() {
         .close-modal-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
         .full-width { width: 100%; }
-        @media (max-width: 768px) { .dashboard-welcome-card { flex-direction: column; align-items: flex-start; gap: 1.5rem; } }
+        @media (max-width: 768px) {
+          .dashboard-container { padding: 2rem 0.85rem; }
+          .dashboard-welcome-card { flex-direction: column; align-items: flex-start; gap: 1.25rem; padding: 1.5rem 1.25rem; }
+          .welcome-text h1 { font-size: clamp(1.5rem, 6vw, 2rem); }
+          .welcome-text p { font-size: 0.9rem; }
+          .dashboard-nav-tabs {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+          }
+          .tab-btn {
+            padding: 0.6rem 0.85rem;
+            font-size: 0.95rem;
+          }
+          .application-card { padding: 1.35rem 1rem; }
+          .app-domain-title { font-size: 1.2rem; }
+          .app-meta-row { flex-wrap: wrap; gap: 0.65rem; font-size: 0.82rem; }
+          .modal-card { padding: 1.35rem 1rem; max-height: 90dvh; overflow-y: auto; border-radius: var(--radius-md); }
+          .modal-actions { flex-direction: column-reverse; gap: 0.65rem; }
+          .modal-actions button { width: 100%; }
+        }
       `}</style>
     </div>
   );

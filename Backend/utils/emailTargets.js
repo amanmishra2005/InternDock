@@ -1,5 +1,5 @@
 function normalizeSupportEmails(value) {
-  const canonical = 'support.interndock@gmail.com';
+  const defaultTargets = ['support@interndock.in', 'support.interndock@gmail.com'];
   const raw = String(value || '')
     .split(/[\s,;]+/)
     .map((entry) => entry.trim().toLowerCase())
@@ -7,16 +7,18 @@ function normalizeSupportEmails(value) {
 
   const seen = new Set();
   raw.forEach((entry) => {
-    if (entry === 'support@interndock.in' || entry === 'support.interndock@gmail.com') {
-      seen.add(canonical);
+    if (entry !== 'amanmishra15.08.2005@gmail.com') {
+      seen.add(entry);
     }
   });
 
-  return canonical;
+  defaultTargets.forEach((target) => seen.add(target));
+
+  return Array.from(seen).join(', ');
 }
 
 function supportTargetEmail() {
-  const configured = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || 'support.interndock@gmail.com';
+  const configured = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || 'support@interndock.in, support.interndock@gmail.com';
   return normalizeSupportEmails(configured);
 }
 

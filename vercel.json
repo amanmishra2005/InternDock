@@ -1,29 +1,12 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "api/index.js",
-      "use": "@vercel/node"
+      "source": "/api/(.*)",
+      "destination": "https://interndock.onrender.com/api/$1"
     },
     {
-      "src": "Frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/Frontend/$1"
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }

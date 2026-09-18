@@ -233,8 +233,8 @@ async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
         }),
       });
       const text = await res.text().catch(() => "");
-      if (!res.ok || text.includes("Error:") || text.includes("Unauthorized")) {
-        throw new Error(`Apps Script error for ${recipient}: ${text}`);
+      if (!res.ok || text.includes("Error:") || text.includes("Unauthorized") || !text.includes("Email sent")) {
+        throw new Error(`Apps Script did not send email for ${recipient} (response was: "${text.slice(0, 80)}"). Make sure Code.gs is updated and deployed as 'New version' in Google Apps Script.`);
       }
       return { recipient, text };
     })

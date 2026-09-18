@@ -16,7 +16,7 @@ const GOLD = "#c9962f";
 const GRAY = "#64748b";
 
 // Bump this any time the offer letter / certificate design changes below.
-const TEMPLATE_VERSION = "2026-09-04-v4";
+const TEMPLATE_VERSION = "2026-09-19-v6";
 
 // Safe date formatter to prevent RangeError crashing on invalid dates
 function formatDateSafe(val, fallback = "Immediate") {
@@ -111,7 +111,7 @@ function verifiedFooter(doc, w, bottomY) {
 
 // ---------- Offer Letter ----------
 
-function generateOfferLetterPdf({ studentName = "Intern Student", collegeName = "-", domainName = "Tech Domain", durationLabel = "4 Weeks Track", startDate, endDate, applicationId, referenceId, verificationId, orgName }) {
+function generateOfferLetterPdf({ studentName = "Intern Student", collegeName = "-", domainName = "Tech Domain", durationLabel = "4 Weeks Track", startDate, endDate, issueDate, applicationId, referenceId, verificationId, orgName }) {
   return new Promise((resolve, reject) => {
     try {
       const filename = `offer-${referenceId || Date.now()}.pdf`;
@@ -127,7 +127,7 @@ function generateOfferLetterPdf({ studentName = "Intern Student", collegeName = 
       drawDottedBackground(doc, w, h);
       drawFrame(doc, w, h);
 
-      const issueDateStr = formatDateSafe(new Date(), "Today");
+      const issueDateStr = formatDateSafe(issueDate || new Date(), "Today");
       const startStr = formatDateSafe(startDate, "Immediate");
       const endStr = formatDateSafe(endDate, "Upon Completion");
 
@@ -230,7 +230,7 @@ function generateOfferLetterPdf({ studentName = "Intern Student", collegeName = 
 
 // ---------- Certificate ----------
 
-function generateCertificatePdf({ studentName = "Intern Student", collegeName = "-", domainName = "Tech Domain", durationLabel = "4 Weeks Track", startDate, endDate, certificateId, verificationId, orgName }) {
+function generateCertificatePdf({ studentName = "Intern Student", collegeName = "-", domainName = "Tech Domain", durationLabel = "4 Weeks Track", startDate, endDate, issueDate, certificateId, verificationId, orgName }) {
   return new Promise((resolve, reject) => {
     try {
       const filename = `certificate-${certificateId || Date.now()}.pdf`;
@@ -248,7 +248,7 @@ function generateCertificatePdf({ studentName = "Intern Student", collegeName = 
 
       const startStr = formatDateSafe(startDate, "Start Date");
       const endStr = formatDateSafe(endDate, "End Date");
-      const issueDateStr = formatDateSafe(new Date(), "Today");
+      const issueDateStr = formatDateSafe(issueDate || new Date(), "Today");
 
       let y = 36;
 
@@ -280,7 +280,10 @@ function generateCertificatePdf({ studentName = "Intern Student", collegeName = 
       doc.moveTo(w / 2 - 130, y).lineTo(w / 2 + 130, y).lineWidth(0.75).strokeColor("#c9c2ac").stroke();
       y += 18;
 
-      const bodyLine1 = `student of ${collegeName || "-"}, has successfully completed an internship`;
+      const hasCollege = collegeName && String(collegeName).trim() && String(collegeName).trim() !== "-";
+      const bodyLine1 = hasCollege
+        ? `student of ${String(collegeName).trim()}, has successfully completed an internship`
+        : `has successfully completed an internship`;
       const bodyLine2 = `in the field of ${domainName},`;
       const bodyLine3 = `contributing to real-world projects from ${startStr} to ${endStr} under the guidance of InternDock.`;
       doc.fontSize(14).font("Helvetica").fillColor("#334155");

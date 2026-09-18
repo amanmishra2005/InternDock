@@ -684,24 +684,24 @@ export default function ApplicationWorkspace() {
           style={{ marginTop: "2.5rem" }}
         >
           <OfferLetterPreview
-            studentName={application.student?.fullName || "Intern Student"}
-            collegeName={application.student?.college || ""}
-            domainName={application.domain?.title || "Tech Internship Domain"}
-            durationLabel={application.duration?.label || "4 Weeks Track"}
+            studentName={application.student?.fullName || application.studentName || "Intern Student"}
+            collegeName={application.student?.college || application.collegeName || ""}
+            domainName={application.domain?.name || application.domain?.title || "Tech Internship Domain"}
+            durationLabel={application.duration?.label || `${application.duration?.weeks || 4} Weeks Track`}
             startDate={
               application.startDate
-                ? new Date(application.startDate).toDateString()
+                ? new Date(application.startDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
                 : ""
             }
             endDate={
               application.endDate
-                ? new Date(application.endDate).toDateString()
+                ? new Date(application.endDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
                 : ""
             }
-            applicationId={application._id}
+            applicationId={application.applicationId || application._id}
             referenceId={
               application.offerLetterRef ||
-              `OFFER-${application._id?.slice(-6)}`
+              `OFFER-${application.applicationId || application._id}`
             }
             verificationId={application.verificationId || application._id}
             onDownload={downloadOfferLetter}
@@ -717,21 +717,21 @@ export default function ApplicationWorkspace() {
           style={{ marginTop: "2.5rem" }}
         >
           <CertificatePreview
-            studentName={application.student?.fullName || "Intern Student"}
-            collegeName={application.student?.college || ""}
-            domainName={application.domain?.title || "Tech Internship Domain"}
-            durationLabel={application.duration?.label || "4 Weeks Track"}
+            studentName={application.student?.fullName || application.studentName || "Intern Student"}
+            collegeName={application.student?.college || application.collegeName || ""}
+            domainName={application.domain?.name || application.domain?.title || "Tech Internship Domain"}
+            durationLabel={application.duration?.label || `${application.duration?.weeks || 4} Weeks Track`}
             startDate={
               application.startDate
-                ? new Date(application.startDate).toDateString()
+                ? new Date(application.startDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
                 : ""
             }
             endDate={
               application.endDate
-                ? new Date(application.endDate).toDateString()
+                ? new Date(application.endDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
                 : ""
             }
-            certificateId={`CERT-${application._id?.slice(-8).toUpperCase()}`}
+            certificateId={`CERT-${application.applicationId || application._id}`}
             verificationId={application.verificationId || application._id}
             onDownload={downloadCertificate}
           />

@@ -44,6 +44,17 @@ export default function Apply() {
   const [startDate, setStartDate] = useState(getTodayInputValue);
   const [endDate, setEndDate] = useState("");
   const endDateEdited = useRef(false);
+
+  // Prefill college from user profile if available
+  const savedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch (e) {
+      return {};
+    }
+  })();
+  const [collegeName, setCollegeName] = useState(savedUser.college || "");
+
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -87,6 +98,7 @@ export default function Apply() {
         durationId,
         startDate,
         endDate,
+        collegeName: collegeName.trim(),
       });
       navigate("/dashboard");
     } catch (err) {
@@ -213,6 +225,23 @@ export default function Apply() {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="input-group" style={{ margin: "1rem 0 1.5rem" }}>
+            <label className="input-label" htmlFor="college-name">
+              College / University Name
+            </label>
+            <input
+              id="college-name"
+              type="text"
+              className="input-field"
+              placeholder="e.g. Delhi Technological University / Amity / IIT"
+              value={collegeName}
+              onChange={(e) => setCollegeName(e.target.value)}
+            />
+            <span style={{ fontSize: "0.78rem", color: "#64748b", display: "block", marginTop: "4px" }}>
+              Appears on your official Offer Letter and cryptographically verified Completion Certificate.
+            </span>
           </div>
 
           {selectedDuration && (

@@ -15,6 +15,9 @@ const applicationSchema = new mongoose.Schema(
   {
     applicationId: { type: String, required: true, unique: true }, // e.g. INT-2026-00001
     student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    studentName: { type: String, trim: true },
+    studentEmail: { type: String, trim: true },
+    collegeName: { type: String, trim: true },
     domain: { type: mongoose.Schema.Types.ObjectId, ref: "Domain", required: true },
     duration: { type: mongoose.Schema.Types.ObjectId, ref: "Duration", required: true },
 

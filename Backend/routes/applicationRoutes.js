@@ -13,14 +13,23 @@ const { supportTargetEmail } = require("../utils/emailTargets");
 function serializeApplication(application) {
   if (!application) return null;
 
+  const studentObj = typeof application.student === "object" && application.student !== null ? application.student : {};
+  const studentName = application.studentName || studentObj.fullName || "";
+  const studentEmail = application.studentEmail || studentObj.email || "";
+  const collegeName = application.collegeName || studentObj.college || "";
+
   return {
     _id: application._id,
     applicationId: application.applicationId,
     student: {
-      _id: application.student?._id || application.student,
-      fullName: application.student?.fullName || "",
-      email: application.student?.email || "",
+      _id: studentObj._id || application.student,
+      fullName: studentName,
+      email: studentEmail,
+      college: collegeName,
     },
+    studentName,
+    studentEmail,
+    collegeName,
     domain: { _id: application.domain?._id || application.domain, name: application.domain?.name || "" },
     duration: {
       _id: application.duration?._id || application.duration,
@@ -84,9 +93,16 @@ router.post("/", protect, async (req, res) => {
     while (attempts < maxAttempts) {
       const candidateId = generateApplicationId(candidateSeq);
       try {
+        const resolvedStudentName = req.user.fullName;
+        const resolvedStudentEmail = req.user.email;
+        const resolvedCollegeName = req.body.collegeName || req.body.college || req.user.college || "";
+
         applicationDoc = await Application.create({
           applicationId: candidateId,
           student: req.user._id,
+          studentName: resolvedStudentName,
+          studentEmail: resolvedStudentEmail,
+          collegeName: resolvedCollegeName,
           domain: domain._id,
           duration: duration._id,
           status: "Submitted",
@@ -181,7 +197,7 @@ router.get("/mine", protect, async (req, res) => {
   const applications = await Application.find({ student: req.user._id })
     .populate("domain", "name")
     .populate("duration", "label weeks fee")
-    .populate("student", "fullName email")
+    .populate("student", "fullName email college")
     .sort({ createdAt: -1 })
     .lean();
 

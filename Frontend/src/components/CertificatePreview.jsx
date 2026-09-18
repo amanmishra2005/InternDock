@@ -85,7 +85,11 @@ export default function CertificatePreview({
 
             <p className="cert-narrative-text">
               <span>
-                student of <strong>{collegeName || "-"}</strong>, has
+                {collegeName && collegeName.trim() && collegeName.trim() !== "-" ? (
+                  <>student of <strong>{collegeName}</strong>, has </>
+                ) : (
+                  <>has </>
+                )}
                 successfully completed an internship
               </span>
               <span>

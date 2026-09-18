@@ -88,8 +88,8 @@ function createTransporter(port, secure) {
     port,
     secure,
     requireTLS: !secure,
-    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 7000,
-    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 12000,
+    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 4000,
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 6000,
     tls: { rejectUnauthorized: false },
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
@@ -116,54 +116,167 @@ function getTransporter() {
 // Simple in-memory email log, exposed for the admin "email logs" view.
 const emailLog = [];
 
-async function sendViaHttpApi(recipients, subject, html, replyTo) {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (resendApiKey) {
-    const from = process.env.EMAIL_FROM || "InternDock <onboarding@resend.dev>";
-    const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: recipients,
-        subject,
-        html,
-        reply_to: effectiveReplyTo,
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(`Resend API error (${res.status}): ${data.message || JSON.stringify(data)}`);
+function getResendFromAddress() {
+  if (process.env.RESEND_FROM) {
+    return process.env.RESEND_FROM.trim();
+  }
+  const configuredFrom = String(process.env.EMAIL_FROM || "").trim();
+  // Resend API strictly forbids sending from unverified third-party consumer webmail domains like @gmail.com
+  const isWebmail = /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(configuredFrom);
+  if (configuredFrom && !isWebmail) {
+    return configuredFrom;
+  }
+  return "InternDock <onboarding@resend.dev>";
+}
+
+async function sendViaResend(recipients, subject, html, replyTo) {
+  const rawKey = process.env.RESEND_API_KEY;
+  if (!rawKey) return null;
+  const resendApiKey = String(rawKey).replace(/^"|"$/g, "").trim();
+  if (!resendApiKey) return null;
+
+  const from = getResendFromAddress();
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+
+  // Dispatch individually so sandbox recipient limits don't block delivery to verified inboxes
+  const results = await Promise.allSettled(
+    recipients.map(async (recipient) => {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [recipient],
+          subject,
+          html,
+          reply_to: effectiveReplyTo,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(`Resend error (${res.status}) for ${recipient}: ${data.message || JSON.stringify(data)}`);
+      }
+      return { recipient, messageId: data.id };
+    })
+  );
+
+  const fulfilled = results.filter((r) => r.status === "fulfilled");
+  const rejected = results.filter((r) => r.status === "rejected");
+
+  if (fulfilled.length > 0) {
+    const messageId = fulfilled.map((f) => f.value?.messageId).filter(Boolean).join(", ");
+    const sentTo = fulfilled.map((f) => f.value?.recipient);
+    if (rejected.length > 0) {
+      console.warn(`[RESEND PARTIAL] Delivered to ${sentTo.join(", ")}, failed for: ${rejected.map((r) => r.reason?.message).join("; ")}`);
     }
-    return { status: "fulfilled", value: { messageId: data.id } };
+    return { status: "fulfilled", value: { messageId, sentTo } };
   }
 
-  const brevoApiKey = process.env.BREVO_API_KEY;
-  if (brevoApiKey) {
-    const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "api-key": brevoApiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sender: { name: "InternDock", email: "support.interndock@gmail.com" },
-        to: recipients.map((r) => ({ email: r })),
-        subject,
-        htmlContent: html,
-        replyTo: { email: effectiveReplyTo },
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(`Brevo API error (${res.status}): ${data.message || JSON.stringify(data)}`);
+  throw new Error(`Resend failed for all recipients: ${rejected.map((r) => r.reason?.message).join(" | ")}`);
+}
+
+async function sendViaBrevo(recipients, subject, html, replyTo) {
+  const rawKey = process.env.BREVO_API_KEY;
+  if (!rawKey) return null;
+  const brevoApiKey = String(rawKey).replace(/^"|"$/g, "").trim();
+  if (!brevoApiKey) return null;
+
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || "support.interndock@gmail.com";
+  const senderName = process.env.ORG_NAME || "InternDock";
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": brevoApiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: senderName, email: senderEmail },
+      to: recipients.map((r) => ({ email: r })),
+      subject,
+      htmlContent: html,
+      replyTo: { email: effectiveReplyTo },
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`Brevo API error (${res.status}): ${data.message || JSON.stringify(data)}`);
+  }
+  return { status: "fulfilled", value: { messageId: data.messageId, sentTo: recipients } };
+}
+
+async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
+  const webhookUrl = (process.env.GOOGLE_SHEET_WEBHOOK_URL || "").trim();
+  const webhookToken = (process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || "").trim();
+  if (!webhookUrl || !webhookToken) return null;
+
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+  const senderName = process.env.ORG_NAME || "InternDock";
+
+  const results = await Promise.allSettled(
+    recipients.map(async (recipient) => {
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          webhookToken,
+          action: "send_email",
+          to: recipient,
+          subject,
+          html,
+          replyTo: effectiveReplyTo,
+          senderName,
+        }),
+      });
+      const text = await res.text().catch(() => "");
+      if (!res.ok || text.includes("Error:") || text.includes("Unauthorized")) {
+        throw new Error(`Apps Script error for ${recipient}: ${text}`);
+      }
+      return { recipient, text };
+    })
+  );
+
+  const fulfilled = results.filter((r) => r.status === "fulfilled");
+  if (fulfilled.length > 0) {
+    const sentTo = fulfilled.map((f) => f.value?.recipient);
+    return { status: "fulfilled", value: { messageId: `gas_${Date.now()}`, sentTo } };
+  }
+  return null;
+}
+
+async function sendViaHttpApi(recipients, subject, html, replyTo) {
+  // 1. Resend (Fast HTTPS transactional delivery)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const res = await sendViaResend(recipients, subject, html, replyTo);
+      if (res) return res;
+    } catch (err) {
+      console.warn("[HTTP RESEND NOTICE]", err.message);
     }
-    return { status: "fulfilled", value: { messageId: data.messageId } };
+  }
+
+  // 2. Brevo (Sendinblue API)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const res = await sendViaBrevo(recipients, subject, html, replyTo);
+      if (res) return res;
+    } catch (err) {
+      console.warn("[HTTP BREVO NOTICE]", err.message);
+    }
+  }
+
+  // 3. Google Apps Script Webhook Relay
+  if (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN) {
+    try {
+      const res = await sendViaGoogleAppsScript(recipients, subject, html, replyTo);
+      if (res) return res;
+    } catch (err) {
+      console.warn("[HTTP GOOGLE APPS SCRIPT NOTICE]", err.message);
+    }
   }
 
   return null;
@@ -183,21 +296,25 @@ async function sendEmail({ to, subject, html, replyTo }) {
   }
 
   try {
-    // 1. If an HTTP email provider API key is configured (Resend or Brevo), use it directly over HTTPS (Port 443).
-    // This bypasses cloud provider SMTP port blocks (Render, AWS, DigitalOcean block 587/465 on free instances).
-    if (process.env.RESEND_API_KEY || process.env.BREVO_API_KEY) {
+    // 1. Try HTTPS API delivery first (bypasses cloud host and ISP SMTP port blocks)
+    const hasHttpEmailProvider = Boolean(
+      process.env.RESEND_API_KEY ||
+      process.env.BREVO_API_KEY ||
+      (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN)
+    );
+
+    if (hasHttpEmailProvider) {
       try {
         const httpResult = await sendViaHttpApi(recipients, subject, html, replyTo);
-        if (httpResult) {
+        if (httpResult && httpResult.value) {
           entry.status = "Sent";
           entry.messageId = httpResult.value?.messageId || "";
-          entry.sentTo = recipients;
-          console.log(`[HTTP EMAIL SUCCESS] Email sent to ${safeTo} via HTTP API | MessageID: ${entry.messageId}`);
+          entry.sentTo = httpResult.value?.sentTo || recipients;
+          console.log(`[HTTP EMAIL SUCCESS] Email delivered to ${Array.isArray(entry.sentTo) ? entry.sentTo.join(", ") : safeTo} via HTTP API | ID: ${entry.messageId}`);
           return entry;
         }
       } catch (httpErr) {
-        console.error("[HTTP EMAIL ERROR] Failed to send via HTTP API:", httpErr.message);
-        // Fall through to SMTP if configured
+        console.warn("[HTTP EMAIL FALLBACK] HTTP API delivery did not complete:", httpErr.message);
       }
     }
 
@@ -419,4 +536,4 @@ const templates = {
 };
 
 
-module.exports = { sendEmail, getEmailLog, templates, normalizeRecipientsForDispatch, getPreferredFromAddress };
+module.exports = { sendEmail, getEmailLog, templates, normalizeRecipientsForDispatch, getPreferredFromAddress, getResendFromAddress };

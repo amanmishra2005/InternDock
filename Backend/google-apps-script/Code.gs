@@ -3,7 +3,7 @@ const EXPECTED_TOKEN = "PASTE_YOUR_GOOGLE_SHEET_WEBHOOK_TOKEN_HERE";
 
 function doGet(e) {
   return ContentService.createTextOutput(
-    "InternDock Google Sheet sync endpoint is ready. Use POST with the webhook token.",
+    "InternDock Google Sheet & Mail sync endpoint is ready. Use POST with the webhook token.",
   ).setMimeType(ContentService.MimeType.TEXT);
 }
 
@@ -18,6 +18,34 @@ function doPost(e) {
       );
     }
 
+    // 1. Email Sending Action (Relays transactional emails through Google's native mail infrastructure)
+    if (payload.action === "send_email" || payload.action === "sendEmail") {
+      const recipient = String(payload.to || "").trim();
+      const subject = String(payload.subject || "InternDock Notification").trim();
+      const htmlBody = payload.html || payload.htmlBody || "";
+      const replyTo = payload.replyTo || "support@interndock.in";
+      const senderName = payload.senderName || "InternDock";
+
+      if (!recipient) {
+        return ContentService.createTextOutput("Error: Missing recipient 'to'").setMimeType(
+          ContentService.MimeType.TEXT,
+        );
+      }
+
+      MailApp.sendEmail({
+        to: recipient,
+        subject: subject,
+        htmlBody: htmlBody,
+        replyTo: replyTo,
+        name: senderName,
+      });
+
+      return ContentService.createTextOutput(
+        JSON.stringify({ success: true, message: "Email sent to " + recipient }),
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // 2. Google Sheets Ledger Append
     const sheetName = String(payload.sheetName || "applications").trim();
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     let sheet = spreadsheet.getSheetByName(sheetName);
@@ -27,7 +55,7 @@ function doPost(e) {
     }
 
     const orderedKeys = Object.keys(payload)
-      .filter((key) => key !== "webhookToken" && key !== "sheetName")
+      .filter((key) => key !== "webhookToken" && key !== "sheetName" && key !== "action")
       .sort((a, b) => a.localeCompare(b));
 
     if (sheet.getLastRow() === 0) {

@@ -4,6 +4,7 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const compression = require("compression");
 const connectDB = require("./config/db");
 const mongoose = require("mongoose");
 const { createRateLimiter } = require("./utils/rateLimit");
@@ -127,6 +128,7 @@ app.use((req, res, next) => {
 app.use(cors(corsOptions));
 app.options("(.*)", cors(corsOptions));
 
+app.use(compression());
 app.use(express.json({ limit: "1mb", strict: true }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(morgan(isProduction ? "combined" : "dev"));

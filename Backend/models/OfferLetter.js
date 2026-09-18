@@ -17,4 +17,6 @@ const offerLetterSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+offerLetterSchema.index({ application: 1 });
+
 module.exports = mongoose.model("OfferLetter", offerLetterSchema);

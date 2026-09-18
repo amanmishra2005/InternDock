@@ -12,10 +12,11 @@ const User = require("../models/User");
 const Payment = require("../models/Payment");
 const Certificate = require("../models/Certificate");
 const { generateCertificateId, generateVerificationId, getNextCertificateSequence } = require("../utils/generateIds");
-const { generateCertificatePdf } = require("../utils/generatePdf");
+const { generateCertificatePdf, TEMPLATE_VERSION } = require("../utils/generatePdf");
 const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
-const { getSpreadsheetPath, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
+const { getSpreadsheetPath, appendToSpreadsheet, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
 const { canIssueCertificate, getRequiredTaskCount } = require("../utils/certificateEligibility");
+const { resolveApplicationDetails } = require("../utils/documentVerification");
 const Submission = require("../models/Submission");
 const { clearCache } = require("../utils/cache");
 
@@ -289,45 +290,83 @@ router.post("/applications/:id/issue-certificate", async (req, res) => {
     });
   }
 
-  // Update application state
+  // Resolve student User profile if needed to guarantee studentName and collegeName
+  let studentUser = application.student;
+  if (!studentUser || !studentUser.fullName || !studentUser.college) {
+    const studentId = studentUser?._id || studentUser;
+    if (studentId) {
+      const foundUser = await User.findById(studentId).lean();
+      if (foundUser) {
+        studentUser = { ...foundUser, ...(typeof studentUser === "object" ? studentUser : {}) };
+      }
+    }
+  }
+
+  const details = resolveApplicationDetails(application, studentUser);
+
+  // Update application state and guarantee accurate dates
   application.paymentStatus = "Successful";
   application.status = "Completed";
   application.certificateIssued = true;
-  if (!application.startDate) application.startDate = new Date();
-  if (!application.endDate) {
-    const end = new Date();
-    end.setDate(end.getDate() + (application.duration?.weeks || 4) * 7);
-    application.endDate = end;
-  }
+  application.startDate = details.startDate;
+  application.endDate = details.endDate;
+  if (!application.studentName) application.studentName = details.studentName;
+  if (!application.collegeName && details.collegeName) application.collegeName = details.collegeName;
   await application.save();
 
   // Create or retrieve Certificate document
   let cert = await Certificate.findOne({ application: application._id });
-  if (!cert) {
-    const certificateId = generateCertificateId(await getNextCertificateSequence(Certificate));
-    const verificationId = generateVerificationId();
-    const pdfUrl = await generateCertificatePdf({
-      studentName: application.student.fullName,
-      collegeName: application.student.college || "",
-      domainName: application.domain?.name || "Tech Internship Domain",
-      durationLabel: application.duration?.label || "4 Weeks Track",
-      startDate: application.startDate,
-      endDate: application.endDate,
-      certificateId,
-      verificationId,
-      orgName: "InternDock",
-    });
+  const certificateId = cert?.certificateId || generateCertificateId(await getNextCertificateSequence(Certificate));
+  const verificationId = cert?.verificationId || generateVerificationId();
+  const issueDate = cert?.issueDate || new Date();
+
+  const pdfUrl = await generateCertificatePdf({
+    studentName: details.studentName,
+    collegeName: details.collegeName,
+    domainName: details.domainName,
+    durationLabel: details.durationLabel,
+    startDate: details.startDate,
+    endDate: details.endDate,
+    issueDate,
+    certificateId,
+    verificationId,
+    orgName: process.env.ORG_NAME || "InternDock",
+  });
+
+  if (cert) {
+    cert.pdfUrl = pdfUrl;
+    cert.templateVersion = TEMPLATE_VERSION;
+    await cert.save();
+  } else {
     cert = await Certificate.create({
       application: application._id,
-      student: application.student._id,
+      student: studentUser?._id || application.student,
       certificateId,
       verificationId,
+      issueDate,
       pdfUrl,
+      templateVersion: TEMPLATE_VERSION,
     });
   }
 
-  const t = templates.certificateIssued(application.student.fullName);
-  await sendEmail({ to: application.student.email, ...t }).catch(() => {});
+  appendToSpreadsheet("certificates", {
+    certificateId: cert.certificateId,
+    applicationId: application.applicationId || application._id,
+    verificationId,
+    studentName: details.studentName,
+    studentEmail: details.studentEmail,
+    collegeName: details.collegeName,
+    startDate: details.startDate.toISOString().slice(0, 10),
+    endDate: details.endDate.toISOString().slice(0, 10),
+    domain: details.domainName,
+    pdfUrl,
+  });
+
+  const t = templates.certificateIssued(details.studentName);
+  const targetEmail = details.studentEmail || studentUser?.email || application.student?.email;
+  if (targetEmail) {
+    await sendEmail({ to: targetEmail, ...t }).catch(() => {});
+  }
 
   res.json({ success: true, message: "Certificate issued successfully!", application, certificate: cert });
 });

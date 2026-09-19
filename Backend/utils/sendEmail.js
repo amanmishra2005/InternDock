@@ -424,8 +424,34 @@ const templates = {
     html: `<p>Hi ${escapeHtml(name)},</p><p>Thanks for creating an account. Explore our internship domains and apply when you're ready.</p>`,
   }),
   applicationSubmitted: (name, applicationId, domainName) => ({
-    subject: "Application received - InternDock",
-    html: `<p>Hi ${escapeHtml(name)},</p><p>We've received your application (<b>${escapeHtml(applicationId)}</b>) for the <b>${escapeHtml(domainName)}</b> internship. We'll notify you once it has been reviewed.</p>`,
+    subject: `Application Confirmed: ${escapeHtml(domainName)} Internship Track (${escapeHtml(applicationId)})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <h2 style="color: #0f172a; margin-top: 0;">🎉 Application Received Successfully!</h2>
+        <p style="color: #334155; font-size: 15px;">Dear ${escapeHtml(name)},</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.6;">Thank you for applying for the <strong>${escapeHtml(domainName)}</strong> internship program on <strong>InternDock</strong>. Your application has been registered with our academic admissions cohort.</p>
+        
+        <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #0284c7; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #334155;">
+          <p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>
+          <p style="margin: 4px 0;"><strong>Internship Track:</strong> ${escapeHtml(domainName)}</p>
+          <p style="margin: 4px 0;"><strong>Status:</strong> Registered &amp; Ready for Workspace Access</p>
+        </div>
+
+        <h3 style="color: #0f172a; font-size: 16px; margin-bottom: 8px;">Next Steps:</h3>
+        <ol style="color: #475569; font-size: 14px; line-height: 1.6; padding-left: 20px; margin-top: 0;">
+          <li>Log in to your <strong><a href="https://www.interndock.in/dashboard" style="color: #0284c7; text-decoration: none;">InternDock Student Dashboard</a></strong>.</li>
+          <li>Access your <strong>Application Workspace</strong> to review your official selection offer letter and curriculum roadmap.</li>
+          <li>Complete your program verification to unlock project repositories, guided milestones, and mentor evaluations.</li>
+        </ol>
+
+        <p style="color: #334155; font-size: 14px; margin-top: 24px;">If you have any questions or require guidance, feel free to reply to this email or contact us anytime at <a href="mailto:support@interndock.in" style="color: #0284c7;">support@interndock.in</a>.</p>
+        <p style="color: #64748b; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          Best regards,<br />
+          <strong>InternDock Admissions &amp; Academic Cohort Team</strong><br />
+          <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none;">www.interndock.in</a>
+        </p>
+      </div>
+    `,
   }),
   newApplicationAdminNotification: (studentName, studentEmail, domainName, durationWeeks, applicationId, startDate, endDate) => ({
     subject: `[New Student Application] ${escapeHtml(studentName)} applied for ${escapeHtml(domainName)}`,
@@ -485,9 +511,29 @@ const templates = {
     subject: "Update on your application",
     html: `<p>Hi ${escapeHtml(name)},</p><p>Thank you for applying to the <b>${escapeHtml(domainName)}</b> internship. Unfortunately we are unable to offer you a place at this time.</p>`,
   }),
-  paymentSuccess: (name, amount) => ({
-    subject: "Payment successful",
-    html: `<p>Hi ${escapeHtml(name)},</p><p>We've received your payment of ₹${escapeHtml(amount)}. You now have full access to your internship workspace.</p>`,
+  paymentSuccess: (name, amount, applicationId) => ({
+    subject: `Payment Confirmed - InternDock Internship Verification (₹${escapeHtml(amount)})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <h2 style="color: #0f172a; margin-top: 0;">💳 Payment Successfully Confirmed!</h2>
+        <p style="color: #334155; font-size: 15px;">Dear ${escapeHtml(name)},</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.6;">We have received and verified your payment of <strong>₹${escapeHtml(amount)}</strong> for your InternDock internship program.</p>
+        
+        <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #16a34a; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #334155;">
+          <p style="margin: 4px 0;"><strong>Amount Paid:</strong> ₹${escapeHtml(amount)}</p>
+          ${applicationId ? `<p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>` : ""}
+          <p style="margin: 4px 0;"><strong>Workspace Status:</strong> Active &amp; Fully Unlocked</p>
+        </div>
+
+        <p style="color: #334155; font-size: 14px; line-height: 1.6;">Your workspace is now active. You have full access to guided milestones, project guides, and capstone project submissions.</p>
+        <p style="margin-top: 16px;"><a href="https://www.interndock.in/dashboard" style="display: inline-block; background: #0284c7; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">Open My Internship Workspace</a></p>
+        <p style="color: #64748b; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          Best regards,<br />
+          <strong>InternDock Finance &amp; Accounts Team</strong><br />
+          <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none;">www.interndock.in</a>
+        </p>
+      </div>
+    `,
   }),
   finalReportSubmitted: (studentName, arg2, arg3, arg4, arg5, arg6, arg7, arg8) => {
     let studentEmail = "";
@@ -533,14 +579,33 @@ const templates = {
     };
   },
   finalReportStudentConfirmation: (name, applicationId, domainName, projectTitle) => ({
-    subject: "Capstone Final Report Received - InternDock",
+    subject: `Final Capstone Project Submitted: ${escapeHtml(domainName || "Internship Track")} (${escapeHtml(applicationId)})`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
-        <h2 style="color: #0f172a; margin-top: 0;">✓ Final Capstone Report Received</h2>
-        <p style="color: #334155; font-size: 15px;">Hi ${escapeHtml(name)},</p>
-        <p style="color: #334155; font-size: 15px; line-height: 1.6;">Thank you for submitting your final capstone report${projectTitle ? ` for "<strong>${escapeHtml(projectTitle)}</strong>"` : ""} in the <strong>${escapeHtml(domainName)}</strong> track (Application ID: <strong>${escapeHtml(applicationId)}</strong>).</p>
-        <p style="color: #334155; font-size: 15px; line-height: 1.6;">Our mentor evaluation team is reviewing your project. Once evaluated, your verified certificate will be generated and made available on your dashboard.</p>
-        <p style="font-size: 13px; color: #64748b; margin-top: 20px;">Need assistance? Contact us anytime at <a href="mailto:support@interndock.in" style="color: #4f46e5;">support@interndock.in</a>.</p>
+        <h2 style="color: #0f172a; margin-top: 0;">🎓 Final Capstone Project Submitted!</h2>
+        <p style="color: #334155; font-size: 15px;">Dear ${escapeHtml(name)},</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.6;">Congratulations on completing and submitting your final capstone project${projectTitle ? ` for "<strong>${escapeHtml(projectTitle)}</strong>"` : ""} in the <strong>${escapeHtml(domainName || "Internship Track")}</strong> program on <strong>InternDock</strong>.</p>
+        
+        <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #10b981; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #334155;">
+          <p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>
+          <p style="margin: 4px 0;"><strong>Domain Track:</strong> ${escapeHtml(domainName || "Internship Track")}</p>
+          ${projectTitle ? `<p style="margin: 4px 0;"><strong>Project Title:</strong> ${escapeHtml(projectTitle)}</p>` : ""}
+          <p style="margin: 4px 0;"><strong>Review Status:</strong> Under Mentor Evaluation</p>
+        </div>
+
+        <h3 style="color: #0f172a; font-size: 16px; margin-bottom: 8px;">What Happens Next?</h3>
+        <ul style="color: #475569; font-size: 14px; line-height: 1.6; padding-left: 20px; margin-top: 0;">
+          <li>Our mentor evaluation board will review your repository, live demo, and final project write-up.</li>
+          <li>Upon approval, your cryptographically verifiable <strong>Certificate of Internship Completion &amp; Merit</strong> will be issued directly on your dashboard.</li>
+          <li>Your credential will also be permanently verifiable online at <a href="https://www.interndock.in/verify" style="color: #0284c7; text-decoration: none;">interndock.in/verify</a> for recruiter background checks.</li>
+        </ul>
+
+        <p style="color: #334155; font-size: 14px; margin-top: 24px;">Need assistance? Contact our mentor support team at <a href="mailto:support@interndock.in" style="color: #0284c7;">support@interndock.in</a>.</p>
+        <p style="color: #64748b; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          Best regards,<br />
+          <strong>InternDock Evaluation &amp; Mentorship Board</strong><br />
+          <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none;">www.interndock.in</a>
+        </p>
       </div>
     `,
   }),

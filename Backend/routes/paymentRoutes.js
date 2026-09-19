@@ -137,7 +137,7 @@ router.post("/confirm", protect, async (req, res) => {
 
     // Trigger instant email confirmation to student and the configured support inbox
     const emailTo = registeredEmail || req.user.email;
-    const studentT = templates.paymentSuccess(payerName || req.user.fullName, feeAmount);
+    const studentT = templates.paymentSuccess(payerName || req.user.fullName, feeAmount, application.applicationId || application._id);
     const adminNotificationEmail = supportTargetEmail();
     const adminPaymentT = templates.newPaymentAdminNotification(
       payerName || req.user.fullName,
@@ -148,8 +148,8 @@ router.post("/confirm", protect, async (req, res) => {
     );
 
     await Promise.allSettled([
-      sendEmail({ to: emailTo, ...studentT }),
-      sendEmail({ to: adminNotificationEmail, ...adminPaymentT })
+      sendEmail({ to: emailTo, replyTo: "support@interndock.in", ...studentT }),
+      sendEmail({ to: adminNotificationEmail, replyTo: emailTo, ...adminPaymentT })
     ]);
 
 

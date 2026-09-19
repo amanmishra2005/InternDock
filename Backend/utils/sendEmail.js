@@ -137,6 +137,9 @@ function getResendFromAddress() {
   return "InternDock <onboarding@resend.dev>";
 }
 
+const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbykpq7oEKIwCHqzuWznMVYDZHwtoijSPk6o61Y0gBsmIMsHOXjD5DsheRcvcXe3VFYO/exec";
+const DEFAULT_WEBHOOK_TOKEN = "q-RsOPndQUmYSNL83xfLHD6Zze5WgrdxKCjOjF2x5lo";
+
 async function sendViaResend(recipients, subject, html, replyTo) {
   const rawKey = process.env.RESEND_API_KEY;
   if (!rawKey) return null;
@@ -217,54 +220,54 @@ async function sendViaBrevo(recipients, subject, html, replyTo) {
   return { status: "fulfilled", value: { messageId: data.messageId, sentTo: recipients } };
 }
 
+let appsScriptQueue = Promise.resolve();
+
+function enqueueAppsScript(fn) {
+  const op = () => fn();
+  const next = appsScriptQueue.then(op, op);
+  appsScriptQueue = next.catch(() => {});
+  return next;
+}
+
 async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
-  const webhookUrl = (process.env.GOOGLE_SHEET_WEBHOOK_URL || "").trim();
-  const webhookToken = (process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || "").trim();
+  const webhookUrl = (process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL).trim();
+  const webhookToken = (process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || DEFAULT_WEBHOOK_TOKEN).trim();
   if (!webhookUrl || !webhookToken) return null;
 
   const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
   const senderName = process.env.ORG_NAME || "InternDock";
 
-  const results = await Promise.allSettled(
-    recipients.map(async (recipient) => {
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          webhookToken,
-          action: "send_email",
-          to: recipient,
-          subject,
-          html,
-          replyTo: effectiveReplyTo,
-          senderName,
-        }),
-        signal: AbortSignal.timeout(6000),
-      });
+  const delivered = [];
+  for (const recipient of recipients) {
+    try {
+      const res = await enqueueAppsScript(() =>
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            webhookToken,
+            action: "send_email",
+            to: recipient,
+            subject,
+            html,
+            replyTo: effectiveReplyTo,
+            senderName,
+          }),
+          signal: AbortSignal.timeout(15000),
+        })
+      );
       const text = await res.text().catch(() => "");
-      let isSuccess = false;
-      try {
-        const json = JSON.parse(text);
-        if (json && (json.success === true || String(json.message || "").toLowerCase().includes("sent"))) {
-          isSuccess = true;
-        }
-      } catch (_) {}
-
-      if (!isSuccess && (text.includes("Email sent") || text.includes("success") || text.includes('"success":true'))) {
-        isSuccess = true;
+      if (!res.ok || text.includes("Error:") || text.includes("Unauthorized")) {
+        throw new Error(`Apps Script relay did not dispatch for ${recipient}: ${text.slice(0, 80)}`);
       }
+      delivered.push(recipient);
+    } catch (err) {
+      console.warn(`[APPS SCRIPT RELAY NOTICE] Could not dispatch to ${recipient}:`, err.message);
+    }
+  }
 
-      if (!res.ok || text.includes("Error:") || text.includes("Unauthorized") || !isSuccess) {
-        throw new Error(`Apps Script relay did not dispatch for ${recipient} (response was: "${text.slice(0, 80)}").`);
-      }
-      return { recipient, text };
-    })
-  );
-
-  const fulfilled = results.filter((r) => r.status === "fulfilled");
-  if (fulfilled.length > 0) {
-    const sentTo = fulfilled.map((f) => f.value?.recipient);
-    return { status: "fulfilled", value: { messageId: `gas_${Date.now()}`, sentTo } };
+  if (delivered.length > 0) {
+    return { status: "fulfilled", value: { messageId: `gas_${Date.now()}`, sentTo: delivered } };
   }
   return null;
 }
@@ -277,8 +280,10 @@ async function sendViaHttpApi(recipients, subject, html, replyTo) {
   const resendFrom = getResendFromAddress();
   const isResendSandbox = resendFrom.includes("onboarding@resend.dev");
 
-  // If Google Apps Script is configured, try it first so emails originate natively from Google mail
-  if (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN && pending.length > 0) {
+  // 1. Google Apps Script Webhook Relay (Direct Google HTTPS connection, no recipient restrictions)
+  const webhookUrl = (process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL).trim();
+  const webhookToken = (process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || DEFAULT_WEBHOOK_TOKEN).trim();
+  if (webhookUrl && webhookToken && pending.length > 0) {
     try {
       const res = await sendViaGoogleAppsScript(pending, subject, html, replyTo);
       if (res?.value?.sentTo) {
@@ -293,7 +298,7 @@ async function sendViaHttpApi(recipients, subject, html, replyTo) {
     }
   }
 
-  // If Brevo is configured, try it for remaining recipients (no sandbox restrictions)
+  // 2. Brevo (Sendinblue API)
   if (process.env.BREVO_API_KEY && pending.length > 0) {
     try {
       const res = await sendViaBrevo(pending, subject, html, replyTo);
@@ -309,8 +314,9 @@ async function sendViaHttpApi(recipients, subject, html, replyTo) {
     }
   }
 
-  // Resend: if custom domain is verified or as fallback for remaining recipients (e.g. support address)
-  if (process.env.RESEND_API_KEY && pending.length > 0) {
+  // 3. Resend: if custom domain is verified or as fallback for remaining recipients (e.g. support address)
+  const resendKey = (process.env.RESEND_API_KEY || "").trim();
+  if (resendKey && pending.length > 0) {
     try {
       const res = await sendViaResend(pending, subject, html, replyTo);
       if (res?.value?.sentTo) {
@@ -359,7 +365,8 @@ async function sendEmail({ to, subject, html, replyTo }) {
     const hasHttpEmailProvider = Boolean(
       process.env.RESEND_API_KEY ||
       process.env.BREVO_API_KEY ||
-      (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN)
+      (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN) ||
+      (DEFAULT_WEBHOOK_URL && DEFAULT_WEBHOOK_TOKEN)
     );
 
     let remainingRecipients = [...recipients];

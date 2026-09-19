@@ -314,9 +314,11 @@ router.post("/final-report", protect, async (req, res) => {
 
     const isObjectId = mongoose.Types.ObjectId.isValid(applicationId);
     const query = isObjectId ? { _id: applicationId } : { applicationId };
-    const application = await Application.findOne(query).populate("domain", "name");
+    const application = await Application.findOne(query).populate("domain", "name").populate("student");
     if (!application) return res.status(404).json({ message: "Application not found" });
-    if (application.paymentStatus !== "Successful") {
+
+    const paymentStatusNormalized = String(application.paymentStatus || "").toLowerCase();
+    if (paymentStatusNormalized !== "successful" && paymentStatusNormalized !== "paid") {
       return res.status(400).json({ message: "Complete the program fee payment before submitting the final report" });
     }
 
@@ -327,20 +329,23 @@ router.post("/final-report", protect, async (req, res) => {
     application.finalReportSubmitted = true;
     await application.save();
 
+    const studentName = req.user.fullName || application.student?.fullName || "Student";
+    const studentEmail = req.user.email || application.student?.email;
+
     appendToSpreadsheet("final_reports", {
       reportId: report._id,
       applicationId: application.applicationId || applicationId,
-      studentName: req.user.fullName,
-      studentEmail: req.user.email,
+      studentName,
+      studentEmail,
       projectTitle: rest.title || "",
       githubUrl: rest.githubUrl || "",
     });
 
     const notifyTarget = supportTargetEmail();
-    const domainName = application.domain?.name || "Internship domain";
+    const domainName = application.domain?.name || "Internship Track";
     const finalReportTemplate = templates.finalReportSubmitted(
-      req.user.fullName,
-      req.user.email,
+      studentName,
+      studentEmail,
       application.applicationId || applicationId,
       domainName,
       rest.title || "",
@@ -349,19 +354,19 @@ router.post("/final-report", protect, async (req, res) => {
       rest.executiveSummary || ""
     );
     const studentReportConfirmation = templates.finalReportStudentConfirmation(
-      req.user.fullName,
+      studentName,
       application.applicationId || applicationId,
       domainName,
       rest.title || ""
     );
 
     const [supportResult, studentResult] = await Promise.allSettled([
-      sendEmail({ to: notifyTarget, replyTo: req.user.email, ...finalReportTemplate }),
-      sendEmail({ to: req.user.email, replyTo: "support.interndock@gmail.com", ...studentReportConfirmation }),
+      sendEmail({ to: notifyTarget, replyTo: studentEmail, ...finalReportTemplate }),
+      studentEmail ? sendEmail({ to: studentEmail, replyTo: "support.interndock@gmail.com", ...studentReportConfirmation }) : Promise.resolve(),
     ]);
 
     console.log(
-      `[FINAL CAPSTONE DISPATCH] Support (${notifyTarget}): ${supportResult.status === "fulfilled" ? supportResult.value?.status : supportResult.reason?.message} | Student (${req.user.email}): ${studentResult.status === "fulfilled" ? studentResult.value?.status : studentResult.reason?.message}`
+      `[FINAL CAPSTONE DISPATCH] Support (${notifyTarget}): ${supportResult.status === "fulfilled" ? supportResult.value?.status : supportResult.reason?.message} | Student (${studentEmail}): ${studentResult.status === "fulfilled" ? studentResult.value?.status : studentResult.reason?.message}`
     );
 
     res.status(201).json(report);

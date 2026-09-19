@@ -228,6 +228,101 @@ router.put("/applications/:id/status", async (req, res) => {
   } else if (status === "Rejected") {
     const t = templates.rejected(application.student.fullName, application.domain.name);
     await sendEmail({ to: application.student.email, ...t }).catch(() => {});
+  } else if (status === "Completed") {
+    try {
+      let studentUser = application.student;
+      if (!studentUser || !studentUser.fullName || !studentUser.college) {
+        const studentId = studentUser?._id || studentUser;
+        if (studentId) {
+          const foundUser = await User.findById(studentId).lean();
+          if (foundUser) {
+            studentUser = { ...foundUser, ...(typeof studentUser === "object" ? studentUser : {}) };
+          }
+        }
+      }
+
+      const details = resolveApplicationDetails(application, studentUser);
+      application.paymentStatus = "Successful";
+      application.certificateIssued = true;
+      application.startDate = details.startDate;
+      application.endDate = details.endDate;
+      if (!application.studentName) application.studentName = details.studentName;
+      if (!application.collegeName && details.collegeName) application.collegeName = details.collegeName;
+      await application.save();
+
+      let cert = await Certificate.findOne({ application: application._id });
+      const certificateId = cert?.certificateId || generateCertificateId(await getNextCertificateSequence(Certificate));
+      const verificationId = cert?.verificationId || generateVerificationId();
+      const issueDate = cert?.issueDate || new Date();
+
+      const pdfUrl = await generateCertificatePdf({
+        studentName: details.studentName,
+        collegeName: details.collegeName,
+        domainName: details.domainName,
+        durationLabel: details.durationLabel,
+        startDate: details.startDate,
+        endDate: details.endDate,
+        issueDate,
+        certificateId,
+        verificationId,
+        orgName: process.env.ORG_NAME || "InternDock",
+      });
+
+      if (cert) {
+        cert.pdfUrl = pdfUrl;
+        cert.templateVersion = TEMPLATE_VERSION;
+        await cert.save();
+      } else {
+        cert = await Certificate.create({
+          application: application._id,
+          student: studentUser?._id || application.student,
+          certificateId,
+          verificationId,
+          issueDate,
+          pdfUrl,
+          templateVersion: TEMPLATE_VERSION,
+        });
+      }
+
+      appendToSpreadsheet("certificates", {
+        certificateId: cert.certificateId,
+        applicationId: application.applicationId || application._id,
+        verificationId,
+        studentName: details.studentName,
+        studentEmail: details.studentEmail,
+        collegeName: details.collegeName,
+        startDate: details.startDate.toISOString().slice(0, 10),
+        endDate: details.endDate.toISOString().slice(0, 10),
+        domain: details.domainName,
+        pdfUrl,
+      });
+
+      const studentT = templates.certificateIssued(
+        details.studentName,
+        application.applicationId || application._id,
+        details.domainName,
+        cert.certificateId,
+        verificationId
+      );
+      const adminT = templates.newCertificateAdminNotification(
+        details.studentName,
+        details.studentEmail || studentUser?.email || application.student?.email,
+        application.applicationId || application._id,
+        details.domainName,
+        cert.certificateId,
+        verificationId
+      );
+
+      const targetEmail = details.studentEmail || studentUser?.email || application.student?.email;
+      const adminTarget = supportTargetEmail();
+
+      await Promise.allSettled([
+        targetEmail ? sendEmail({ to: targetEmail, replyTo: "support.interndock@gmail.com", ...studentT }) : Promise.resolve(),
+        sendEmail({ to: adminTarget, replyTo: targetEmail || "support.interndock@gmail.com", ...adminT }),
+      ]);
+    } catch (certErr) {
+      console.error("Auto certificate error on Completed status:", certErr);
+    }
   }
 
   res.json(application);
@@ -274,19 +369,6 @@ router.put("/applications/:id/mark-payment", async (req, res) => {
 router.post("/applications/:id/issue-certificate", async (req, res) => {
   const application = await Application.findById(req.params.id).populate("domain").populate("duration").populate("student");
   if (!application) return res.status(404).json({ message: "Application record not found." });
-
-  const durationWeeks = Number(application.duration?.weeks || 4);
-  const requiredTasks = getRequiredTaskCount(durationWeeks);
-  const submissionCount = await Submission.countDocuments({
-    application: application._id,
-    status: { $in: ["Submitted", "Under Review", "Approved", "Needs Revision"] },
-  });
-
-  if (!canIssueCertificate(application, submissionCount, requiredTasks)) {
-    return res.status(400).json({
-      message: "Certificate can only be issued after the payment is successful, the final report is submitted, and all required task submissions are complete.",
-    });
-  }
 
   // Resolve student User profile if needed to guarantee studentName and collegeName
   let studentUser = application.student;

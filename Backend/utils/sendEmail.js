@@ -303,15 +303,38 @@ async function sendEmail({ to, subject, html, replyTo }) {
       (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN)
     );
 
+    let remainingRecipients = [...recipients];
+    const deliveredRecipients = [];
+    const collectedMessageIds = [];
+
     if (hasHttpEmailProvider) {
       try {
-        const httpResult = await sendViaHttpApi(recipients, subject, html, replyTo);
+        const httpResult = await sendViaHttpApi(remainingRecipients, subject, html, replyTo);
         if (httpResult && httpResult.value) {
-          entry.status = "Sent";
-          entry.messageId = httpResult.value?.messageId || "";
-          entry.sentTo = httpResult.value?.sentTo || recipients;
-          console.log(`[HTTP EMAIL SUCCESS] Email delivered to ${Array.isArray(entry.sentTo) ? entry.sentTo.join(", ") : safeTo} via HTTP API | ID: ${entry.messageId}`);
-          return entry;
+          const sentTo = Array.isArray(httpResult.value.sentTo)
+            ? httpResult.value.sentTo
+            : remainingRecipients;
+          deliveredRecipients.push(...sentTo);
+          if (httpResult.value.messageId) {
+            collectedMessageIds.push(httpResult.value.messageId);
+          }
+
+          const sentLower = new Set(sentTo.map((s) => String(s).toLowerCase()));
+          remainingRecipients = remainingRecipients.filter(
+            (r) => !sentLower.has(String(r).toLowerCase())
+          );
+
+          if (remainingRecipients.length === 0) {
+            entry.status = "Sent";
+            entry.messageId = collectedMessageIds.join(", ");
+            entry.sentTo = deliveredRecipients;
+            console.log(`[HTTP EMAIL SUCCESS] Email delivered to ${deliveredRecipients.join(", ")} via HTTP API | ID: ${entry.messageId}`);
+            return entry;
+          }
+
+          console.warn(
+            `[HTTP EMAIL PARTIAL] HTTP delivered to ${sentTo.join(", ")}, but remaining [${remainingRecipients.join(", ")}] will fall back to SMTP.`
+          );
         }
       } catch (httpErr) {
         console.warn("[HTTP EMAIL FALLBACK] HTTP API delivery did not complete:", httpErr.message);
@@ -319,9 +342,9 @@ async function sendEmail({ to, subject, html, replyTo }) {
     }
 
     const transporter = getTransporter();
-    if (transporter) {
+    if (transporter && remainingRecipients.length > 0) {
       const from = getPreferredFromAddress();
-      let results = await sendRecipientBatch(transporter, from, recipients, subject, html, replyTo);
+      let results = await sendRecipientBatch(transporter, from, remainingRecipients, subject, html, replyTo);
       let failures = results.filter((result) => result.status === "rejected");
       let successes = results.filter((result) => result.status === "fulfilled");
 
@@ -340,7 +363,7 @@ async function sendEmail({ to, subject, html, replyTo }) {
           console.warn(`[SMTP FAILOVER] Primary dispatch on port ${currentPort} timed out. Retrying on port ${altPort} (secure: ${altSecure})...`);
 
           const altTransporter = createTransporter(altPort, altSecure);
-          const altResults = await sendRecipientBatch(altTransporter, from, recipients, subject, html, replyTo);
+          const altResults = await sendRecipientBatch(altTransporter, from, remainingRecipients, subject, html, replyTo);
           const altSuccesses = altResults.filter((result) => result.status === "fulfilled");
 
           if (altSuccesses.length > 0) {
@@ -353,15 +376,24 @@ async function sendEmail({ to, subject, html, replyTo }) {
       }
 
       if (successes.length > 0) {
+        const smtpMessageId = successes[0]?.value?.messageId || "";
+        if (smtpMessageId) collectedMessageIds.push(smtpMessageId);
+        deliveredRecipients.push(...remainingRecipients.filter((_, idx) => results[idx]?.status === "fulfilled"));
         entry.status = "Sent";
-        entry.messageId = successes[0]?.value?.messageId || "";
-        entry.sentTo = recipients;
-        console.log(`[EMAIL SUCCESS] Email sent to ${safeTo} | Subject: "${subject}" | MessageID: ${entry.messageId}`);
+        entry.messageId = collectedMessageIds.join(", ");
+        entry.sentTo = deliveredRecipients;
+        console.log(`[EMAIL SUCCESS] Email sent to ${entry.sentTo.join(", ")} | Subject: "${subject}" | MessageID: ${entry.messageId}`);
       } else {
-        entry.status = "Failed";
+        entry.status = deliveredRecipients.length > 0 ? "Sent" : "Failed";
+        entry.messageId = collectedMessageIds.join(", ");
+        entry.sentTo = deliveredRecipients;
         entry.error = failures.map((r) => r.reason?.message || String(r.reason)).join(" | ");
-        console.error(`[EMAIL ERROR] Failed to send email to ${safeTo}:`, entry.error);
+        console.error(`[EMAIL ERROR] Failed to send email to remaining recipients ${remainingRecipients.join(", ")}:`, entry.error);
       }
+    } else if (deliveredRecipients.length > 0) {
+      entry.status = "Sent";
+      entry.messageId = collectedMessageIds.join(", ");
+      entry.sentTo = deliveredRecipients;
     } else {
       entry.status = "Skipped";
       console.warn(`[EMAIL SKIPPED] SMTP not configured. Could not send email to ${safeTo}`);

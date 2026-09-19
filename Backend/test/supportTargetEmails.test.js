@@ -3,15 +3,15 @@ const assert = require('node:assert/strict');
 const { normalizeSupportEmails } = require('../utils/emailTargets');
 const { getPreferredFromAddress } = require('../utils/sendEmail');
 
-test('normalizeSupportEmails keeps support.interndock@gmail.com, filters out support@interndock.in, and trims extra commas', () => {
-  assert.equal(normalizeSupportEmails('support@interndock.in, support.interndock@gmail.com'), 'support.interndock@gmail.com');
-  assert.equal(normalizeSupportEmails(' support@interndock.in , , support.interndock@gmail.com '), 'support.interndock@gmail.com');
+test('normalizeSupportEmails keeps support.interndock@gmail.com and trims extra commas', () => {
+  assert.equal(normalizeSupportEmails('support.interndock@gmail.com'), 'support.interndock@gmail.com');
+  assert.equal(normalizeSupportEmails(' support.interndock@gmail.com , , support.interndock@gmail.com '), 'support.interndock@gmail.com');
   assert.equal(normalizeSupportEmails(''), 'support.interndock@gmail.com');
 });
 
-test('normalizeSupportEmails keeps specified email targets along with default support list while filtering support@interndock.in', () => {
+test('normalizeSupportEmails keeps specified email targets along with default support list', () => {
   assert.equal(
-    normalizeSupportEmails('amanmishra15.08.2005@gmail.com, support@interndock.in, support.interndock@gmail.com'),
+    normalizeSupportEmails('amanmishra15.08.2005@gmail.com, support.interndock@gmail.com'),
     'amanmishra15.08.2005@gmail.com, support.interndock@gmail.com'
   );
 });
@@ -20,7 +20,7 @@ test('getPreferredFromAddress prefers the authenticated SMTP mailbox when the co
   const previousEmailFrom = process.env.EMAIL_FROM;
   const previousSmtpUser = process.env.SMTP_USER;
 
-  process.env.EMAIL_FROM = 'InternDock <support@interndock.in>';
+  process.env.EMAIL_FROM = 'InternDock <unverified-alias@externaldomain.com>';
   process.env.SMTP_USER = 'support.interndock@gmail.com';
 
   assert.equal(

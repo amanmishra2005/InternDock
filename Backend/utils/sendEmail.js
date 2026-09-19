@@ -3,9 +3,7 @@ const nodemailer = require("nodemailer");
 
 const BLOCKED_RECIPIENTS = new Set();
 
-const CANONICAL_EMAIL_ALIASES = {
-  "support@interndock.in": "support.interndock@gmail.com",
-};
+const CANONICAL_EMAIL_ALIASES = {};
 
 function normalizeRecipientsForDispatch(to) {
   if (!to) return [];

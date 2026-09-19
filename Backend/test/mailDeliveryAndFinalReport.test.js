@@ -50,6 +50,5 @@ test('supportTargetEmail returns support inbox and normalizeRecipientsForDispatc
   const targets = supportTargetEmail();
   const recipients = normalizeRecipientsForDispatch(targets);
   assert.ok(recipients.includes('support.interndock@gmail.com'));
-  assert.ok(!recipients.includes('support@interndock.in'));
   assert.equal(recipients.length, 1);
 });

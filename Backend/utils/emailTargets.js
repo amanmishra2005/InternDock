@@ -3,8 +3,7 @@ function normalizeSupportEmails(value) {
   const raw = String(value || '')
     .split(/[\s,;]+/)
     .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean)
-    .filter((entry) => entry !== 'support@interndock.in');
+    .filter(Boolean);
 
   const seen = new Set();
   raw.forEach((entry) => {

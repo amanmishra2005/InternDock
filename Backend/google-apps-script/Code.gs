@@ -1,5 +1,5 @@
 const SPREADSHEET_ID = "PASTE_YOUR_GOOGLE_SHEET_ID_HERE";
-const EXPECTED_TOKEN = "PASTE_YOUR_GOOGLE_SHEET_WEBHOOK_TOKEN_HERE";
+const EXPECTED_TOKEN = "q-RsOPndQUmYSNL83xfLHD6Zze5WgrdxKCjOjF2x5lo";
 
 function doGet(e) {
   return ContentService.createTextOutput(
@@ -32,13 +32,21 @@ function doPost(e) {
         );
       }
 
-      MailApp.sendEmail({
-        to: recipient,
-        subject: subject,
-        htmlBody: htmlBody,
-        replyTo: replyTo,
-        name: senderName,
-      });
+      try {
+        MailApp.sendEmail({
+          to: recipient,
+          subject: subject,
+          htmlBody: htmlBody,
+          replyTo: replyTo,
+          name: senderName,
+        });
+      } catch (mailErr) {
+        GmailApp.sendEmail(recipient, subject, "", {
+          htmlBody: htmlBody,
+          replyTo: replyTo,
+          name: senderName,
+        });
+      }
 
       return ContentService.createTextOutput(
         JSON.stringify({ success: true, message: "Email sent to " + recipient }),

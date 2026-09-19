@@ -7,7 +7,11 @@ function normalizeSupportEmails(value) {
 
   const seen = new Set();
   raw.forEach((entry) => {
-    seen.add(entry);
+    if (entry === 'support@interndock.in' || entry.endsWith('@interndock.in')) {
+      seen.add('support.interndock@gmail.com');
+    } else {
+      seen.add(entry);
+    }
   });
 
   defaultTargets.forEach((target) => seen.add(target));

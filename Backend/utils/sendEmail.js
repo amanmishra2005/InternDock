@@ -3,7 +3,12 @@ const nodemailer = require("nodemailer");
 
 const BLOCKED_RECIPIENTS = new Set();
 
-const CANONICAL_EMAIL_ALIASES = {};
+const CANONICAL_EMAIL_ALIASES = {
+  "support@interndock.in": "support.interndock@gmail.com",
+  "admin@interndock.in": "support.interndock@gmail.com",
+  "contact@interndock.in": "support.interndock@gmail.com",
+  "help@interndock.in": "support.interndock@gmail.com",
+};
 
 function normalizeRecipientsForDispatch(to) {
   if (!to) return [];
@@ -83,13 +88,16 @@ let cachedTransporter = null;
 
 function createTransporter(port, secure) {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  const connTimeout = Math.min(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 2500, 3000);
+  const sockTimeout = Math.min(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 3500, 4000);
+
   return nodemailer.createTransport({
     host,
     port,
     secure,
     requireTLS: !secure,
-    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 4000,
-    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 6000,
+    connectionTimeout: connTimeout,
+    socketTimeout: sockTimeout,
     tls: { rejectUnauthorized: false },
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
@@ -233,8 +241,20 @@ async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
         }),
       });
       const text = await res.text().catch(() => "");
-      if (!res.ok || text.includes("Error:") || text.includes("Unauthorized") || !text.includes("Email sent")) {
-        throw new Error(`Apps Script did not send email for ${recipient} (response was: "${text.slice(0, 80)}"). Make sure Code.gs is updated and deployed as 'New version' in Google Apps Script.`);
+      let isSuccess = false;
+      try {
+        const json = JSON.parse(text);
+        if (json && (json.success === true || String(json.message || "").toLowerCase().includes("sent"))) {
+          isSuccess = true;
+        }
+      } catch (_) {}
+
+      if (!isSuccess && (text.includes("Email sent") || text.includes("success") || text.includes('"success":true'))) {
+        isSuccess = true;
+      }
+
+      if (!res.ok || text.includes("Error:") || text.includes("Unauthorized") || !isSuccess) {
+        throw new Error(`Apps Script relay did not dispatch for ${recipient} (response was: "${text.slice(0, 80)}").`);
       }
       return { recipient, text };
     })
@@ -249,34 +269,66 @@ async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
 }
 
 async function sendViaHttpApi(recipients, subject, html, replyTo) {
+  let pending = [...recipients];
+  const delivered = [];
+  const messageIds = [];
+
   // 1. Resend (Fast HTTPS transactional delivery)
-  if (process.env.RESEND_API_KEY) {
+  if (process.env.RESEND_API_KEY && pending.length > 0) {
     try {
-      const res = await sendViaResend(recipients, subject, html, replyTo);
-      if (res) return res;
+      const res = await sendViaResend(pending, subject, html, replyTo);
+      if (res?.value?.sentTo) {
+        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        delivered.push(...sent);
+        if (res.value.messageId) messageIds.push(res.value.messageId);
+        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
+        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+      }
     } catch (err) {
       console.warn("[HTTP RESEND NOTICE]", err.message);
     }
   }
 
-  // 2. Brevo (Sendinblue API)
-  if (process.env.BREVO_API_KEY) {
+  // 2. Brevo (Sendinblue API - allows sending to any recipient without sandbox restrictions)
+  if (process.env.BREVO_API_KEY && pending.length > 0) {
     try {
-      const res = await sendViaBrevo(recipients, subject, html, replyTo);
-      if (res) return res;
+      const res = await sendViaBrevo(pending, subject, html, replyTo);
+      if (res?.value?.sentTo) {
+        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        delivered.push(...sent);
+        if (res.value.messageId) messageIds.push(res.value.messageId);
+        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
+        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+      }
     } catch (err) {
       console.warn("[HTTP BREVO NOTICE]", err.message);
     }
   }
 
-  // 3. Google Apps Script Webhook Relay
-  if (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN) {
+  // 3. Google Apps Script Webhook Relay (Relays through Google's native mail infrastructure)
+  if (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN && pending.length > 0) {
     try {
-      const res = await sendViaGoogleAppsScript(recipients, subject, html, replyTo);
-      if (res) return res;
+      const res = await sendViaGoogleAppsScript(pending, subject, html, replyTo);
+      if (res?.value?.sentTo) {
+        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        delivered.push(...sent);
+        if (res.value.messageId) messageIds.push(res.value.messageId);
+        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
+        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+      }
     } catch (err) {
       console.warn("[HTTP GOOGLE APPS SCRIPT NOTICE]", err.message);
     }
+  }
+
+  if (delivered.length > 0) {
+    return {
+      status: "fulfilled",
+      value: {
+        messageId: messageIds.join(", "),
+        sentTo: delivered,
+      },
+    };
   }
 
   return null;
@@ -626,9 +678,65 @@ const templates = {
       </div>
     `,
   }),
-  certificateIssued: (name) => ({
-    subject: "Your internship certificate is ready",
-    html: `<p>Hi ${escapeHtml(name)},</p><p>Congratulations on completing your internship! Your certificate is ready to download from your dashboard.</p>`,
+  certificateIssued: (name, applicationId, domainName, certificateId, verificationId) => {
+    const certId = certificateId || "Verified";
+    const domain = domainName || "Internship Track";
+    const appId = applicationId || "";
+    const verId = verificationId || "";
+
+    return {
+      subject: `🎓 Certificate Issued: ${escapeHtml(domain)} - InternDock (${escapeHtml(certId)})`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+          <h2 style="color: #0f172a; margin-top: 0;">🎉 Congratulations! Your Internship Certificate is Ready</h2>
+          <p style="color: #334155; font-size: 15px;">Dear ${escapeHtml(name)},</p>
+          <p style="color: #334155; font-size: 15px; line-height: 1.6;">We are pleased to inform you that you have successfully completed your internship track in <strong>${escapeHtml(domain)}</strong>. Your official Certificate of Completion &amp; Merit has been generated and issued.</p>
+          
+          <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #16a34a; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #334155;">
+            <p style="margin: 4px 0;"><strong>Certificate ID:</strong> ${escapeHtml(certId)}</p>
+            ${verId ? `<p style="margin: 4px 0;"><strong>Verification ID:</strong> ${escapeHtml(verId)}</p>` : ""}
+            ${appId ? `<p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(appId)}</p>` : ""}
+            <p style="margin: 4px 0;"><strong>Domain Track:</strong> ${escapeHtml(domain)}</p>
+            <p style="margin: 4px 0;"><strong>Status:</strong> Issued &amp; Verified</p>
+          </div>
+
+          <h3 style="color: #0f172a; font-size: 16px; margin-bottom: 8px;">Access Your Certificate:</h3>
+          <ul style="color: #475569; font-size: 14px; line-height: 1.6; padding-left: 20px; margin-top: 0;">
+            <li>Download your high-resolution verified PDF from your <a href="https://www.interndock.in/dashboard" style="color: #0284c7; font-weight: bold; text-decoration: none;">Student Dashboard</a>.</li>
+            <li>Your credential is permanently verifiable by recruiters and employers online at <a href="https://www.interndock.in/verify" style="color: #0284c7; text-decoration: none;">interndock.in/verify</a>.</li>
+          </ul>
+
+          <p style="margin-top: 20px;">
+            <a href="https://www.interndock.in/dashboard" style="display: inline-block; background: #0284c7; color: #ffffff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">View &amp; Download Certificate</a>
+          </p>
+
+          <p style="color: #334155; font-size: 14px; margin-top: 24px;">Thank you for your outstanding performance and dedication throughout the internship. We wish you immense success in your tech career!</p>
+          <p style="color: #64748b; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+            Best regards,<br />
+            <strong>InternDock Certification &amp; Academic Board</strong><br />
+            <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none;">www.interndock.in</a>
+          </p>
+        </div>
+      `,
+    };
+  },
+  newCertificateAdminNotification: (studentName, studentEmail, applicationId, domainName, certificateId, verificationId) => ({
+    subject: `[Certificate Issued] ${escapeHtml(studentName)} - ${escapeHtml(certificateId || applicationId)} (${escapeHtml(domainName || "Track")})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <h2 style="color: #0f172a; margin-top: 0;">🎓 Certificate Issued to Candidate</h2>
+        <p style="color: #334155; font-size: 15px;">An official Certificate of Completion &amp; Merit has been issued for the following candidate:</p>
+        <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #16a34a; border-radius: 4px; margin: 16px 0; font-size: 14px; color: #334155;">
+          <p style="margin: 4px 0;"><strong>Student Name:</strong> ${escapeHtml(studentName)}</p>
+          ${studentEmail ? `<p style="margin: 4px 0;"><strong>Student Email:</strong> ${escapeHtml(studentEmail)}</p>` : ""}
+          <p style="margin: 4px 0;"><strong>Certificate ID:</strong> ${escapeHtml(certificateId || "N/A")}</p>
+          ${verificationId ? `<p style="margin: 4px 0;"><strong>Verification ID:</strong> ${escapeHtml(verificationId)}</p>` : ""}
+          ${applicationId ? `<p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>` : ""}
+          <p style="margin: 4px 0;"><strong>Domain Track:</strong> ${escapeHtml(domainName || "Standard Track")}</p>
+        </div>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support.interndock@gmail.com | InternDock Certification System</p>
+      </div>
+    `,
   }),
 };
 

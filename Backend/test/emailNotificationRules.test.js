@@ -66,3 +66,31 @@ test("final capstone project templates produce valid confirmation emails for stu
   assert.ok(adminEmail.html.includes("https://github.com/charlie/fraud-detect"));
   assert.ok(adminEmail.html.includes("support.interndock@gmail.com"));
 });
+
+test("certificate issuance templates produce valid emails for student and admin", () => {
+  const studentEmail = templates.certificateIssued(
+    "Diana Test",
+    "IND-2026-6666",
+    "Cybersecurity Track",
+    "CERT-2026-1234",
+    "VERIFY-9876"
+  );
+  assert.ok(studentEmail.subject.includes("Certificate Issued"));
+  assert.ok(studentEmail.subject.includes("CERT-2026-1234"));
+  assert.ok(studentEmail.html.includes("Diana Test"));
+  assert.ok(studentEmail.html.includes("Cybersecurity Track"));
+  assert.ok(studentEmail.html.includes("CERT-2026-1234"));
+  assert.ok(studentEmail.html.includes("interndock.in/verify"));
+
+  const adminEmail = templates.newCertificateAdminNotification(
+    "Diana Test",
+    "diana@example.com",
+    "IND-2026-6666",
+    "Cybersecurity Track",
+    "CERT-2026-1234",
+    "VERIFY-9876"
+  );
+  assert.ok(adminEmail.subject.includes("[Certificate Issued]"));
+  assert.ok(adminEmail.html.includes("CERT-2026-1234"));
+  assert.ok(adminEmail.html.includes("support.interndock@gmail.com"));
+});

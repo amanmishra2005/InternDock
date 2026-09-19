@@ -17,6 +17,7 @@ const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
 const { getSpreadsheetPath, appendToSpreadsheet, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
 const { canIssueCertificate, getRequiredTaskCount } = require("../utils/certificateEligibility");
 const { resolveApplicationDetails } = require("../utils/documentVerification");
+const { supportTargetEmail } = require("../utils/emailTargets");
 const Submission = require("../models/Submission");
 const { clearCache } = require("../utils/cache");
 
@@ -359,11 +360,29 @@ router.post("/applications/:id/issue-certificate", async (req, res) => {
     pdfUrl,
   });
 
-  const t = templates.certificateIssued(details.studentName);
+  const studentT = templates.certificateIssued(
+    details.studentName,
+    application.applicationId || application._id,
+    details.domainName,
+    cert.certificateId,
+    verificationId
+  );
+  const adminT = templates.newCertificateAdminNotification(
+    details.studentName,
+    details.studentEmail || studentUser?.email || application.student?.email,
+    application.applicationId || application._id,
+    details.domainName,
+    cert.certificateId,
+    verificationId
+  );
+
   const targetEmail = details.studentEmail || studentUser?.email || application.student?.email;
-  if (targetEmail) {
-    await sendEmail({ to: targetEmail, ...t }).catch(() => {});
-  }
+  const adminTarget = supportTargetEmail();
+
+  await Promise.allSettled([
+    targetEmail ? sendEmail({ to: targetEmail, replyTo: "support.interndock@gmail.com", ...studentT }) : Promise.resolve(),
+    sendEmail({ to: adminTarget, replyTo: targetEmail || "support.interndock@gmail.com", ...adminT }),
+  ]).catch(() => {});
 
   res.json({ success: true, message: "Certificate issued successfully!", application, certificate: cert });
 });

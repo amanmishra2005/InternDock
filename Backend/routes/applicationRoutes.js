@@ -180,10 +180,14 @@ router.post("/", protect, async (req, res) => {
       parsedEndDate.toISOString().slice(0, 10)
     );
 
-    await Promise.allSettled([
+    const [studentRes, adminRes] = await Promise.allSettled([
       sendEmail({ to: req.user.email, replyTo: "support.interndock@gmail.com", ...studentT }),
       sendEmail({ to: adminNotificationEmail, replyTo: req.user.email, ...adminT })
     ]);
+
+    console.log(
+      `[APPLICATION DISPATCH] Student (${req.user.email}): ${studentRes.status === "fulfilled" ? studentRes.value?.status : studentRes.reason?.message} | Support (${adminNotificationEmail}): ${adminRes.status === "fulfilled" ? adminRes.value?.status : adminRes.reason?.message}`
+    );
 
     return res.status(201).json(application);
 

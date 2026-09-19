@@ -355,10 +355,14 @@ router.post("/final-report", protect, async (req, res) => {
       rest.title || ""
     );
 
-    await Promise.allSettled([
+    const [supportResult, studentResult] = await Promise.allSettled([
       sendEmail({ to: notifyTarget, replyTo: req.user.email, ...finalReportTemplate }),
       sendEmail({ to: req.user.email, replyTo: "support.interndock@gmail.com", ...studentReportConfirmation }),
     ]);
+
+    console.log(
+      `[FINAL CAPSTONE DISPATCH] Support (${notifyTarget}): ${supportResult.status === "fulfilled" ? supportResult.value?.status : supportResult.reason?.message} | Student (${req.user.email}): ${studentResult.status === "fulfilled" ? studentResult.value?.status : studentResult.reason?.message}`
+    );
 
     res.status(201).json(report);
   } catch (err) {

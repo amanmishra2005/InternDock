@@ -379,10 +379,14 @@ router.post("/applications/:id/issue-certificate", async (req, res) => {
   const targetEmail = details.studentEmail || studentUser?.email || application.student?.email;
   const adminTarget = supportTargetEmail();
 
-  await Promise.allSettled([
+  const [studentRes, adminRes] = await Promise.allSettled([
     targetEmail ? sendEmail({ to: targetEmail, replyTo: "support.interndock@gmail.com", ...studentT }) : Promise.resolve(),
     sendEmail({ to: adminTarget, replyTo: targetEmail || "support.interndock@gmail.com", ...adminT }),
-  ]).catch(() => {});
+  ]);
+
+  console.log(
+    `[CERTIFICATE DISPATCH] Student (${targetEmail}): ${studentRes.status === "fulfilled" ? studentRes.value?.status : studentRes.reason?.message} | Support (${adminTarget}): ${adminRes.status === "fulfilled" ? adminRes.value?.status : adminRes.reason?.message}`
+  );
 
   res.json({ success: true, message: "Certificate issued successfully!", application, certificate: cert });
 });

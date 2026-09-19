@@ -239,6 +239,7 @@ async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
           replyTo: effectiveReplyTo,
           senderName,
         }),
+        signal: AbortSignal.timeout(6000),
       });
       const text = await res.text().catch(() => "");
       let isSuccess = false;
@@ -273,10 +274,13 @@ async function sendViaHttpApi(recipients, subject, html, replyTo) {
   const delivered = [];
   const messageIds = [];
 
-  // 1. Resend (Fast HTTPS transactional delivery)
-  if (process.env.RESEND_API_KEY && pending.length > 0) {
+  const resendFrom = getResendFromAddress();
+  const isResendSandbox = resendFrom.includes("onboarding@resend.dev");
+
+  // If Google Apps Script is configured, try it first so emails originate natively from Google mail
+  if (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN && pending.length > 0) {
     try {
-      const res = await sendViaResend(pending, subject, html, replyTo);
+      const res = await sendViaGoogleAppsScript(pending, subject, html, replyTo);
       if (res?.value?.sentTo) {
         const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
         delivered.push(...sent);
@@ -285,11 +289,11 @@ async function sendViaHttpApi(recipients, subject, html, replyTo) {
         pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
       }
     } catch (err) {
-      console.warn("[HTTP RESEND NOTICE]", err.message);
+      console.warn("[HTTP GOOGLE APPS SCRIPT NOTICE]", err.message);
     }
   }
 
-  // 2. Brevo (Sendinblue API - allows sending to any recipient without sandbox restrictions)
+  // If Brevo is configured, try it for remaining recipients (no sandbox restrictions)
   if (process.env.BREVO_API_KEY && pending.length > 0) {
     try {
       const res = await sendViaBrevo(pending, subject, html, replyTo);
@@ -305,19 +309,22 @@ async function sendViaHttpApi(recipients, subject, html, replyTo) {
     }
   }
 
-  // 3. Google Apps Script Webhook Relay (Relays through Google's native mail infrastructure)
-  if (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN && pending.length > 0) {
+  // Resend: if custom domain is verified or as fallback for remaining recipients (e.g. support address)
+  if (process.env.RESEND_API_KEY && pending.length > 0) {
     try {
-      const res = await sendViaGoogleAppsScript(pending, subject, html, replyTo);
+      const res = await sendViaResend(pending, subject, html, replyTo);
       if (res?.value?.sentTo) {
         const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
         delivered.push(...sent);
         if (res.value.messageId) messageIds.push(res.value.messageId);
         const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
         pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+        if (isResendSandbox) {
+          console.log("[RESEND SANDBOX NOTICE] Delivered via onboarding@resend.dev. Check Spam/Junk folder in Gmail if not in primary inbox.");
+        }
       }
     } catch (err) {
-      console.warn("[HTTP GOOGLE APPS SCRIPT NOTICE]", err.message);
+      console.warn("[HTTP RESEND NOTICE]", err.message);
     }
   }
 

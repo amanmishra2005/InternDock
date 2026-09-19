@@ -76,8 +76,8 @@ export default function RefundPolicy() {
         {
           icon: Mail,
           label: "Official Support Email",
-          val: "support@interndock.in",
-          link: "mailto:support@interndock.in",
+          val: "InternDock",
+          link: "mailto:support.interndock@gmail.com",
         },
         {
           icon: MapPin,
@@ -248,7 +248,9 @@ export default function RefundPolicy() {
                                 {cb.link ? (
                                   <a
                                     href={cb.link}
-                                    className="contact-box-link"
+                                    className={cb.link.startsWith("mailto:") ? "email-tag-btn" : "contact-box-link"}
+                                    title={cb.link.startsWith("mailto:") ? "Click to email InternDock" : undefined}
+                                    style={cb.link.startsWith("mailto:") ? { marginTop: "0.25rem" } : undefined}
                                   >
                                     {cb.val}
                                   </a>
@@ -314,19 +316,21 @@ export default function RefundPolicy() {
                 </p>
                 <div className="help-contact-stack">
                   <a
-                    href="mailto:support@interndock.in"
+                    href="mailto:support.interndock@gmail.com"
                     className="contact-link-row"
+                    title="Click to email InternDock"
                   >
                     <Mail size={16} />
-                    <span>support@interndock.in</span>
+                    <span className="email-tag-btn">InternDock</span>
                   </a>
                 </div>
                 <a
-                  href="mailto:support@interndock.in"
+                  href="mailto:support.interndock@gmail.com"
                   className="btn btn-primary btn-glow full-width"
                   style={{ marginTop: "1rem" }}
+                  title="Click to email InternDock"
                 >
-                  <span>Email Support Desk</span>
+                  <span>InternDock</span>
                   <ChevronRight size={16} />
                 </a>
               </div>

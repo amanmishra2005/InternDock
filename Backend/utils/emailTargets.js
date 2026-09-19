@@ -1,9 +1,10 @@
 function normalizeSupportEmails(value) {
-  const defaultTargets = ['support@interndock.in', 'support.interndock@gmail.com'];
+  const defaultTargets = ['support.interndock@gmail.com'];
   const raw = String(value || '')
     .split(/[\s,;]+/)
     .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((entry) => entry !== 'support@interndock.in');
 
   const seen = new Set();
   raw.forEach((entry) => {
@@ -16,7 +17,7 @@ function normalizeSupportEmails(value) {
 }
 
 function supportTargetEmail() {
-  const configured = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || 'support@interndock.in, support.interndock@gmail.com';
+  const configured = process.env.NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || 'support.interndock@gmail.com';
   return normalizeSupportEmails(configured);
 }
 

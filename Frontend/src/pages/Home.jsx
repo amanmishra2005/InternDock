@@ -71,7 +71,7 @@ export default function Home() {
     } catch (err) {
       console.error("Error submitting contact form:", err);
       alert(
-        "Could not send message. Please try again or email support@interndock.in directly.",
+        "Could not send message. Please try again or click the InternDock button directly.",
       );
     } finally {
       setContactSubmitting(false);
@@ -525,12 +525,13 @@ export default function Home() {
                   <Mail className="c-icon" size={20} />
                   <div>
                     <strong>Email Support</strong>
-                    <p>
+                    <p style={{ marginTop: "0.35rem" }}>
                       <a
-                        href="mailto:support@interndock.in"
-                        style={{ color: "inherit", textDecoration: "none" }}
+                        href="mailto:support.interndock@gmail.com"
+                        className="email-tag-btn"
+                        title="Click to email InternDock"
                       >
-                        support@interndock.in
+                        InternDock
                       </a>
                     </p>
                   </div>
@@ -557,10 +558,17 @@ export default function Home() {
                     color="#059669"
                     style={{ marginBottom: "1rem" }}
                   />
-                  <h3>Message Dispatched to support@interndock.in!</h3>
+                  <h3>Message Dispatched to InternDock!</h3>
                   <p>
                     Thank you for reaching out to InternDock. Your inquiry has
-                    been sent directly to <strong>support@interndock.in</strong>{" "}
+                    been sent directly to{" "}
+                    <a
+                      href="mailto:support.interndock@gmail.com"
+                      className="email-tag-btn"
+                      title="Click to email InternDock"
+                    >
+                      InternDock
+                    </a>{" "}
                     and a confirmation has been emailed to you.
                   </p>
                   <button

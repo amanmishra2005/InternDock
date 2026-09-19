@@ -181,7 +181,7 @@ router.post("/", protect, async (req, res) => {
     );
 
     await Promise.allSettled([
-      sendEmail({ to: req.user.email, replyTo: "support@interndock.in", ...studentT }),
+      sendEmail({ to: req.user.email, replyTo: "support.interndock@gmail.com", ...studentT }),
       sendEmail({ to: adminNotificationEmail, replyTo: req.user.email, ...adminT })
     ]);
 

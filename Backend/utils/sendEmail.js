@@ -3,7 +3,9 @@ const nodemailer = require("nodemailer");
 
 const BLOCKED_RECIPIENTS = new Set();
 
-const CANONICAL_EMAIL_ALIASES = {};
+const CANONICAL_EMAIL_ALIASES = {
+  "support@interndock.in": "support.interndock@gmail.com",
+};
 
 function normalizeRecipientsForDispatch(to) {
   if (!to) return [];
@@ -29,10 +31,10 @@ async function sendRecipientBatch(transporter, from, recipients, subject, html, 
     return [];
   }
 
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
 
   // Dispatch to each recipient individually to guarantee independent delivery
-  // to both primary support (support@interndock.in) and backup/student inboxes.
+  // to both primary support (support.interndock@gmail.com) and backup/student inboxes.
   const results = await Promise.allSettled(
     recipients.map(async (recipient) => {
       const mailOptions = {
@@ -136,7 +138,7 @@ async function sendViaResend(recipients, subject, html, replyTo) {
   if (!resendApiKey) return null;
 
   const from = getResendFromAddress();
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
 
   // Dispatch individually so sandbox recipient limits don't block delivery to verified inboxes
   const results = await Promise.allSettled(
@@ -184,7 +186,7 @@ async function sendViaBrevo(recipients, subject, html, replyTo) {
   const brevoApiKey = String(rawKey).replace(/^"|"$/g, "").trim();
   if (!brevoApiKey) return null;
 
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
   const senderEmail = process.env.BREVO_SENDER_EMAIL || "support.interndock@gmail.com";
   const senderName = process.env.ORG_NAME || "InternDock";
 
@@ -214,7 +216,7 @@ async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
   const webhookToken = (process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || "").trim();
   if (!webhookUrl || !webhookToken) return null;
 
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support@interndock.in";
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
   const senderName = process.env.ORG_NAME || "InternDock";
 
   const results = await Promise.allSettled(
@@ -444,7 +446,7 @@ const templates = {
           <li>Complete your program verification to unlock project repositories, guided milestones, and mentor evaluations.</li>
         </ol>
 
-        <p style="color: #334155; font-size: 14px; margin-top: 24px;">If you have any questions or require guidance, feel free to reply to this email or contact us anytime at <a href="mailto:support@interndock.in" style="color: #0284c7;">support@interndock.in</a>.</p>
+        <p style="color: #334155; font-size: 14px; margin-top: 24px;">If you have any questions or require guidance, feel free to reply to this email or contact us anytime at <a href="mailto:support.interndock@gmail.com" style="color: #0284c7; font-weight: bold;">InternDock</a>.</p>
         <p style="color: #64748b; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
           Best regards,<br />
           <strong>InternDock Admissions &amp; Academic Cohort Team</strong><br />
@@ -468,7 +470,7 @@ const templates = {
           <p style="margin: 4px 0;"><strong>Start Date:</strong> ${escapeHtml(startDate || "Immediate")}</p>
           <p style="margin: 4px 0;"><strong>End Date:</strong> ${escapeHtml(endDate || "Standard")}</p>
         </div>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in & support.interndock@gmail.com | InternDock Admissions & Support System</p>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support.interndock@gmail.com | InternDock Admissions & Support System</p>
       </div>
     `,
   }),
@@ -482,7 +484,7 @@ const templates = {
         <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #4f46e5; border-radius: 4px; margin: 16px 0;">
           <p style="margin: 0; color: #334155; white-space: pre-wrap; font-size: 15px;">${escapeHtml(message)}</p>
         </div>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Recipient: support@interndock.in & support.interndock@gmail.com | Sent via www.interndock.in contact portal</p>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Recipient: support.interndock@gmail.com | Sent via www.interndock.in contact portal</p>
       </div>
     `,
   }),
@@ -499,7 +501,7 @@ const templates = {
           <p style="margin: 4px 0;"><strong>UTR / Reference No:</strong> ${escapeHtml(utrNumber || "N/A")}</p>
           <p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>
         </div>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in & support.interndock@gmail.com | InternDock Finance & Accounts</p>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support.interndock@gmail.com | InternDock Finance & Accounts</p>
       </div>
     `,
   }),
@@ -573,7 +575,7 @@ const templates = {
             ${hostedUrl ? `<p style="margin: 4px 0;"><strong>Live Demo:</strong> <a href="${escapeHtml(hostedUrl)}" target="_blank" style="color: #0284c7; word-break: break-all;">${escapeHtml(hostedUrl)}</a></p>` : ""}
             ${summary ? `<p style="margin: 8px 0 4px 0;"><strong>Executive Summary:</strong></p><p style="margin: 0; color: #475569; font-size: 13px; white-space: pre-wrap;">${escapeHtml(summary)}</p>` : ""}
           </div>
-          <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in & support.interndock@gmail.com | InternDock Evaluation Team</p>
+          <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support.interndock@gmail.com | InternDock Evaluation Team</p>
         </div>
       `,
     };
@@ -600,7 +602,7 @@ const templates = {
           <li>Your credential will also be permanently verifiable online at <a href="https://www.interndock.in/verify" style="color: #0284c7; text-decoration: none;">interndock.in/verify</a> for recruiter background checks.</li>
         </ul>
 
-        <p style="color: #334155; font-size: 14px; margin-top: 24px;">Need assistance? Contact our mentor support team at <a href="mailto:support@interndock.in" style="color: #0284c7;">support@interndock.in</a>.</p>
+        <p style="color: #334155; font-size: 14px; margin-top: 24px;">Need assistance? Contact our mentor support team at <a href="mailto:support.interndock@gmail.com" style="color: #0284c7; font-weight: bold;">InternDock</a>.</p>
         <p style="color: #64748b; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
           Best regards,<br />
           <strong>InternDock Evaluation &amp; Mentorship Board</strong><br />
@@ -622,7 +624,7 @@ const templates = {
           <p style="margin: 4px 0;"><strong>Task Title:</strong> ${escapeHtml(assignmentTitle)}</p>
           ${githubUrl ? `<p style="margin: 4px 0;"><strong>GitHub URL:</strong> <a href="${escapeHtml(githubUrl)}" target="_blank" style="color: #4f46e5; word-break: break-all;">${escapeHtml(githubUrl)}</a></p>` : ""}
         </div>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support@interndock.in & support.interndock@gmail.com | InternDock Evaluation Team</p>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support.interndock@gmail.com | InternDock Evaluation Team</p>
       </div>
     `,
   }),

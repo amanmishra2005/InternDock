@@ -8,7 +8,7 @@ test("application templates produce valid confirmation emails for student and ad
   assert.ok(studentEmail.subject.includes("IND-2026-9999"));
   assert.ok(studentEmail.html.includes("Alice Test"));
   assert.ok(studentEmail.html.includes("Full Stack Web Development"));
-  assert.ok(studentEmail.html.includes("support@interndock.in"));
+  assert.ok(studentEmail.html.includes("support.interndock@gmail.com"));
 
   const adminEmail = templates.newApplicationAdminNotification(
     "Alice Test",
@@ -20,7 +20,7 @@ test("application templates produce valid confirmation emails for student and ad
     "2026-10-29"
   );
   assert.ok(adminEmail.subject.includes("[New Student Application]"));
-  assert.ok(adminEmail.html.includes("support@interndock.in"));
+  assert.ok(!adminEmail.html.includes("support@interndock.in"));
   assert.ok(adminEmail.html.includes("support.interndock@gmail.com"));
 });
 
@@ -65,6 +65,6 @@ test("final capstone project templates produce valid confirmation emails for stu
   );
   assert.ok(adminEmail.subject.includes("[Final Capstone Submission]"));
   assert.ok(adminEmail.html.includes("https://github.com/charlie/fraud-detect"));
-  assert.ok(adminEmail.html.includes("support@interndock.in"));
+  assert.ok(!adminEmail.html.includes("support@interndock.in"));
   assert.ok(adminEmail.html.includes("support.interndock@gmail.com"));
 });

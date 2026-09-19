@@ -394,7 +394,7 @@ function probePort(host, port, timeoutMs = 3000) {
 
 // POST /api/admin/test-email - Send a test email to verify SMTP delivery
 router.post("/test-email", async (req, res) => {
-  const target = req.body.to || "support@interndock.in";
+  const target = req.body.to || "support.interndock@gmail.com";
   try {
     const host = process.env.SMTP_HOST || "smtp.gmail.com";
     const [p587, p465] = await Promise.all([
@@ -406,7 +406,7 @@ router.post("/test-email", async (req, res) => {
       to: target,
       subject: `[InternDock System Test] SMTP Verification (${new Date().toISOString()})`,
       html: `<div style="font-family: Arial, sans-serif; padding: 16px;"><h3>SMTP Test Successful</h3><p>Your email service is operating normally over IPv4.</p></div>`,
-      replyTo: "support@interndock.in",
+      replyTo: "support.interndock@gmail.com",
     });
     return res.json({ success: result.status === "Sent", result, portProbes: { 587: p587, 465: p465 } });
   } catch (err) {

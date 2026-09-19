@@ -4,7 +4,7 @@ const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
 const { supportTargetEmail } = require("../utils/emailTargets");
 
-// POST /api/contact - Submit contact form query to support@interndock.in
+// POST /api/contact - Submit contact form query to support.interndock@gmail.com
 router.post("/", async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
@@ -48,7 +48,7 @@ router.post("/", async (req, res) => {
 
     await Promise.allSettled([
       sendEmail({ to: supportTarget, ...notifyTemplate, replyTo: email }),
-      sendEmail({ to: email, subject: "We received your message - InternDock Support", html: autoReplyHtml, replyTo: "support@interndock.in" })
+      sendEmail({ to: email, subject: "We received your message - InternDock Support", html: autoReplyHtml, replyTo: "support.interndock@gmail.com" })
     ]);
 
     return res.json({

@@ -6,7 +6,7 @@ const contactQuerySchema = new mongoose.Schema(
     email: { type: String, required: true, trim: true, lowercase: true },
     subject: { type: String, default: "General Inquiry" },
     message: { type: String, required: true },
-    recipientEmail: { type: String, default: "support@interndock.in" },
+    recipientEmail: { type: String, default: "support.interndock@gmail.com" },
     status: { type: String, enum: ["Pending", "Responded", "Archived"], default: "Pending" },
   },
   { timestamps: true }

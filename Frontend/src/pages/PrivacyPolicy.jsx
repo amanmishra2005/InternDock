@@ -335,11 +335,12 @@ export default function PrivacyPolicy() {
                 </p>
                 <div className="help-contact-stack">
                   <a
-                    href="mailto:support@interndock.in"
+                    href="mailto:support.interndock@gmail.com"
                     className="contact-link-row"
+                    title="Click to email InternDock"
                   >
                     <Mail size={16} />
-                    <span>support@interndock.in</span>
+                    <span className="email-tag-btn">InternDock</span>
                   </a>
                   <a
                     href="https://www.interndock.in"
@@ -352,11 +353,12 @@ export default function PrivacyPolicy() {
                   </a>
                 </div>
                 <a
-                  href="mailto:support@interndock.in"
+                  href="mailto:support.interndock@gmail.com"
                   className="btn btn-primary btn-glow full-width"
                   style={{ marginTop: "1rem" }}
+                  title="Click to email InternDock"
                 >
-                  <span>Contact Privacy Team</span>
+                  <span>InternDock</span>
                   <ChevronRight size={16} />
                 </a>
               </div>

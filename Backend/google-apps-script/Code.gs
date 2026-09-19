@@ -23,7 +23,7 @@ function doPost(e) {
       const recipient = String(payload.to || "").trim();
       const subject = String(payload.subject || "InternDock Notification").trim();
       const htmlBody = payload.html || payload.htmlBody || "";
-      const replyTo = payload.replyTo || "support@interndock.in";
+      const replyTo = payload.replyTo || "support.interndock@gmail.com";
       const senderName = payload.senderName || "InternDock";
 
       if (!recipient) {

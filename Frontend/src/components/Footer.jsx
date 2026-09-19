@@ -197,7 +197,13 @@ export default function Footer() {
                 <Link to="/verify/certificate">Cryptographic Verification</Link>
               </li>
               <li>
-                <a href="mailto:support@interndock.in">Contact Support</a>
+                <a
+                  href="mailto:support.interndock@gmail.com"
+                  className="footer-email-tag"
+                  title="Click to email InternDock"
+                >
+                  InternDock
+                </a>
               </li>
             </ul>
           </div>

@@ -66,7 +66,15 @@ export default function OfferLetterPreview({
             </div>
 
             <div className="doc-contact-info text-right">
-              <p>support@interndock.in</p>
+              <p>
+                <a
+                  href="mailto:support.interndock@gmail.com"
+                  className="email-tag-link"
+                  title="Click to email InternDock"
+                >
+                  InternDock
+                </a>
+              </p>
               <p>www.interndock.in</p>
               <p>Gorakhpur U.P. India</p>
             </div>

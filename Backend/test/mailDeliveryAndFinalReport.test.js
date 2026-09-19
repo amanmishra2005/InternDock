@@ -20,10 +20,10 @@ test('getResendFromAddress defaults to onboarding@resend.dev when EMAIL_FROM use
 
 test('getResendFromAddress respects explicit RESEND_FROM if specified', () => {
   const originalResendFrom = process.env.RESEND_FROM;
-  process.env.RESEND_FROM = 'InternDock <support@interndock.in>';
+  process.env.RESEND_FROM = 'InternDock <support.interndock@gmail.com>';
 
   const resolved = getResendFromAddress();
-  assert.equal(resolved, 'InternDock <support@interndock.in>');
+  assert.equal(resolved, 'InternDock <support.interndock@gmail.com>');
 
   if (originalResendFrom) {
     process.env.RESEND_FROM = originalResendFrom;
@@ -37,19 +37,19 @@ test('getResendFromAddress preserves verified custom domain in EMAIL_FROM', () =
   const originalResendFrom = process.env.RESEND_FROM;
 
   delete process.env.RESEND_FROM;
-  process.env.EMAIL_FROM = 'InternDock <support@interndock.in>';
+  process.env.EMAIL_FROM = 'InternDock <updates@mycustomdomain.org>';
 
   const resolved = getResendFromAddress();
-  assert.equal(resolved, 'InternDock <support@interndock.in>');
+  assert.equal(resolved, 'InternDock <updates@mycustomdomain.org>');
 
   process.env.EMAIL_FROM = originalFrom;
   if (originalResendFrom) process.env.RESEND_FROM = originalResendFrom;
 });
 
-test('supportTargetEmail returns comma-separated dual inboxes and normalizeRecipientsForDispatch separates them', () => {
+test('supportTargetEmail returns support inbox and normalizeRecipientsForDispatch separates them', () => {
   const targets = supportTargetEmail();
   const recipients = normalizeRecipientsForDispatch(targets);
   assert.ok(recipients.includes('support.interndock@gmail.com'));
-  assert.ok(recipients.includes('support@interndock.in'));
-  assert.equal(recipients.length, 2);
+  assert.ok(!recipients.includes('support@interndock.in'));
+  assert.equal(recipients.length, 1);
 });

@@ -357,7 +357,7 @@ router.post("/final-report", protect, async (req, res) => {
 
     await Promise.allSettled([
       sendEmail({ to: notifyTarget, replyTo: req.user.email, ...finalReportTemplate }),
-      sendEmail({ to: req.user.email, replyTo: "support@interndock.in", ...studentReportConfirmation }),
+      sendEmail({ to: req.user.email, replyTo: "support.interndock@gmail.com", ...studentReportConfirmation }),
     ]);
 
     res.status(201).json(report);

@@ -300,11 +300,12 @@ export default function TermsOfService() {
                   verification clearance?
                 </p>
                 <a
-                  href="mailto:support@interndock.in"
+                  href="mailto:support.interndock@gmail.com"
                   className="btn btn-primary btn-glow full-width"
                   style={{ marginTop: "1rem" }}
+                  title="Click to email InternDock"
                 >
-                  <span>Email Legal Desk</span>
+                  <span>InternDock</span>
                   <ChevronRight size={16} />
                 </a>
               </div>

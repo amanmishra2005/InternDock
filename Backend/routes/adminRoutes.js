@@ -266,9 +266,6 @@ router.put("/applications/:id/mark-payment", async (req, res) => {
   payment.paymentId = `ADMIN_VERIFIED_${Date.now()}`;
   await payment.save();
 
-  const t = templates.paymentSuccess(application.student.fullName, application.duration?.fee || 100);
-  await sendEmail({ to: application.student.email, ...t }).catch(() => {});
-
   res.json({ success: true, application, payment });
 });
 

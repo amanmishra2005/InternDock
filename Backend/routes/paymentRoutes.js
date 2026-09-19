@@ -6,9 +6,7 @@ const Payment = require("../models/Payment");
 const Application = require("../models/Application");
 const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
-const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
-const { supportTargetEmail } = require("../utils/emailTargets");
 
 async function findApplicationByIdentifier(identifier) {
   if (!identifier) return null;
@@ -135,29 +133,7 @@ router.post("/confirm", protect, async (req, res) => {
 
     await application.save();
 
-    // Trigger instant email confirmation to student and the configured support inbox
-    const studentEmail = (
-      (registeredEmail && String(registeredEmail).trim()) ||
-      (application.student && application.student.email) ||
-      (req.user && req.user.email) ||
-      ""
-    ).toLowerCase().trim();
 
-    const studentName = payerName || (application.student && application.student.fullName) || req.user.fullName || "Student";
-    const studentT = templates.paymentSuccess(studentName, feeAmount, application.applicationId || application._id);
-    const adminNotificationEmail = supportTargetEmail();
-    const adminPaymentT = templates.newPaymentAdminNotification(
-      studentName,
-      studentEmail,
-      feeAmount,
-      utrNumber || payment.utrNumber,
-      application.applicationId || application._id
-    );
-
-    await Promise.allSettled([
-      sendEmail({ to: studentEmail, replyTo: "support@interndock.in", ...studentT }),
-      sendEmail({ to: adminNotificationEmail, replyTo: studentEmail, ...adminPaymentT })
-    ]);
 
 
     res.json({

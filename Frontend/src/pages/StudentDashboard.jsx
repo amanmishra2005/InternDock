@@ -12,9 +12,31 @@ import {
   Award,
   Clock,
   CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 import api from "../api/axios";
 import DomainCard from "../components/DomainCard";
+
+const WHATSAPP_COMMUNITY_URL =
+  "https://chat.whatsapp.com/HET9cyDkmH8BsBTdqhM6AL";
+const WHATSAPP_CHANNEL_URL =
+  "https://whatsapp.com/channel/0029VbDhsUN3AzNbMjZikU0r";
+
+function WhatsAppIcon({ size = 18, color = "currentColor" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={color}
+      aria-hidden="true"
+      style={{ flexShrink: 0 }}
+    >
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+      <path d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.947.56 3.766 1.53 5.309L2.2 21.8l4.634-1.298a9.96 9.96 0 0 0 5.17 1.498c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2zm0 18.254c-1.62 0-3.136-.456-4.437-1.25l-.318-.195-2.757.773.784-2.684-.213-.338A8.214 8.214 0 0 1 3.75 12c0-4.557 3.693-8.25 8.254-8.25 4.56 0 8.25 3.693 8.25 8.25 0 4.56-3.69 8.254-8.25 8.254z" />
+    </svg>
+  );
+}
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("my-applications");
@@ -233,7 +255,75 @@ export default function StudentDashboard() {
               </button>
             </motion.div>
           ) : (
-            <div className="grid-2 applications-grid">
+            <>
+              {applications.some((app) =>
+                ["Selected", "Active", "Completed"].includes(app.status),
+              ) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="glass-panel whatsapp-community-banner"
+                >
+                  <div className="whatsapp-banner-left">
+                    <div
+                      className="badge-pill badge-pill-emerald"
+                      style={{ alignSelf: "flex-start", marginBottom: "0.5rem" }}
+                    >
+                      <span
+                        className="pulse-dot"
+                        style={{ background: "#25D366" }}
+                      ></span>
+                      <WhatsAppIcon size={14} color="#059669" />
+                      <span>Official WhatsApp Community</span>
+                    </div>
+                    <h2>Join Selected Interns WhatsApp Hub</h2>
+                    <p>
+                      Connect with fellow interns in your cohort, discuss weekly
+                      project tasks, get mentor support, and stay updated with
+                      official announcements.
+                    </p>
+                  </div>
+
+                  <div className="whatsapp-banner-actions">
+                    <motion.a
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      href={WHATSAPP_COMMUNITY_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn whatsapp-join-btn"
+                    >
+                      <WhatsAppIcon size={18} color="#ffffff" />
+                      <div className="whatsapp-btn-text">
+                        <span className="btn-main-title">Join Community</span>
+                        <span className="btn-sub-title">
+                          Peer Chat &amp; Q&amp;A
+                        </span>
+                      </div>
+                      <ExternalLink size={15} />
+                    </motion.a>
+
+                    <motion.a
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      href={WHATSAPP_CHANNEL_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn whatsapp-channel-btn"
+                    >
+                      <WhatsAppIcon size={18} color="#15803d" />
+                      <div className="whatsapp-btn-text">
+                        <span className="btn-main-title">Follow Channel</span>
+                        <span className="btn-sub-title">Official Updates</span>
+                      </div>
+                      <ExternalLink size={15} />
+                    </motion.a>
+                  </div>
+                </motion.div>
+              )}
+
+              <div className="grid-2 applications-grid">
               {applications.map((app, index) => (
                 <motion.div
                   key={app._id}
@@ -294,6 +384,19 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="app-card-footer">
+                    {["Selected", "Active", "Completed"].includes(app.status) && (
+                      <a
+                        href={WHATSAPP_COMMUNITY_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="whatsapp-quick-chip"
+                        title="Join Selected Interns WhatsApp Community"
+                      >
+                        <WhatsAppIcon size={14} color="#16a34a" />
+                        <span>Join WhatsApp Group</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
                     <Link to={`/applications/${app._id}`}>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
@@ -307,6 +410,7 @@ export default function StudentDashboard() {
                 </motion.div>
               ))}
             </div>
+            </>
           )}
         </section>
       )}
@@ -555,28 +659,116 @@ export default function StudentDashboard() {
         .close-modal-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
         .full-width { width: 100%; }
+        .whatsapp-community-banner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 2rem 2.25rem;
+          margin-bottom: 2rem;
+          background: linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(16, 185, 129, 0.05), rgba(79, 70, 229, 0.04));
+          border: 1px solid rgba(37, 211, 102, 0.35);
+          border-radius: var(--radius-md);
+          gap: 2rem;
+        }
+        .whatsapp-banner-left h2 {
+          font-size: 1.45rem;
+          font-weight: 800;
+          color: #0f172a !important;
+          margin: 0.4rem 0 0.35rem 0;
+        }
+        .whatsapp-banner-left p {
+          color: #475569 !important;
+          font-size: 0.925rem;
+          line-height: 1.55;
+          max-width: 600px;
+          margin: 0;
+        }
+        .whatsapp-banner-actions {
+          display: flex;
+          gap: 1rem;
+          flex-shrink: 0;
+        }
+        .whatsapp-join-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
+          background: #25D366 !important;
+          color: #ffffff !important;
+          border: 1px solid #22c55e !important;
+          padding: 0.75rem 1.25rem;
+          border-radius: var(--radius-sm);
+          box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .whatsapp-join-btn:hover {
+          background: #1fb855 !important;
+        }
+        .whatsapp-channel-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
+          background: #f0fdf4 !important;
+          color: #15803d !important;
+          border: 1px solid rgba(37, 211, 102, 0.4) !important;
+          padding: 0.75rem 1.25rem;
+          border-radius: var(--radius-sm);
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .whatsapp-channel-btn:hover {
+          background: #dcfce7 !important;
+        }
+        .whatsapp-btn-text {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          text-align: left;
+        }
+        .btn-main-title {
+          font-size: 0.88rem;
+          font-weight: 800;
+          line-height: 1.2;
+        }
+        .btn-sub-title {
+          font-size: 0.72rem;
+          opacity: 0.85;
+          font-weight: 500;
+        }
+        .whatsapp-quick-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          background: rgba(37, 211, 102, 0.1);
+          border: 1px solid rgba(37, 211, 102, 0.3);
+          color: #15803d !important;
+          padding: 0.45rem 0.85rem;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          text-decoration: none;
+          margin-bottom: 0.5rem;
+          transition: all 0.2s;
+        }
+        .whatsapp-quick-chip:hover {
+          background: rgba(37, 211, 102, 0.2);
+          border-color: #25D366;
+        }
         @media (max-width: 768px) {
-          .dashboard-container { padding: 2rem 0.85rem; }
-          .dashboard-welcome-card { flex-direction: column; align-items: flex-start; gap: 1.25rem; padding: 1.5rem 1.25rem; }
-          .welcome-text h1 { font-size: clamp(1.5rem, 6vw, 2rem); }
-          .welcome-text p { font-size: 0.9rem; }
-          .dashboard-nav-tabs {
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-            gap: 0.25rem;
-            margin-bottom: 1.5rem;
+          .whatsapp-community-banner {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 1.35rem 1rem;
+            gap: 1.25rem;
           }
-          .tab-btn {
-            padding: 0.6rem 0.85rem;
-            font-size: 0.95rem;
+          .whatsapp-banner-actions {
+            flex-direction: column;
+            width: 100%;
           }
-          .application-card { padding: 1.35rem 1rem; }
-          .app-domain-title { font-size: 1.2rem; }
-          .app-meta-row { flex-wrap: wrap; gap: 0.65rem; font-size: 0.82rem; }
-          .modal-card { padding: 1.35rem 1rem; max-height: 90dvh; overflow-y: auto; border-radius: var(--radius-md); }
-          .modal-actions { flex-direction: column-reverse; gap: 0.65rem; }
-          .modal-actions button { width: 100%; }
+          .whatsapp-join-btn, .whatsapp-channel-btn {
+            width: 100%;
+            justify-content: center;
+          }
         }
       `}</style>
     </div>

@@ -146,23 +146,24 @@ router.post("/", protect, async (req, res) => {
 
     const ledgerRow = {
       applicationId,
-      studentId: String(req.user._id),
       studentName: req.user.fullName,
       studentEmail: req.user.email,
-      domainId: String(domain._id),
+      phoneNumber: req.user.phone || req.body.phone || "-",
+      collegeName: req.user.college || req.body.college || "-",
+      degree: req.user.degree || req.body.degree || "-",
+      graduationYear: req.user.graduationYear || req.body.graduationYear || "-",
       domainName: domain.name,
-      durationId: String(duration._id),
+      durationLabel: duration.label || `${duration.weeks} Weeks Track`,
       durationWeeks: duration.weeks,
       startDate: parsedStartDate.toISOString().slice(0, 10),
       endDate: parsedEndDate.toISOString().slice(0, 10),
       fee: duration.fee,
       paymentStatus: "Pending",
       status: "Submitted",
-      statusHistory: "Submitted",
     };
 
     try {
-      await appendToSpreadsheet("applications", { ...ledgerRow, applicationId: applicationDoc.applicationId });
+      await appendToSpreadsheet("applications", ledgerRow);
     } catch (err) {
       console.warn("Application ledger append failed after application was created:", err.message);
     }

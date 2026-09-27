@@ -188,17 +188,17 @@ router.get("/offer-letter/:applicationId", protect, async (req, res) => {
       }
 
       appendToSpreadsheet("offer_letters", {
-        offerId: offer._id,
-        applicationId: application.applicationId || application._id,
         referenceId,
-        verificationId,
+        applicationId: application.applicationId || application._id,
         studentName: details.studentName,
         studentEmail: details.studentEmail,
-        collegeName: details.collegeName,
-        startDate: details.startDate.toISOString().slice(0, 10),
-        endDate: details.endDate.toISOString().slice(0, 10),
-        domain: details.domainName,
-        pdfUrl,
+        collegeName: details.collegeName || "-",
+        domainName: details.domainName,
+        durationLabel: details.durationLabel || "4 Weeks Track",
+        startDate: details.startDate,
+        endDate: details.endDate,
+        issueDate,
+        verificationId,
       });
     }
 
@@ -286,14 +286,15 @@ router.get("/certificate/:applicationId", protect, async (req, res) => {
       appendToSpreadsheet("certificates", {
         certificateId: cert.certificateId,
         applicationId: application.applicationId || application._id,
-        verificationId,
         studentName: details.studentName,
         studentEmail: details.studentEmail,
-        collegeName: details.collegeName,
-        startDate: details.startDate.toISOString().slice(0, 10),
-        endDate: details.endDate.toISOString().slice(0, 10),
-        domain: details.domainName,
-        pdfUrl,
+        collegeName: details.collegeName || "-",
+        domainName: details.domainName,
+        durationLabel: details.durationLabel || "4 Weeks Track",
+        startDate: details.startDate,
+        endDate: details.endDate,
+        issueDate,
+        verificationId,
       });
     }
 
@@ -336,13 +337,17 @@ router.post("/final-report", protect, async (req, res) => {
     const studentName = req.user.fullName || application.student?.fullName || "Student";
     const studentEmail = req.user.email || application.student?.email;
 
-    appendToSpreadsheet("final_reports", {
-      reportId: report._id,
+    appendToSpreadsheet("final_projects", {
       applicationId: application.applicationId || applicationId,
       studentName,
       studentEmail,
-      projectTitle: rest.title || "",
-      githubUrl: rest.githubUrl || "",
+      collegeName: application.student?.college || req.user.college || "-",
+      domainName: application.domain?.name || "Internship Track",
+      projectTitle: rest.title || "Capstone Final Project",
+      githubUrl: rest.githubUrl || "-",
+      liveUrl: rest.hostedUrl || "-",
+      executiveSummary: rest.executiveSummary || "-",
+      status: "Submitted",
     });
 
     const notifyTarget = supportTargetEmail();

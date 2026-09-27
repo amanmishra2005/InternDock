@@ -287,14 +287,15 @@ router.put("/applications/:id/status", async (req, res) => {
       appendToSpreadsheet("certificates", {
         certificateId: cert.certificateId,
         applicationId: application.applicationId || application._id,
-        verificationId,
         studentName: details.studentName,
         studentEmail: details.studentEmail,
-        collegeName: details.collegeName,
-        startDate: details.startDate.toISOString().slice(0, 10),
-        endDate: details.endDate.toISOString().slice(0, 10),
-        domain: details.domainName,
-        pdfUrl,
+        collegeName: details.collegeName || "-",
+        domainName: details.domainName,
+        durationLabel: details.durationLabel || "4 Weeks Track",
+        startDate: details.startDate,
+        endDate: details.endDate,
+        issueDate,
+        verificationId,
       });
 
       const studentT = templates.certificateIssued(
@@ -432,14 +433,15 @@ router.post("/applications/:id/issue-certificate", async (req, res) => {
   appendToSpreadsheet("certificates", {
     certificateId: cert.certificateId,
     applicationId: application.applicationId || application._id,
-    verificationId,
     studentName: details.studentName,
     studentEmail: details.studentEmail,
-    collegeName: details.collegeName,
-    startDate: details.startDate.toISOString().slice(0, 10),
-    endDate: details.endDate.toISOString().slice(0, 10),
-    domain: details.domainName,
-    pdfUrl,
+    collegeName: details.collegeName || "-",
+    domainName: details.domainName,
+    durationLabel: details.durationLabel || "4 Weeks Track",
+    startDate: details.startDate,
+    endDate: details.endDate,
+    issueDate,
+    verificationId,
   });
 
   const studentT = templates.certificateIssued(

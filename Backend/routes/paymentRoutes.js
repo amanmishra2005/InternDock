@@ -42,14 +42,15 @@ router.post("/create-order", protect, async (req, res) => {
     });
 
     appendToSpreadsheet("payments", {
-      paymentId: payment._id,
-      orderId,
       applicationId: application.applicationId || String(application._id),
-      studentId: String(req.user._id),
+      studentName: req.user.fullName || application.student?.fullName || "-",
+      studentEmail: req.user.email || application.student?.email || "-",
+      domainName: application.domain?.name || "Internship Track",
       amount: application.duration?.fee || 100,
-      currency: application.duration?.currency || "INR",
-      utrNumber: "",
       status: "Pending",
+      utrNumber: "-",
+      payerName: req.user.fullName || "-",
+      orderId,
     });
 
     res.status(201).json(payment);
@@ -109,14 +110,15 @@ router.post("/confirm", protect, async (req, res) => {
     await payment.save();
 
     appendToSpreadsheet("payments", {
-      paymentId: payment.paymentId,
-      orderId: payment.orderId,
       applicationId: application.applicationId || application._id,
-      studentId: req.user._id,
+      studentName: req.user.fullName || application.student?.fullName || payerName || "-",
+      studentEmail: registeredEmail || req.user.email || application.student?.email || "-",
+      domainName: application.domain?.name || "Internship Track",
       amount: feeAmount,
-      currency: payment.currency,
-      utrNumber: payment.utrNumber || "",
-      status: payment.status,
+      status: "Successful",
+      utrNumber: payment.utrNumber || utrNumber || "-",
+      payerName: payerName || payment.payerName || req.user.fullName || "-",
+      orderId: payment.orderId,
     });
 
     // Instantly update application paymentStatus & unlock Active workspace

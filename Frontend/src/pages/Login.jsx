@@ -19,6 +19,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [requiresVerification, setRequiresVerification] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault();
     setError("");
+    setRequiresVerification(false);
     setLoading(true);
     try {
       const user = await login(email, password);
@@ -33,6 +36,10 @@ export default function Login() {
         ["admin", "superadmin"].includes(user.role) ? "/admin" : "/dashboard",
       );
     } catch (err) {
+      if (err.response?.data?.requiresVerification) {
+        setRequiresVerification(true);
+        setUnverifiedEmail(err.response?.data?.email || email);
+      }
       setError(
         err.response?.data?.message ||
           "Invalid credentials. Please check your email and password.",
@@ -169,6 +176,41 @@ export default function Login() {
                 className="error-alert-box"
               >
                 {error}
+              </motion.div>
+            )}
+
+            {requiresVerification && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="verification-notice-box"
+                style={{
+                  background: "rgba(2, 132, 199, 0.12)",
+                  border: "1px solid rgba(2, 132, 199, 0.3)",
+                  color: "#e0f2fe",
+                  padding: "0.85rem",
+                  borderRadius: "var(--radius-sm)",
+                  marginBottom: "1.25rem",
+                  fontSize: "0.875rem",
+                }}
+              >
+                <p style={{ margin: "0 0 0.5rem 0" }}>
+                  Your account is registered but email verification is pending.
+                </p>
+                <Link
+                  to={`/register?verify=true&email=${encodeURIComponent(unverifiedEmail || email)}`}
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    padding: "0.4rem 0.8rem",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  <span>Enter Verification Code</span>
+                  <ArrowRight size={14} />
+                </Link>
               </motion.div>
             )}
 

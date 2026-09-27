@@ -325,7 +325,11 @@ router.post("/final-report", protect, async (req, res) => {
     const studentId = application.student?._id ? application.student._id : application.student;
     if (String(studentId) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
-    const report = await FinalReport.create({ application: application._id, student: req.user._id, ...rest });
+    const existingReport = await FinalReport.findOne({ application: application._id });
+    const report = existingReport
+      ? await FinalReport.findByIdAndUpdate(existingReport._id, { student: req.user._id, ...rest, status: "Submitted" }, { new: true })
+      : await FinalReport.create({ application: application._id, student: req.user._id, ...rest });
+
     application.finalReportSubmitted = true;
     await application.save();
 
@@ -365,9 +369,19 @@ router.post("/final-report", protect, async (req, res) => {
       studentEmail ? sendEmail({ to: studentEmail, replyTo: "support.interndock@gmail.com", ...studentReportConfirmation }) : Promise.resolve(),
     ]);
 
-    console.log(
-      `[FINAL CAPSTONE DISPATCH] Support (${notifyTarget}): ${supportResult.status === "fulfilled" ? supportResult.value?.status : supportResult.reason?.message} | Student (${studentEmail}): ${studentResult.status === "fulfilled" ? studentResult.value?.status : studentResult.reason?.message}`
-    );
+    if (supportResult.status === "fulfilled" && supportResult.value?.success) {
+      console.log(`[FINAL REPORT EMAIL SUCCESS] Admin notification delivered to ${notifyTarget} (ID: ${supportResult.value.messageId})`);
+    } else {
+      const err = supportResult.status === "fulfilled" ? supportResult.value?.error : supportResult.reason?.message;
+      console.error(`[FINAL REPORT EMAIL FAILURE] Admin notification failed for ${notifyTarget}: ${err}`);
+    }
+
+    if (studentResult.status === "fulfilled" && studentResult.value?.success) {
+      console.log(`[FINAL REPORT EMAIL SUCCESS] Student confirmation delivered to ${studentEmail} (ID: ${studentResult.value.messageId})`);
+    } else if (studentEmail) {
+      const err = studentResult.status === "fulfilled" ? studentResult.value?.error : studentResult.reason?.message;
+      console.error(`[FINAL REPORT EMAIL FAILURE] Student confirmation failed for ${studentEmail}: ${err}`);
+    }
 
     res.status(201).json(report);
   } catch (err) {

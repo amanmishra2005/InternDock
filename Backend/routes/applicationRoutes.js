@@ -83,6 +83,19 @@ router.post("/", protect, async (req, res) => {
       return res.status(400).json({ message: "Choose a valid internship start and end date" });
     }
 
+    const existingActive = await Application.findOne({
+      student: req.user._id,
+      domain: domain._id,
+      status: { $in: ["Submitted", "Under Review", "Selected", "Active"] }
+    }).populate("domain", "name").populate("duration", "weeks fee label").lean();
+
+    if (existingActive) {
+      return res.status(409).json({
+        message: "You already have an active application registered for this domain.",
+        application: serializeApplication(existingActive)
+      });
+    }
+
     const ledgerRows = readSpreadsheet("applications");
     let candidateSeq = await getNextApplicationSequence(Application, ledgerRows);
 
@@ -185,9 +198,19 @@ router.post("/", protect, async (req, res) => {
       sendEmail({ to: adminNotificationEmail, replyTo: req.user.email, ...adminT })
     ]);
 
-    console.log(
-      `[APPLICATION DISPATCH] Student (${req.user.email}): ${studentRes.status === "fulfilled" ? studentRes.value?.status : studentRes.reason?.message} | Support (${adminNotificationEmail}): ${adminRes.status === "fulfilled" ? adminRes.value?.status : adminRes.reason?.message}`
-    );
+    if (studentRes.status === "fulfilled" && studentRes.value?.success) {
+      console.log(`[APPLICATION EMAIL SUCCESS] Student confirmation delivered to ${req.user.email} (ID: ${studentRes.value.messageId})`);
+    } else {
+      const err = studentRes.status === "fulfilled" ? studentRes.value?.error : studentRes.reason?.message;
+      console.error(`[APPLICATION EMAIL FAILURE] Student confirmation failed for ${req.user.email}: ${err}`);
+    }
+
+    if (adminRes.status === "fulfilled" && adminRes.value?.success) {
+      console.log(`[APPLICATION EMAIL SUCCESS] Admin notification delivered to ${adminNotificationEmail} (ID: ${adminRes.value.messageId})`);
+    } else {
+      const err = adminRes.status === "fulfilled" ? adminRes.value?.error : adminRes.reason?.message;
+      console.error(`[APPLICATION EMAIL FAILURE] Admin notification failed for ${adminNotificationEmail}: ${err}`);
+    }
 
     return res.status(201).json(application);
 

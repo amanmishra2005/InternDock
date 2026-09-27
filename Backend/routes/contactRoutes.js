@@ -46,10 +46,24 @@ router.post("/", async (req, res) => {
       </div>
     `;
 
-    await Promise.allSettled([
+    const [supportRes, userRes] = await Promise.allSettled([
       sendEmail({ to: supportTarget, ...notifyTemplate, replyTo: email }),
       sendEmail({ to: email, subject: "We received your message - InternDock Support", html: autoReplyHtml, replyTo: "support.interndock@gmail.com" })
     ]);
+
+    if (supportRes.status === "fulfilled" && supportRes.value?.success) {
+      console.log(`[CONTACT EMAIL SUCCESS] Support inquiry delivered to ${supportTarget} (ID: ${supportRes.value.messageId})`);
+    } else {
+      const err = supportRes.status === "fulfilled" ? supportRes.value?.error : supportRes.reason?.message;
+      console.error(`[CONTACT EMAIL FAILURE] Support inquiry failed for ${supportTarget}: ${err}`);
+    }
+
+    if (userRes.status === "fulfilled" && userRes.value?.success) {
+      console.log(`[CONTACT EMAIL SUCCESS] Auto-reply delivered to ${email} (ID: ${userRes.value.messageId})`);
+    } else {
+      const err = userRes.status === "fulfilled" ? userRes.value?.error : userRes.reason?.message;
+      console.error(`[CONTACT EMAIL FAILURE] Auto-reply failed for ${email}: ${err}`);
+    }
 
     return res.json({
       success: true,

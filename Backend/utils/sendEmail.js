@@ -10,6 +10,28 @@ const CANONICAL_EMAIL_ALIASES = {
   "help@interndock.in": "support.interndock@gmail.com",
 };
 
+// In-memory email log for admin auditing
+const emailLog = [];
+
+// Deduplication map to prevent duplicate triggers (30-second window)
+const recentDispatches = new Map();
+const DEDUPLICATION_WINDOW_MS = 30000;
+
+function pruneRecentDispatches() {
+  const now = Date.now();
+  for (const [key, value] of recentDispatches.entries()) {
+    if (now - value.timestamp > DEDUPLICATION_WINDOW_MS) {
+      recentDispatches.delete(key);
+    }
+  }
+}
+
+function getDispatchKey(recipients, subject, html) {
+  const normRecipients = recipients.slice().sort().join(",");
+  const snippet = String(html || "").slice(0, 100);
+  return `${normRecipients}::${subject}::${snippet}`;
+}
+
 function normalizeRecipientsForDispatch(to) {
   if (!to) return [];
 
@@ -27,31 +49,6 @@ function normalizeRecipientsForDispatch(to) {
   });
 
   return Array.from(recipientSet);
-}
-
-async function sendRecipientBatch(transporter, from, recipients, subject, html, replyTo) {
-  if (!Array.isArray(recipients) || recipients.length === 0) {
-    return [];
-  }
-
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
-
-  // Dispatch to each recipient individually to guarantee independent delivery
-  // to both primary support (support.interndock@gmail.com) and backup/student inboxes.
-  const results = await Promise.allSettled(
-    recipients.map(async (recipient) => {
-      const mailOptions = {
-        from,
-        to: recipient,
-        replyTo: effectiveReplyTo,
-        subject,
-        html,
-      };
-      return transporter.sendMail(mailOptions);
-    })
-  );
-
-  return results;
 }
 
 function getPreferredFromAddress() {
@@ -75,6 +72,18 @@ function getPreferredFromAddress() {
   return `${display} <${smtpUser}>`;
 }
 
+function getResendFromAddress() {
+  if (process.env.RESEND_FROM) {
+    return process.env.RESEND_FROM.trim();
+  }
+  const configuredFrom = String(process.env.EMAIL_FROM || "").trim();
+  const isWebmail = /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(configuredFrom);
+  if (configuredFrom && !isWebmail) {
+    return configuredFrom;
+  }
+  return "InternDock <onboarding@resend.dev>";
+}
+
 function escapeHtml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -86,61 +95,136 @@ function escapeHtml(value = "") {
 
 let cachedTransporter = null;
 
+function getSmtpConfig() {
+  const host = (process.env.SMTP_HOST || "smtp.gmail.com").trim();
+  const port = Number(process.env.SMTP_PORT) || 587;
+  const user = (process.env.SMTP_USER || "").trim();
+  const pass = (process.env.SMTP_PASS || "").trim();
+  const secure = process.env.SMTP_SECURE === "true" || port === 465;
+  const requireTLS = process.env.SMTP_REQUIRE_TLS !== "false";
+  const connectionTimeout = Math.min(Math.max(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 10000, 3000), 30000);
+  const socketTimeout = Math.min(Math.max(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000, 5000), 45000);
+
+  return { host, port, user, pass, secure, requireTLS, connectionTimeout, socketTimeout };
+}
+
 function createTransporter(port, secure) {
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const connTimeout = Math.min(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 2500, 3000);
-  const sockTimeout = Math.min(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 3500, 4000);
+  const config = getSmtpConfig();
+  const effectivePort = port || config.port;
+  const effectiveSecure = secure !== undefined ? secure : (process.env.SMTP_SECURE === "true" || effectivePort === 465);
 
   return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    requireTLS: !secure,
-    connectionTimeout: connTimeout,
-    socketTimeout: sockTimeout,
+    host: config.host,
+    port: effectivePort,
+    secure: effectiveSecure,
+    requireTLS: !effectiveSecure && config.requireTLS,
+    connectionTimeout: config.connectionTimeout,
+    socketTimeout: config.socketTimeout,
     tls: { rejectUnauthorized: false },
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    auth: {
+      user: config.user,
+      pass: config.pass,
+    },
   });
 }
 
 function getTransporter() {
-  const smtpConfigured = Boolean(
-    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
-  );
-  if (!smtpConfigured) {
-    console.warn("[SMTP WARNING] SMTP configuration missing in process.env (SMTP_HOST, SMTP_USER, or SMTP_PASS).");
+  const config = getSmtpConfig();
+  if (!config.user || !config.pass) {
     return null;
   }
 
   if (!cachedTransporter) {
-    const smtpPort = Number(process.env.SMTP_PORT) || 587;
-    const isSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
-    cachedTransporter = createTransporter(smtpPort, isSecure);
+    cachedTransporter = createTransporter(config.port, config.secure);
   }
 
   return cachedTransporter;
 }
 
-// Simple in-memory email log, exposed for the admin "email logs" view.
-const emailLog = [];
+function classifySmtpError(err) {
+  const msg = String(err?.message || "").toLowerCase();
+  const code = String(err?.code || "").toUpperCase();
+  const responseCode = err?.responseCode || 0;
 
-function getResendFromAddress() {
-  if (process.env.RESEND_FROM) {
-    return process.env.RESEND_FROM.trim();
+  if (
+    code === "EAUTH" ||
+    responseCode === 535 ||
+    msg.includes("badauth") ||
+    msg.includes("invalid login") ||
+    msg.includes("username and password not accepted")
+  ) {
+    return {
+      type: "SMTP authentication failure",
+      message: `Invalid username or App Password (check SMTP_USER and SMTP_PASS). Original: ${err.message}`,
+    };
   }
-  const configuredFrom = String(process.env.EMAIL_FROM || "").trim();
-  // Resend API strictly forbids sending from unverified third-party consumer webmail domains like @gmail.com
-  const isWebmail = /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(configuredFrom);
-  if (configuredFrom && !isWebmail) {
-    return configuredFrom;
+
+  if (
+    code === "ETIMEDOUT" ||
+    code === "ECONNREFUSED" ||
+    code === "ENETUNREACH" ||
+    code === "ESOCKET" ||
+    msg.includes("timeout") ||
+    msg.includes("econn") ||
+    msg.includes("network")
+  ) {
+    return {
+      type: "Connection failure",
+      message: `Could not connect to SMTP server: ${err.message}`,
+    };
   }
-  return "InternDock <onboarding@resend.dev>";
+
+  if (
+    code === "EENVELOPE" ||
+    responseCode === 550 ||
+    responseCode === 553 ||
+    responseCode === 501 ||
+    msg.includes("recipient") ||
+    msg.includes("mailbox unavailable")
+  ) {
+    return {
+      type: "Invalid recipient",
+      message: `Recipient address rejected by server: ${err.message}`,
+    };
+  }
+
+  if (responseCode >= 500 || msg.includes("rejected")) {
+    return {
+      type: "SMTP rejection",
+      message: `SMTP server rejected message (${responseCode || "5xx"}): ${err.message}`,
+    };
+  }
+
+  return {
+    type: "General email error",
+    message: err.message || "Unknown SMTP error",
+  };
 }
 
-const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbykpq7oEKIwCHqzuWznMVYDZHwtoijSPk6o61Y0gBsmIMsHOXjD5DsheRcvcXe3VFYO/exec";
-const DEFAULT_WEBHOOK_TOKEN = "q-RsOPndQUmYSNL83xfLHD6Zze5WgrdxKCjOjF2x5lo";
+async function sendRecipientBatch(transporter, from, recipients, subject, html, replyTo) {
+  if (!Array.isArray(recipients) || recipients.length === 0) {
+    return [];
+  }
 
-async function sendViaResend(recipients, subject, html, replyTo) {
+  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
+
+  const results = await Promise.allSettled(
+    recipients.map(async (recipient) => {
+      const mailOptions = {
+        from,
+        to: recipient,
+        replyTo: effectiveReplyTo,
+        subject,
+        html,
+      };
+      return transporter.sendMail(mailOptions);
+    })
+  );
+
+  return results;
+}
+
+async function sendViaResendFallback(recipients, subject, html, replyTo) {
   const rawKey = process.env.RESEND_API_KEY;
   if (!rawKey) return null;
   const resendApiKey = String(rawKey).replace(/^"|"$/g, "").trim();
@@ -149,7 +233,6 @@ async function sendViaResend(recipients, subject, html, replyTo) {
   const from = getResendFromAddress();
   const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
 
-  // Dispatch individually so sandbox recipient limits don't block delivery to verified inboxes
   const results = await Promise.allSettled(
     recipients.map(async (recipient) => {
       const res = await fetch("https://api.resend.com/emails", {
@@ -168,7 +251,7 @@ async function sendViaResend(recipients, subject, html, replyTo) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(`Resend error (${res.status}) for ${recipient}: ${data.message || JSON.stringify(data)}`);
+        throw new Error(`Resend API (${res.status}): ${data.message || JSON.stringify(data)}`);
       }
       return { recipient, messageId: data.id };
     })
@@ -180,303 +263,185 @@ async function sendViaResend(recipients, subject, html, replyTo) {
   if (fulfilled.length > 0) {
     const messageId = fulfilled.map((f) => f.value?.messageId).filter(Boolean).join(", ");
     const sentTo = fulfilled.map((f) => f.value?.recipient);
-    if (rejected.length > 0) {
-      console.warn(`[RESEND PARTIAL] Delivered to ${sentTo.join(", ")}, failed for: ${rejected.map((r) => r.reason?.message).join("; ")}`);
-    }
     return { status: "fulfilled", value: { messageId, sentTo } };
   }
 
-  throw new Error(`Resend failed for all recipients: ${rejected.map((r) => r.reason?.message).join(" | ")}`);
+  const errDetail = rejected.map((r) => r.reason?.message).join("; ");
+  throw new Error(`Resend fallback failed: ${errDetail}`);
 }
 
-async function sendViaBrevo(recipients, subject, html, replyTo) {
-  const rawKey = process.env.BREVO_API_KEY;
-  if (!rawKey) return null;
-  const brevoApiKey = String(rawKey).replace(/^"|"$/g, "").trim();
-  if (!brevoApiKey) return null;
-
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || "support.interndock@gmail.com";
-  const senderName = process.env.ORG_NAME || "InternDock";
-
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": brevoApiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      sender: { name: senderName, email: senderEmail },
-      to: recipients.map((r) => ({ email: r })),
-      subject,
-      htmlContent: html,
-      replyTo: { email: effectiveReplyTo },
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(`Brevo API error (${res.status}): ${data.message || JSON.stringify(data)}`);
-  }
-  return { status: "fulfilled", value: { messageId: data.messageId, sentTo: recipients } };
-}
-
-let appsScriptQueue = Promise.resolve();
-
-function enqueueAppsScript(fn) {
-  const op = () => fn();
-  const next = appsScriptQueue.then(op, op);
-  appsScriptQueue = next.catch(() => {});
-  return next;
-}
-
-async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
-  const webhookUrl = (process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL).trim();
-  const webhookToken = (process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || DEFAULT_WEBHOOK_TOKEN).trim();
-  if (!webhookUrl || !webhookToken) return null;
-
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
-  const senderName = process.env.ORG_NAME || "InternDock";
-
-  const delivered = [];
-  for (const recipient of recipients) {
-    try {
-      const res = await enqueueAppsScript(() =>
-        fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            webhookToken,
-            action: "send_email",
-            to: recipient,
-            subject,
-            html,
-            replyTo: effectiveReplyTo,
-            senderName,
-          }),
-          signal: AbortSignal.timeout(15000),
-        })
-      );
-      const text = await res.text().catch(() => "");
-      if (!res.ok || text.includes("Error:") || text.includes("Unauthorized")) {
-        throw new Error(`Apps Script relay did not dispatch for ${recipient}: ${text.slice(0, 80)}`);
-      }
-      delivered.push(recipient);
-    } catch (err) {
-      console.warn(`[APPS SCRIPT RELAY NOTICE] Could not dispatch to ${recipient}:`, err.message);
-    }
-  }
-
-  if (delivered.length > 0) {
-    return { status: "fulfilled", value: { messageId: `gas_${Date.now()}`, sentTo: delivered } };
-  }
-  return null;
-}
-
-async function sendViaHttpApi(recipients, subject, html, replyTo) {
-  let pending = [...recipients];
-  const delivered = [];
-  const messageIds = [];
-
-  const resendFrom = getResendFromAddress();
-  const isResendSandbox = resendFrom.includes("onboarding@resend.dev");
-
-  // 1. Google Apps Script Webhook Relay (Direct Google HTTPS connection, no recipient restrictions)
-  const webhookUrl = (process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL).trim();
-  const webhookToken = (process.env.GOOGLE_SHEET_WEBHOOK_TOKEN || DEFAULT_WEBHOOK_TOKEN).trim();
-  if (webhookUrl && webhookToken && pending.length > 0) {
-    try {
-      const res = await sendViaGoogleAppsScript(pending, subject, html, replyTo);
-      if (res?.value?.sentTo) {
-        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
-        delivered.push(...sent);
-        if (res.value.messageId) messageIds.push(res.value.messageId);
-        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
-        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
-      }
-    } catch (err) {
-      console.warn("[HTTP GOOGLE APPS SCRIPT NOTICE]", err.message);
-    }
-  }
-
-  // 2. Brevo (Sendinblue API)
-  if (process.env.BREVO_API_KEY && pending.length > 0) {
-    try {
-      const res = await sendViaBrevo(pending, subject, html, replyTo);
-      if (res?.value?.sentTo) {
-        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
-        delivered.push(...sent);
-        if (res.value.messageId) messageIds.push(res.value.messageId);
-        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
-        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
-      }
-    } catch (err) {
-      console.warn("[HTTP BREVO NOTICE]", err.message);
-    }
-  }
-
-  // 3. Resend: if custom domain is verified or as fallback for remaining recipients (e.g. support address)
-  const resendKey = (process.env.RESEND_API_KEY || "").trim();
-  if (resendKey && pending.length > 0) {
-    try {
-      const res = await sendViaResend(pending, subject, html, replyTo);
-      if (res?.value?.sentTo) {
-        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
-        delivered.push(...sent);
-        if (res.value.messageId) messageIds.push(res.value.messageId);
-        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
-        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
-        if (isResendSandbox) {
-          console.log("[RESEND SANDBOX NOTICE] Delivered via onboarding@resend.dev. Check Spam/Junk folder in Gmail if not in primary inbox.");
-        }
-      }
-    } catch (err) {
-      console.warn("[HTTP RESEND NOTICE]", err.message);
-    }
-  }
-
-  if (delivered.length > 0) {
-    return {
-      status: "fulfilled",
-      value: {
-        messageId: messageIds.join(", "),
-        sentTo: delivered,
-      },
-    };
-  }
-
-  return null;
-}
-
+/**
+ * Centralized, reliable email dispatch function.
+ * Uses primary SMTP configuration with automatic failover between ports 587 and 465,
+ * duplicate suppression, rich error logging, and optional HTTP fallback if SMTP ports are blocked.
+ */
 async function sendEmail({ to, subject, html, replyTo }) {
   const recipients = normalizeRecipientsForDispatch(to);
   const safeTo = recipients.join(", ");
 
-  const entry = { to: safeTo, subject, html, sentAt: new Date(), status: "Pending" };
-  emailLog.unshift(entry);
+  const entry = {
+    success: false,
+    to: safeTo,
+    subject,
+    html,
+    sentAt: new Date(),
+    status: "Pending",
+    error: null,
+    messageId: null,
+    sentTo: [],
+  };
 
-  if (!safeTo) {
-    entry.status = "Blocked";
-    entry.error = "Blocked personal mailbox recipient";
+  emailLog.unshift(entry);
+  if (emailLog.length > 200) emailLog.pop();
+
+  if (!safeTo || recipients.length === 0) {
+    entry.status = "Failed";
+    entry.error = "No valid recipients specified";
+    console.warn(`[EMAIL WARNING] Attempted to send email with no valid recipients: "${to}"`);
     return entry;
   }
 
-  try {
-    // 1. Try HTTPS API delivery first (bypasses cloud host and ISP SMTP port blocks)
-    const hasHttpEmailProvider = Boolean(
-      process.env.RESEND_API_KEY ||
-      process.env.BREVO_API_KEY ||
-      (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN) ||
-      (DEFAULT_WEBHOOK_URL && DEFAULT_WEBHOOK_TOKEN)
-    );
-
-    let remainingRecipients = [...recipients];
-    const deliveredRecipients = [];
-    const collectedMessageIds = [];
-
-    if (hasHttpEmailProvider) {
-      try {
-        const httpResult = await sendViaHttpApi(remainingRecipients, subject, html, replyTo);
-        if (httpResult && httpResult.value) {
-          const sentTo = Array.isArray(httpResult.value.sentTo)
-            ? httpResult.value.sentTo
-            : remainingRecipients;
-          deliveredRecipients.push(...sentTo);
-          if (httpResult.value.messageId) {
-            collectedMessageIds.push(httpResult.value.messageId);
-          }
-
-          const sentLower = new Set(sentTo.map((s) => String(s).toLowerCase()));
-          remainingRecipients = remainingRecipients.filter(
-            (r) => !sentLower.has(String(r).toLowerCase())
-          );
-
-          if (remainingRecipients.length === 0) {
-            entry.status = "Sent";
-            entry.messageId = collectedMessageIds.join(", ");
-            entry.sentTo = deliveredRecipients;
-            console.log(`[HTTP EMAIL SUCCESS] Email delivered to ${deliveredRecipients.join(", ")} via HTTP API | ID: ${entry.messageId}`);
-            return entry;
-          }
-
-          console.warn(
-            `[HTTP EMAIL PARTIAL] HTTP delivered to ${sentTo.join(", ")}, but remaining [${remainingRecipients.join(", ")}] will fall back to SMTP.`
-          );
-        }
-      } catch (httpErr) {
-        console.warn("[HTTP EMAIL FALLBACK] HTTP API delivery did not complete:", httpErr.message);
-      }
-    }
-
-    const transporter = getTransporter();
-    if (transporter && remainingRecipients.length > 0) {
-      const from = getPreferredFromAddress();
-      let results = await sendRecipientBatch(transporter, from, remainingRecipients, subject, html, replyTo);
-      let failures = results.filter((result) => result.status === "rejected");
-      let successes = results.filter((result) => result.status === "fulfilled");
-
-      // Auto-fallback: if all dispatches failed due to network timeout or socket errors,
-      // failover to the alternative SMTP port (587 STARTTLS <-> 465 direct SSL)
-      if (successes.length === 0 && failures.length > 0) {
-        const isNetworkFailure = failures.some((f) => {
-          const msg = (f.reason?.message || "").toLowerCase();
-          return msg.includes("timeout") || msg.includes("econn") || msg.includes("enetunreach") || msg.includes("esocket");
-        });
-
-        if (isNetworkFailure) {
-          const currentPort = Number(process.env.SMTP_PORT) || 587;
-          const altPort = currentPort === 465 ? 587 : 465;
-          const altSecure = altPort === 465;
-          console.warn(`[SMTP FAILOVER] Primary dispatch on port ${currentPort} timed out. Retrying on port ${altPort} (secure: ${altSecure})...`);
-
-          const altTransporter = createTransporter(altPort, altSecure);
-          const altResults = await sendRecipientBatch(altTransporter, from, remainingRecipients, subject, html, replyTo);
-          const altSuccesses = altResults.filter((result) => result.status === "fulfilled");
-
-          if (altSuccesses.length > 0) {
-            cachedTransporter = altTransporter; // Switch to the active port for subsequent emails
-            results = altResults;
-            successes = altSuccesses;
-            failures = altResults.filter((result) => result.status === "rejected");
-          }
-        }
-      }
-
-      if (successes.length > 0) {
-        const smtpMessageId = successes[0]?.value?.messageId || "";
-        if (smtpMessageId) collectedMessageIds.push(smtpMessageId);
-        deliveredRecipients.push(...remainingRecipients.filter((_, idx) => results[idx]?.status === "fulfilled"));
-        entry.status = "Sent";
-        entry.messageId = collectedMessageIds.join(", ");
-        entry.sentTo = deliveredRecipients;
-        console.log(`[EMAIL SUCCESS] Email sent to ${entry.sentTo.join(", ")} | Subject: "${subject}" | MessageID: ${entry.messageId}`);
-      } else {
-        entry.status = deliveredRecipients.length > 0 ? "Sent" : "Failed";
-        entry.messageId = collectedMessageIds.join(", ");
-        entry.sentTo = deliveredRecipients;
-        entry.error = failures.map((r) => r.reason?.message || String(r.reason)).join(" | ");
-        console.error(`[EMAIL ERROR] Failed to send email to remaining recipients ${remainingRecipients.join(", ")}:`, entry.error);
-      }
-    } else if (deliveredRecipients.length > 0) {
-      entry.status = "Sent";
-      entry.messageId = collectedMessageIds.join(", ");
-      entry.sentTo = deliveredRecipients;
-    } else {
-      entry.status = "Skipped";
-      console.warn(`[EMAIL SKIPPED] SMTP not configured. Could not send email to ${safeTo}`);
-      if (process.env.NODE_ENV !== "production") {
-        console.log(`\n----- EMAIL (not sent, no SMTP configured) -----`);
-        console.log(`To: ${safeTo}\nSubject: ${subject}\n${html}`);
-        console.log(`--------------------------------------------------\n`);
-      }
-      return entry;
-    }
-  } catch (err) {
-    entry.status = "Failed";
-    entry.error = err.message;
-    console.error(`[EMAIL FATAL EXCEPTION] Email send failed to ${safeTo}:`, err.message);
+  // Deduplication check: avoid firing identical emails within 30 seconds
+  pruneRecentDispatches();
+  const dispatchKey = getDispatchKey(recipients, subject, html);
+  const existingDispatch = recentDispatches.get(dispatchKey);
+  if (existingDispatch && (Date.now() - existingDispatch.timestamp < DEDUPLICATION_WINDOW_MS)) {
+    console.log(`[EMAIL DEDUPLICATION] Suppressed duplicate email to "${safeTo}" with subject "${subject}" (sent ${Math.round((Date.now() - existingDispatch.timestamp) / 1000)}s ago).`);
+    entry.success = true;
+    entry.status = "Sent";
+    entry.messageId = existingDispatch.messageId || "duplicate-suppressed";
+    entry.sentTo = recipients;
+    entry.duplicateSuppressed = true;
+    return entry;
   }
 
-  return entry;
+  const config = getSmtpConfig();
+  const smtpConfigured = Boolean(config.user && config.pass);
+
+  if (!smtpConfigured) {
+    entry.status = "Skipped";
+    entry.error = "Missing environment variables: SMTP_USER or SMTP_PASS is not configured.";
+    console.warn(`[EMAIL CONFIG WARNING] SMTP credentials missing in process.env (SMTP_USER or SMTP_PASS).`);
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`\n----- EMAIL SIMULATION (SMTP Not Configured) -----`);
+      console.log(`To: ${safeTo}\nReply-To: ${replyTo || "default"}\nSubject: ${subject}\nBody: ${html.slice(0, 300)}...`);
+      console.log(`--------------------------------------------------\n`);
+      entry.success = true;
+      entry.messageId = `sim_${Date.now()}`;
+      entry.sentTo = recipients;
+      recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+      return entry;
+    }
+
+    // Try Resend fallback if available
+    if (process.env.RESEND_API_KEY) {
+      try {
+        console.log(`[EMAIL NOTICE] Attempting Resend fallback since SMTP is not configured...`);
+        const fallbackRes = await sendViaResendFallback(recipients, subject, html, replyTo);
+        if (fallbackRes?.value) {
+          entry.success = true;
+          entry.status = "Sent";
+          entry.messageId = fallbackRes.value.messageId;
+          entry.sentTo = fallbackRes.value.sentTo;
+          entry.error = null;
+          console.log(`[RESEND SUCCESS] Delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
+          recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+          return entry;
+        }
+      } catch (fallbackErr) {
+        console.error(`[RESEND ERROR] Resend fallback failed:`, fallbackErr.message);
+        entry.error += ` | Resend: ${fallbackErr.message}`;
+      }
+    }
+
+    return entry;
+  }
+
+  // 1. Primary Dispatch: Direct Nodemailer SMTP
+  try {
+    const transporter = getTransporter();
+    const from = getPreferredFromAddress();
+
+    let results = await sendRecipientBatch(transporter, from, recipients, subject, html, replyTo);
+    let successes = results.filter((r) => r.status === "fulfilled");
+    let failures = results.filter((r) => r.status === "rejected");
+
+    // Auto-failover: if primary port (e.g. 587) timed out, retry alternative port (465 SSL)
+    if (successes.length === 0 && failures.length > 0) {
+      const isNetworkFailure = failures.some((f) => {
+        const msg = (f.reason?.message || "").toLowerCase();
+        return msg.includes("timeout") || msg.includes("econn") || msg.includes("enetunreach") || msg.includes("esocket");
+      });
+
+      if (isNetworkFailure) {
+        const currentPort = Number(process.env.SMTP_PORT) || 587;
+        const altPort = currentPort === 465 ? 587 : 465;
+        const altSecure = altPort === 465;
+        console.warn(`[SMTP FAILOVER] Primary port ${currentPort} timed out. Retrying on port ${altPort} (secure: ${altSecure})...`);
+
+        const altTransporter = createTransporter(altPort, altSecure);
+        const altResults = await sendRecipientBatch(altTransporter, from, recipients, subject, html, replyTo);
+        const altSuccesses = altResults.filter((r) => r.status === "fulfilled");
+
+        if (altSuccesses.length > 0) {
+          cachedTransporter = altTransporter;
+          results = altResults;
+          successes = altSuccesses;
+          failures = altResults.filter((r) => r.status === "rejected");
+        }
+      }
+    }
+
+    if (successes.length > 0) {
+      const delivered = recipients.filter((_, idx) => results[idx]?.status === "fulfilled");
+      const messageIds = successes.map((s) => s.value?.messageId).filter(Boolean);
+      entry.success = true;
+      entry.status = "Sent";
+      entry.messageId = messageIds.join(", ");
+      entry.sentTo = delivered;
+      entry.error = null;
+      console.log(`[SMTP SUCCESS] Delivered to ${delivered.join(", ")} | Subject: "${subject}" | MessageID: ${entry.messageId}`);
+      recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+      return entry;
+    }
+
+    // SMTP rejected/failed for all recipients
+    const firstReason = failures[0]?.reason;
+    const classified = classifySmtpError(firstReason);
+    console.error(`[SMTP ERROR - ${classified.type}] ${classified.message}`);
+    entry.error = classified.message;
+
+    // 2. Secondary fallback: Resend HTTP API (if configured)
+    if (process.env.RESEND_API_KEY) {
+      try {
+        console.log(`[SMTP FALLBACK] Attempting Resend API fallback for ${safeTo}...`);
+        const fallbackRes = await sendViaResendFallback(recipients, subject, html, replyTo);
+        if (fallbackRes?.value) {
+          entry.success = true;
+          entry.status = "Sent";
+          entry.messageId = fallbackRes.value.messageId;
+          entry.sentTo = fallbackRes.value.sentTo;
+          entry.error = null;
+          console.log(`[RESEND SUCCESS] Fallback delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
+          recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+          return entry;
+        }
+      } catch (fallbackErr) {
+        console.error(`[RESEND FALLBACK FAILED]`, fallbackErr.message);
+        entry.error += ` | Resend fallback: ${fallbackErr.message}`;
+      }
+    }
+
+    entry.status = "Failed";
+    return entry;
+  } catch (err) {
+    const classified = classifySmtpError(err);
+    console.error(`[EMAIL EXCEPTION - ${classified.type}] ${classified.message}`);
+    entry.status = "Failed";
+    entry.error = classified.message;
+    return entry;
+  }
 }
 
 function getEmailLog() {
@@ -752,7 +717,43 @@ const templates = {
       </div>
     `,
   }),
+  emailVerification: (name, code, expiryMinutes = 15) => ({
+    subject: `Your InternDock Verification Code: ${escapeHtml(code)}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #0f172a; margin-bottom: 4px;">Verify Your Email Address</h2>
+          <p style="color: #64748b; font-size: 14px; margin: 0;">InternDock Internship Platform</p>
+        </div>
+        <p style="color: #334155; font-size: 15px;">Hi ${escapeHtml(name)},</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.6;">Thank you for registering on <strong>InternDock</strong>. To complete your candidate registration and activate your account, please enter this one-time verification code:</p>
+        
+        <div style="text-align: center; margin: 28px 0;">
+          <div style="display: inline-block; background: #f1f5f9; border: 2px dashed #0284c7; padding: 14px 32px; border-radius: 8px; letter-spacing: 8px; font-size: 32px; font-weight: 800; color: #0284c7; font-family: 'Courier New', monospace;">
+            ${escapeHtml(code)}
+          </div>
+          <p style="color: #64748b; font-size: 13px; margin-top: 8px;">Valid for <strong>${expiryMinutes} minutes</strong>. Do not share this code with anyone.</p>
+        </div>
+
+        <p style="color: #475569; font-size: 14px; line-height: 1.6;">Once verified, you will have immediate access to your candidate dashboard, domain curricula, and verifiable internship workspaces.</p>
+        <p style="color: #94a3b8; font-size: 12px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 14px;">If you did not attempt to register on InternDock, please disregard this email.</p>
+        <p style="color: #64748b; font-size: 13px; margin-top: 14px;">
+          Best regards,<br />
+          <strong>InternDock Admissions &amp; Security Team</strong><br />
+          <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none;">www.interndock.in</a>
+        </p>
+      </div>
+    `,
+  }),
 };
 
-
-module.exports = { sendEmail, getEmailLog, templates, normalizeRecipientsForDispatch, getPreferredFromAddress, getResendFromAddress };
+module.exports = {
+  sendEmail,
+  getEmailLog,
+  templates,
+  normalizeRecipientsForDispatch,
+  getPreferredFromAddress,
+  getResendFromAddress,
+  createTransporter,
+  classifySmtpError,
+};

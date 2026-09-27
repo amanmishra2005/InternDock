@@ -25,12 +25,17 @@ async function ensureAdminAccount(options = {}) {
       password: adminPassword,
       role: "admin",
       isActive: true,
+      isVerified: true,
     });
     logger.log(`Created admin user -> email: ${adminEmail}`);
     return admin;
   }
 
   let changed = false;
+  if (!admin.isVerified) {
+    admin.isVerified = true;
+    changed = true;
+  }
   if (admin.role !== "admin") {
     admin.role = "admin";
     changed = true;

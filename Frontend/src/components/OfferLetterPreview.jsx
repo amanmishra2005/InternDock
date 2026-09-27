@@ -1,5 +1,6 @@
 import React from "react";
 import { ShieldCheck, Download } from "lucide-react";
+import { renderOfferLetterHtml } from "../../../shared/documentTemplates.js";
 import "./DocumentPreview.css";
 
 export default function OfferLetterPreview({
@@ -15,11 +16,21 @@ export default function OfferLetterPreview({
   orgName = "InternDock",
   onDownload = null,
 }) {
-  const issueDateStr = new Date().toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const documentHtml = renderOfferLetterHtml(
+    {
+      studentName,
+      collegeName,
+      domainName,
+      durationLabel,
+      startDate,
+      endDate,
+      applicationId,
+      referenceId,
+      verificationId,
+      orgName,
+    },
+    { mode: "preview", bodyOnly: true }
+  );
 
   return (
     <div className="doc-preview-wrapper">
@@ -39,147 +50,10 @@ export default function OfferLetterPreview({
         )}
       </div>
 
-      <div className="doc-card-frame doc-card-portrait">
-        {/* Corner L-Brackets */}
-        <div className="doc-corner corner-tl" />
-        <div className="doc-corner corner-tr" />
-        <div className="doc-corner corner-bl" />
-        <div className="doc-corner corner-br" />
-
-        <div className="doc-inner-content">
-          <div className="doc-company-watermark" aria-hidden="true">
-            <img src="/logo_mark.png" alt="" />
-          </div>
-
-          {/* Header Row */}
-          <div className="doc-header-row">
-            <div className="doc-brand-block">
-              <img
-                src="/favicon.png"
-                alt="InternDock"
-                className="doc-logo-img"
-              />
-              <div className="doc-brand-titles">
-                <span className="doc-brand-name">InternDock</span>
-                <span className="doc-brand-tagline">TECH TALENT PLATFORM</span>
-              </div>
-            </div>
-
-            <div className="doc-contact-info text-right">
-              <p>www.interndock.in</p>
-              <p>Gorakhpur U.P. India</p>
-            </div>
-          </div>
-
-          <div className="doc-divider-line" />
-
-          {/* Meta Bar */}
-          <div className="offer-meta-bar">
-            <p className="offer-ref-text">
-              Reference: <strong>{referenceId}</strong>
-            </p>
-            <p className="offer-date-text">{issueDateStr}</p>
-          </div>
-
-          {/* Document Title */}
-          <div className="offer-title-block text-center">
-            <h1 className="offer-main-title">Internship Offer Letter</h1>
-            <div className="offer-teal-bar" />
-          </div>
-
-          {/* Body Content */}
-          <div className="offer-body-content">
-            <h2 className="offer-salutation">Dear {studentName},</h2>
-            <p className="offer-intro-p">
-              We are delighted to welcome you to the Internship Program at{" "}
-              <strong>InternDock</strong>. We believe your skills and enthusiasm
-              will be a valuable asset to our team.
-            </p>
-
-            {/* Structured Table matching PDF */}
-            <div className="offer-details-section">
-              <h3 className="offer-details-title">INTERNSHIP DETAILS</h3>
-              <div className="offer-details-divider" />
-              <div className="offer-details-table">
-                <div className="offer-table-row">
-                  <span className="row-key">College / University</span>
-                  <span className="row-val">{collegeName || "-"}</span>
-                </div>
-                <div className="offer-table-row">
-                  <span className="row-key">Role</span>
-                  <span className="row-val">{domainName} Intern</span>
-                </div>
-                <div className="offer-table-row">
-                  <span className="row-key">Start Date</span>
-                  <span className="row-val">{startDate || "Immediate"}</span>
-                </div>
-                <div className="offer-table-row">
-                  <span className="row-key">End Date</span>
-                  <span className="row-val">
-                    {endDate || "Upon Completion"}
-                  </span>
-                </div>
-                <div className="offer-table-row">
-                  <span className="row-key">Type</span>
-                  <span className="row-val">Project-Based / Remote</span>
-                </div>
-                <div className="offer-table-row">
-                  <span className="row-key">Duration</span>
-                  <span className="row-val">{durationLabel}</span>
-                </div>
-              </div>
-            </div>
-
-            <p className="offer-body-p">
-              During this period, you will have the opportunity to work on
-              real-world projects and gain hands-on experience under mentor
-              guidance. Upon successful completion of the internship, you will
-              be awarded an official Internship Completion Certificate.
-            </p>
-
-            <p className="offer-closing-p">
-              We look forward to a productive and meaningful association with
-              you.
-            </p>
-
-            <p className="offer-regards-line">Best regards,</p>
-          </div>
-
-          {/* Bottom Row Block with Dual Seals */}
-          <div className="doc-bottom-row">
-            <div className="doc-cid-block text-left">
-              <span className="doc-meta-label">APPLICATION ID</span>
-              <span className="doc-ref-val">{applicationId}</span>
-            </div>
-
-            <div className="doc-footer-seals" aria-label="Certification marks">
-              <img src="/official_seal.png" alt="Certified" />
-              <img src="/msme_logo.png" alt="MSME registered" />
-            </div>
-
-            <div className="doc-ceo-sig text-center">
-              <div className="doc-sig-wrapper">
-                <img
-                  src="/ceo_signature.png"
-                  alt="Founder & CEO Signature"
-                  className="doc-sig-img"
-                />
-                <div className="doc-sig-line" />
-              </div>
-              <span className="doc-sig-name">Aman Mishra</span>
-              <span className="doc-sig-title">
-                Founder &amp; CEO, InternDock
-              </span>
-            </div>
-          </div>
-
-          <div className="doc-verified-footer">
-            <span>
-              InternDock Certified | www.interndock.in | Govt. Registered
-            </span>
-          </div>
-        </div>
-      </div>
+      <div
+        className="doc-rendered-container"
+        dangerouslySetInnerHTML={{ __html: documentHtml }}
+      />
     </div>
   );
 }

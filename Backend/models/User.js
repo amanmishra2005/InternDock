@@ -25,6 +25,11 @@ const userSchema = new mongoose.Schema(
     profilePhotoUrl: String,
 
     isActive: { type: Boolean, default: true },
+    isVerified: { type: Boolean, default: false },
+    verificationCode: { type: String, select: false },
+    verificationCodeExpires: { type: Date, select: false },
+    verificationAttempts: { type: Number, default: 0, select: false },
+    lastVerificationSentAt: { type: Date, select: false },
   },
   { timestamps: true }
 );

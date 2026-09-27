@@ -7,6 +7,8 @@ const Application = require("../models/Application");
 const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
+const { sendEmail, templates } = require("../utils/sendEmail");
+const { supportTargetEmail } = require("../utils/emailTargets");
 
 async function findApplicationByIdentifier(identifier) {
   if (!identifier) return null;
@@ -133,8 +135,40 @@ router.post("/confirm", protect, async (req, res) => {
 
     await application.save();
 
+    const studentUser = application.student || req.user;
+    const studentEmail = studentUser.email || registeredEmail;
+    const studentName = studentUser.fullName || payerName || "Student";
+    const appId = application.applicationId || String(application._id);
+    const adminNotificationEmail = supportTargetEmail();
 
+    const studentReceiptT = templates.paymentSuccess(studentName, feeAmount, appId);
+    const adminPaymentT = templates.newPaymentAdminNotification(
+      studentName,
+      studentEmail,
+      feeAmount,
+      payment.utrNumber,
+      appId
+    );
 
+    Promise.allSettled([
+      studentEmail ? sendEmail({ to: studentEmail, replyTo: "support.interndock@gmail.com", ...studentReceiptT }) : Promise.resolve(),
+      sendEmail({ to: adminNotificationEmail, replyTo: studentEmail || "support.interndock@gmail.com", ...adminPaymentT })
+    ]).then(([studentRes, adminRes]) => {
+      if (studentRes.status === "fulfilled" && studentRes.value?.success) {
+        console.log(`[PAYMENT EMAIL SUCCESS] Receipt delivered to ${studentEmail} (ID: ${studentRes.value.messageId})`);
+      } else if (studentEmail) {
+        const err = studentRes.status === "fulfilled" ? studentRes.value?.error : studentRes.reason?.message;
+        console.error(`[PAYMENT EMAIL FAILURE] Receipt failed for ${studentEmail}: ${err}`);
+      }
+      if (adminRes.status === "fulfilled" && adminRes.value?.success) {
+        console.log(`[PAYMENT EMAIL SUCCESS] Admin notification delivered to ${adminNotificationEmail} (ID: ${adminRes.value.messageId})`);
+      } else {
+        const err = adminRes.status === "fulfilled" ? adminRes.value?.error : adminRes.reason?.message;
+        console.error(`[PAYMENT EMAIL FAILURE] Admin notification failed for ${adminNotificationEmail}: ${err}`);
+      }
+    }).catch((err) => {
+      console.error("[PAYMENT EMAIL ERROR]", err.message);
+    });
 
     res.json({
       success: true,

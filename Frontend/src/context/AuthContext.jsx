@@ -64,9 +64,25 @@ export function AuthProvider({ children }) {
 
   const register = async (payload) => {
     const res = await api.post("/auth/register", payload);
-    localStorage.setItem("token", res.data.token);
-    persistUser(res.data.user);
-    return res.data.user;
+    if (res.data.token && res.data.user) {
+      localStorage.setItem("token", res.data.token);
+      persistUser(res.data.user);
+    }
+    return res.data;
+  };
+
+  const verifyEmail = async (email, code) => {
+    const res = await api.post("/auth/verify-email", { email, code });
+    if (res.data.token && res.data.user) {
+      localStorage.setItem("token", res.data.token);
+      persistUser(res.data.user);
+    }
+    return res.data;
+  };
+
+  const resendVerification = async (email) => {
+    const res = await api.post("/auth/resend-verification", { email });
+    return res.data;
   };
 
   const logout = () => {
@@ -77,7 +93,16 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser: persistUser, loading, login, register, logout }}
+      value={{
+        user,
+        setUser: persistUser,
+        loading,
+        login,
+        register,
+        verifyEmail,
+        resendVerification,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

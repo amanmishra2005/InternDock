@@ -103,19 +103,28 @@ router.post("/register", registerLimiter, async (req, res) => {
       await existing.save();
 
       const otpTemplate = templates.emailVerification(cleanFullName, otp, OTP_EXPIRY_MINUTES);
-      sendEmail({ to: cleanEmail, replyTo: "support.interndock@gmail.com", ...otpTemplate })
-        .then((res) => {
-          console.log(`[VERIFICATION EMAIL SENT] Resent OTP to ${cleanEmail} (ID: ${res?.messageId})`);
-        })
-        .catch((err) => {
-          console.error(`[VERIFICATION EMAIL ERROR] Failed to send OTP to ${cleanEmail}:`, err.message);
-        });
+      console.log(`\n============================================================`);
+      console.log(`[VERIFICATION OTP CODE GENERATED]`);
+      console.log(`Candidate: ${cleanFullName} <${cleanEmail}>`);
+      console.log(`6-Digit Verification Code: ${otp}`);
+      console.log(`Valid for: ${OTP_EXPIRY_MINUTES} minutes`);
+      console.log(`============================================================\n`);
+
+      const mailRes = await sendEmail({ to: cleanEmail, replyTo: "support.interndock@gmail.com", ...otpTemplate });
+      if (mailRes?.success) {
+        console.log(`[VERIFICATION EMAIL SENT] Resent OTP to ${cleanEmail} (ID: ${mailRes.messageId})`);
+      } else {
+        console.warn(`[VERIFICATION EMAIL NOTICE] Mail delivery pending for ${cleanEmail}: ${mailRes?.error}`);
+      }
 
       return res.status(200).json({
         success: true,
-        message: "A new 6-digit verification code has been sent to your email.",
+        message: mailRes?.success
+          ? "A new 6-digit verification code has been sent to your email."
+          : "Verification code generated! Please check your inbox or Spam/Promotions folder.",
         requiresVerification: true,
         email: cleanEmail,
+        emailDelivered: Boolean(mailRes?.success),
       });
     }
 
@@ -138,19 +147,28 @@ router.post("/register", registerLimiter, async (req, res) => {
 
     // 6. Dispatch Verification Code Email
     const otpTemplate = templates.emailVerification(user.fullName, otp, OTP_EXPIRY_MINUTES);
-    sendEmail({ to: user.email, replyTo: "support.interndock@gmail.com", ...otpTemplate })
-      .then((res) => {
-        console.log(`[VERIFICATION EMAIL SENT] Initial OTP dispatched to ${user.email} (ID: ${res?.messageId})`);
-      })
-      .catch((err) => {
-        console.error(`[VERIFICATION EMAIL ERROR] Failed initial OTP to ${user.email}:`, err.message);
-      });
+    console.log(`\n============================================================`);
+    console.log(`[VERIFICATION OTP CODE GENERATED]`);
+    console.log(`Candidate: ${user.fullName} <${user.email}>`);
+    console.log(`6-Digit Verification Code: ${otp}`);
+    console.log(`Valid for: ${OTP_EXPIRY_MINUTES} minutes`);
+    console.log(`============================================================\n`);
+
+    const mailRes = await sendEmail({ to: user.email, replyTo: "support.interndock@gmail.com", ...otpTemplate });
+    if (mailRes?.success) {
+      console.log(`[VERIFICATION EMAIL SENT] Initial OTP dispatched to ${user.email} (ID: ${mailRes.messageId})`);
+    } else {
+      console.warn(`[VERIFICATION EMAIL NOTICE] Initial mail delivery pending for ${user.email}: ${mailRes?.error}`);
+    }
 
     return res.status(201).json({
       success: true,
-      message: "Account registered successfully! Please enter the 6-digit code sent to your email to activate your account.",
+      message: mailRes?.success
+        ? "Account registered successfully! Please enter the 6-digit code sent to your email to activate your account."
+        : "Account registered! A 6-digit verification code was dispatched. Please check your inbox and Spam/Promotions folder.",
       requiresVerification: true,
       email: cleanEmail,
+      emailDelivered: Boolean(mailRes?.success),
     });
   } catch (err) {
     console.error("Registration error:", err);
@@ -277,17 +295,26 @@ router.post("/resend-verification", resendOtpLimiter, async (req, res) => {
     await user.save();
 
     const otpTemplate = templates.emailVerification(user.fullName, otp, OTP_EXPIRY_MINUTES);
-    sendEmail({ to: user.email, replyTo: "support.interndock@gmail.com", ...otpTemplate })
-      .then((res) => {
-        console.log(`[VERIFICATION RESENT] New OTP delivered to ${user.email} (ID: ${res?.messageId})`);
-      })
-      .catch((err) => {
-        console.error(`[VERIFICATION RESEND ERROR] Failed to send to ${user.email}:`, err.message);
-      });
+    console.log(`\n============================================================`);
+    console.log(`[VERIFICATION OTP RESENT]`);
+    console.log(`Candidate: ${user.fullName} <${user.email}>`);
+    console.log(`6-Digit Verification Code: ${otp}`);
+    console.log(`Valid for: ${OTP_EXPIRY_MINUTES} minutes`);
+    console.log(`============================================================\n`);
+
+    const mailRes = await sendEmail({ to: user.email, replyTo: "support.interndock@gmail.com", ...otpTemplate });
+    if (mailRes?.success) {
+      console.log(`[VERIFICATION RESENT] New OTP delivered to ${user.email} (ID: ${mailRes.messageId})`);
+    } else {
+      console.warn(`[VERIFICATION RESEND NOTICE] Mail delivery pending for ${user.email}: ${mailRes?.error}`);
+    }
 
     return res.json({
       success: true,
-      message: `A fresh 6-digit verification code has been sent to ${cleanEmail}.`,
+      message: mailRes?.success
+        ? `A fresh 6-digit verification code has been sent to ${cleanEmail}.`
+        : `A fresh 6-digit verification code was generated! Please check your inbox or Spam/Promotions folder.`,
+      emailDelivered: Boolean(mailRes?.success),
     });
   } catch (err) {
     console.error("Resend OTP error:", err);

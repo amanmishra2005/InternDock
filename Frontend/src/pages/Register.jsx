@@ -33,13 +33,24 @@ export default function Register() {
     phone: "",
     college: "",
   });
-  const [otpCode, setOtpCode] = useState("");
+  const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
+  const otpInputRefs = useRef([]);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+
+  // Auto-focus first OTP box when entering verify step
+  useEffect(() => {
+    if (step === "verify") {
+      setTimeout(() => {
+        otpInputRefs.current[0]?.focus();
+      }, 150);
+    }
+  }, [step]);
+
 
   // Anti-Bot: Honeypot & Timing
   const [honeypot, setHoneypot] = useState("");
@@ -128,15 +139,69 @@ export default function Register() {
     }
   };
 
+  // OTP Digit Input Handlers
+  const handleDigitChange = (index, value) => {
+    const numericChar = value.replace(/\D/g, "");
+    if (!numericChar) {
+      const updated = [...otpDigits];
+      updated[index] = "";
+      setOtpDigits(updated);
+      return;
+    }
+    const char = numericChar.slice(-1);
+    const updated = [...otpDigits];
+    updated[index] = char;
+    setOtpDigits(updated);
+    setError("");
+
+    if (index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleDigitKeyDown = (index, e) => {
+    if (e.key === "Backspace") {
+      if (!otpDigits[index] && index > 0) {
+        const updated = [...otpDigits];
+        updated[index - 1] = "";
+        setOtpDigits(updated);
+        otpInputRefs.current[index - 1]?.focus();
+      } else {
+        const updated = [...otpDigits];
+        updated[index] = "";
+        setOtpDigits(updated);
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const chars = pasted.split("");
+    const updated = ["", "", "", "", "", ""];
+    for (let i = 0; i < 6; i++) {
+      updated[i] = chars[i] || "";
+    }
+    setOtpDigits(updated);
+    setError("");
+    const nextFocusIdx = Math.min(chars.length, 5);
+    otpInputRefs.current[nextFocusIdx]?.focus();
+  };
+
   // Step 2: Verify 6-digit Email OTP
   const submitVerify = async (e) => {
     e.preventDefault();
     setError("");
     setSuccessMsg("");
 
-    const cleanCode = String(otpCode).trim();
+    const cleanCode = otpDigits.join("").trim();
     if (!/^\d{6}$/.test(cleanCode)) {
-      setError("Please enter the complete 6-digit numerical code.");
+      setError("Please enter the complete 6-digit verification code.");
       return;
     }
 
@@ -153,6 +218,7 @@ export default function Register() {
       setLoading(false);
     }
   };
+
 
   // Resend OTP
   const handleResend = async () => {
@@ -414,25 +480,31 @@ export default function Register() {
                   </button>
                 </div>
 
-                <div className="input-group">
-                  <label className="input-label">6-Digit Verification Code</label>
-                  <div className="input-with-icon">
-                    <KeyRound className="field-icon" size={18} />
-                    <input
-                      className="input-field padded-input otp-large-input"
-                      type="text"
-                      maxLength={6}
-                      pattern="[0-9]{6}"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      autoFocus
-                      placeholder="• • • • • •"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      required
-                    />
+                <div className="otp-box-section">
+                  <div className="otp-boxes-label-row">
+                    <KeyRound size={16} className="otp-label-icon" />
+                    <label className="input-label mb-0">6-Digit Verification Code</label>
                   </div>
-                  <span className="field-subtext">Check your inbox or Spam/Updates folder. Valid for 15 minutes.</span>
+                  <div className="otp-boxes-container" onPaste={handlePaste}>
+                    {otpDigits.map((digit, idx) => (
+                      <input
+                        key={idx}
+                        ref={(el) => (otpInputRefs.current[idx] = el)}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        autoComplete="off"
+                        className={`otp-box-digit ${digit ? "filled" : ""}`}
+                        value={digit}
+                        onChange={(e) => handleDigitChange(idx, e.target.value)}
+                        onKeyDown={(e) => handleDigitKeyDown(idx, e)}
+                        aria-label={`Digit ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="field-subtext text-center">
+                    Check your inbox or Spam/Updates folder. Valid for 15 minutes.
+                  </span>
                 </div>
 
                 {error && (
@@ -454,11 +526,12 @@ export default function Register() {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   className="btn btn-primary btn-glow full-width btn-lg"
-                  disabled={loading || otpCode.length !== 6}
+                  disabled={loading || otpDigits.join("").length !== 6}
                 >
                   <span>{loading ? "Activating Account..." : "Verify & Activate Account"}</span>
                   <ShieldCheck size={18} />
                 </motion.button>
+
 
                 <div className="resend-box text-center">
                   <p>Didn't receive the email code?</p>
@@ -522,9 +595,43 @@ export default function Register() {
         .email-chip-label { color: var(--text-muted); font-size: 0.75rem; }
         .email-chip-address { color: #ffffff; word-break: break-all; }
         .email-chip-change-btn { background: none; border: none; color: #0284c7; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline; }
-        
-        .otp-large-input { font-size: 1.35rem !important; letter-spacing: 0.45rem; text-align: center; font-weight: 700; font-family: monospace; }
+        .otp-box-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; width: 100%; }
+        .otp-boxes-label-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
+        .otp-label-icon { color: #6366f1; }
+        .mb-0 { margin-bottom: 0 !important; }
+        .otp-boxes-container { display: flex; gap: 0.65rem; justify-content: center; margin-bottom: 0.65rem; width: 100%; }
+        .otp-box-digit {
+          width: 52px;
+          height: 60px;
+          text-align: center;
+          font-size: 1.65rem;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+          background: rgba(15, 23, 42, 0.85);
+          border: 1.5px solid rgba(255, 255, 255, 0.16);
+          border-radius: 12px;
+          color: #ffffff;
+          outline: none;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+        .otp-box-digit:focus {
+          border-color: #6366f1;
+          background: rgba(99, 102, 241, 0.14);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), 0 6px 18px rgba(99, 102, 241, 0.35);
+          transform: translateY(-2px);
+        }
+        .otp-box-digit.filled {
+          border-color: rgba(99, 102, 241, 0.6);
+          background: rgba(30, 41, 59, 0.95);
+          color: #38bdf8;
+        }
+        @media (max-width: 480px) {
+          .otp-boxes-container { gap: 0.35rem; }
+          .otp-box-digit { width: 44px; height: 52px; font-size: 1.4rem; border-radius: 8px; }
+        }
         .resend-box { margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-muted); }
+
         .resend-box p { margin-bottom: 0.35rem; }
         .resend-action-btn { background: none; border: none; color: #0284c7; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
         .resend-action-btn:disabled { color: var(--text-muted); cursor: not-allowed; opacity: 0.6; }

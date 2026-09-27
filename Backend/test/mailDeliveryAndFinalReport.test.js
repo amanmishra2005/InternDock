@@ -14,16 +14,18 @@ test('getResendFromAddress defaults to onboarding@resend.dev when EMAIL_FROM use
   assert.equal(resolvedFrom, 'InternDock <onboarding@resend.dev>', 'Prevents Resend 403 rejection by using onboarding@resend.dev');
 
   // Cleanup
-  process.env.EMAIL_FROM = originalFrom;
-  if (originalResendFrom) process.env.RESEND_FROM = originalResendFrom;
+  if (originalFrom !== undefined) process.env.EMAIL_FROM = originalFrom;
+  else delete process.env.EMAIL_FROM;
+  if (originalResendFrom !== undefined) process.env.RESEND_FROM = originalResendFrom;
+  else delete process.env.RESEND_FROM;
 });
 
-test('getResendFromAddress respects explicit RESEND_FROM if specified', () => {
+test('getResendFromAddress respects explicit RESEND_FROM with verified custom domain', () => {
   const originalResendFrom = process.env.RESEND_FROM;
-  process.env.RESEND_FROM = 'InternDock <support.interndock@gmail.com>';
+  process.env.RESEND_FROM = 'InternDock <notifications@interndock.in>';
 
   const resolved = getResendFromAddress();
-  assert.equal(resolved, 'InternDock <support.interndock@gmail.com>');
+  assert.equal(resolved, 'InternDock <notifications@interndock.in>');
 
   if (originalResendFrom) {
     process.env.RESEND_FROM = originalResendFrom;
@@ -31,6 +33,21 @@ test('getResendFromAddress respects explicit RESEND_FROM if specified', () => {
     delete process.env.RESEND_FROM;
   }
 });
+
+test('getResendFromAddress falls back to onboarding@resend.dev when RESEND_FROM contains @gmail.com', () => {
+  const originalResendFrom = process.env.RESEND_FROM;
+  process.env.RESEND_FROM = 'InternDock <support.interndock@gmail.com>';
+
+  const resolved = getResendFromAddress();
+  assert.equal(resolved, 'InternDock <onboarding@resend.dev>');
+
+  if (originalResendFrom) {
+    process.env.RESEND_FROM = originalResendFrom;
+  } else {
+    delete process.env.RESEND_FROM;
+  }
+});
+
 
 test('getResendFromAddress preserves verified custom domain in EMAIL_FROM', () => {
   const originalFrom = process.env.EMAIL_FROM;

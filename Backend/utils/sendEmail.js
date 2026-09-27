@@ -73,16 +73,23 @@ function getPreferredFromAddress() {
 }
 
 function getResendFromAddress() {
-  if (process.env.RESEND_FROM) {
-    return process.env.RESEND_FROM.trim();
+  const customFrom = String(process.env.RESEND_FROM || "").trim();
+  const isWebmailCustom = /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(customFrom);
+  if (customFrom && customFrom !== "undefined" && !isWebmailCustom && !customFrom.toLowerCase().includes("@gmail.")) {
+    return customFrom;
   }
+
   const configuredFrom = String(process.env.EMAIL_FROM || "").trim();
-  const isWebmail = /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(configuredFrom);
-  if (configuredFrom && !isWebmail) {
+  const isWebmailConfigured = /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(configuredFrom);
+  if (configuredFrom && configuredFrom !== "undefined" && !isWebmailConfigured && !configuredFrom.toLowerCase().includes("@gmail.")) {
     return configuredFrom;
   }
+
+  // Resend strictly forbids sending from public webmail domains like @gmail.com without verified DNS.
+  // The official free testing sender recognized by Resend is onboarding@resend.dev.
   return "InternDock <onboarding@resend.dev>";
 }
+
 
 function escapeHtml(value = "") {
   return String(value)
@@ -102,11 +109,12 @@ function getSmtpConfig() {
   const pass = (process.env.SMTP_PASS || "").trim();
   const secure = process.env.SMTP_SECURE === "true" || port === 465;
   const requireTLS = process.env.SMTP_REQUIRE_TLS !== "false";
-  const connectionTimeout = Math.min(Math.max(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 10000, 3000), 30000);
-  const socketTimeout = Math.min(Math.max(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000, 5000), 45000);
+  const connectionTimeout = Math.min(Math.max(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 4000, 2000), 30000);
+  const socketTimeout = Math.min(Math.max(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 8000, 3000), 45000);
 
   return { host, port, user, pass, secure, requireTLS, connectionTimeout, socketTimeout };
 }
+
 
 function createTransporter(port, secure) {
   const config = getSmtpConfig();
@@ -270,6 +278,149 @@ async function sendViaResendFallback(recipients, subject, html, replyTo) {
   throw new Error(`Resend fallback failed: ${errDetail}`);
 }
 
+async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
+  const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
+  const webhookToken = process.env.GOOGLE_SHEET_WEBHOOK_TOKEN;
+  if (!webhookUrl || !webhookToken) return null;
+
+  const results = await Promise.allSettled(
+    recipients.map(async (recipient) => {
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          webhookToken,
+          action: "send_email",
+          to: recipient,
+          subject,
+          html,
+          replyTo: replyTo || "support.interndock@gmail.com",
+          senderName: "InternDock",
+        }),
+      });
+      const text = await res.text().catch(() => "");
+      if (!res.ok && !text.includes("OK") && !text.includes("success")) {
+        throw new Error(`Google Apps Script Relay (${res.status}): ${text.slice(0, 100)}`);
+      }
+      return { recipient, messageId: `gas_${Date.now()}` };
+    })
+  );
+
+  const fulfilled = results.filter((r) => r.status === "fulfilled");
+  if (fulfilled.length > 0) {
+    const messageId = fulfilled.map((f) => f.value?.messageId).join(", ");
+    const sentTo = fulfilled.map((f) => f.value?.recipient);
+    return { status: "fulfilled", value: { messageId, sentTo } };
+  }
+  const rejected = results.filter((r) => r.status === "rejected");
+  const errDetail = rejected.map((r) => r.reason?.message).join("; ");
+  throw new Error(`Google Apps Script relay failed: ${errDetail}`);
+}
+
+async function sendViaBrevo(recipients, subject, html, replyTo) {
+  const rawKey = process.env.BREVO_API_KEY;
+  if (!rawKey) return null;
+  const apiKey = String(rawKey).replace(/^"|"$/g, "").trim();
+  if (!apiKey) return null;
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: "InternDock", email: "support.interndock@gmail.com" },
+      to: recipients.map((r) => ({ email: r })),
+      subject,
+      htmlContent: html,
+      replyTo: { email: replyTo || "support.interndock@gmail.com" },
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`Brevo API (${res.status}): ${data.message || JSON.stringify(data)}`);
+  }
+  return {
+    status: "fulfilled",
+    value: {
+      messageId: data.messageId || `brevo_${Date.now()}`,
+      sentTo: recipients,
+    },
+  };
+}
+
+async function dispatchViaHttpFallbacks(recipients, subject, html, replyTo) {
+  const delivered = [];
+  const messageIds = [];
+  let pending = [...recipients];
+
+  // 1. Resend API (Delivers to support.interndock@gmail.com & verified domains)
+  if (process.env.RESEND_API_KEY && pending.length > 0) {
+    try {
+      console.log(`[HTTP DISPATCH] Attempting Resend API for: ${pending.join(", ")}`);
+      const res = await sendViaResendFallback(pending, subject, html, replyTo);
+      if (res?.value?.sentTo) {
+        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        delivered.push(...sent);
+        if (res.value.messageId) messageIds.push(res.value.messageId);
+        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
+        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+      }
+    } catch (err) {
+      console.warn(`[HTTP RESEND NOTICE]`, err.message);
+    }
+  }
+
+  // 2. Google Apps Script Webhook Relay (Over HTTPS Port 443; sends from support.interndock@gmail.com)
+  if (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN && pending.length > 0) {
+    try {
+      console.log(`[HTTP DISPATCH] Attempting Google Apps Script Relay for: ${pending.join(", ")}`);
+      const res = await sendViaGoogleAppsScript(pending, subject, html, replyTo);
+      if (res?.value?.sentTo) {
+        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        delivered.push(...sent);
+        if (res.value.messageId) messageIds.push(res.value.messageId);
+        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
+        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+      }
+    } catch (err) {
+      console.warn(`[HTTP GOOGLE APPS SCRIPT NOTICE]`, err.message);
+    }
+  }
+
+  // 3. Brevo API (if configured)
+  if (process.env.BREVO_API_KEY && pending.length > 0) {
+    try {
+      console.log(`[HTTP DISPATCH] Attempting Brevo API for: ${pending.join(", ")}`);
+      const res = await sendViaBrevo(pending, subject, html, replyTo);
+      if (res?.value?.sentTo) {
+        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        delivered.push(...sent);
+        if (res.value.messageId) messageIds.push(res.value.messageId);
+        const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
+        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+      }
+    } catch (err) {
+      console.warn(`[HTTP BREVO NOTICE]`, err.message);
+    }
+  }
+
+  if (delivered.length > 0) {
+    return {
+      status: "fulfilled",
+      value: {
+        messageId: messageIds.join(", "),
+        sentTo: delivered,
+      },
+    };
+  }
+
+  return null;
+}
+
 /**
  * Centralized, reliable email dispatch function.
  * Uses primary SMTP configuration with automatic failover between ports 587 and 465,
@@ -334,25 +485,23 @@ async function sendEmail({ to, subject, html, replyTo }) {
       return entry;
     }
 
-    // Try Resend fallback if available
-    if (process.env.RESEND_API_KEY) {
-      try {
-        console.log(`[EMAIL NOTICE] Attempting Resend fallback since SMTP is not configured...`);
-        const fallbackRes = await sendViaResendFallback(recipients, subject, html, replyTo);
-        if (fallbackRes?.value) {
-          entry.success = true;
-          entry.status = "Sent";
-          entry.messageId = fallbackRes.value.messageId;
-          entry.sentTo = fallbackRes.value.sentTo;
-          entry.error = null;
-          console.log(`[RESEND SUCCESS] Delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
-          recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
-          return entry;
-        }
-      } catch (fallbackErr) {
-        console.error(`[RESEND ERROR] Resend fallback failed:`, fallbackErr.message);
-        entry.error += ` | Resend: ${fallbackErr.message}`;
+    // Try HTTP fallbacks if available
+    try {
+      console.log(`[EMAIL NOTICE] Attempting HTTP fallback relay since SMTP is not configured...`);
+      const fallbackRes = await dispatchViaHttpFallbacks(recipients, subject, html, replyTo);
+      if (fallbackRes?.value) {
+        entry.success = true;
+        entry.status = "Sent";
+        entry.messageId = fallbackRes.value.messageId;
+        entry.sentTo = fallbackRes.value.sentTo;
+        entry.error = null;
+        console.log(`[HTTP SUCCESS] Delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
+        recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+        return entry;
       }
+    } catch (fallbackErr) {
+      console.error(`[HTTP RELAY ERROR] HTTP fallbacks failed:`, fallbackErr.message);
+      entry.error += ` | HTTP: ${fallbackErr.message}`;
     }
 
     return entry;
@@ -412,25 +561,23 @@ async function sendEmail({ to, subject, html, replyTo }) {
     console.error(`[SMTP ERROR - ${classified.type}] ${classified.message}`);
     entry.error = classified.message;
 
-    // 2. Secondary fallback: Resend HTTP API (if configured)
-    if (process.env.RESEND_API_KEY) {
-      try {
-        console.log(`[SMTP FALLBACK] Attempting Resend API fallback for ${safeTo}...`);
-        const fallbackRes = await sendViaResendFallback(recipients, subject, html, replyTo);
-        if (fallbackRes?.value) {
-          entry.success = true;
-          entry.status = "Sent";
-          entry.messageId = fallbackRes.value.messageId;
-          entry.sentTo = fallbackRes.value.sentTo;
-          entry.error = null;
-          console.log(`[RESEND SUCCESS] Fallback delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
-          recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
-          return entry;
-        }
-      } catch (fallbackErr) {
-        console.error(`[RESEND FALLBACK FAILED]`, fallbackErr.message);
-        entry.error += ` | Resend fallback: ${fallbackErr.message}`;
+    // 2. Secondary fallback: Multi-layer HTTP API dispatch (Resend, Google Apps Script, Brevo)
+    try {
+      console.log(`[SMTP FALLBACK] Attempting HTTP API fallbacks for ${safeTo}...`);
+      const fallbackRes = await dispatchViaHttpFallbacks(recipients, subject, html, replyTo);
+      if (fallbackRes?.value) {
+        entry.success = true;
+        entry.status = "Sent";
+        entry.messageId = fallbackRes.value.messageId;
+        entry.sentTo = fallbackRes.value.sentTo;
+        entry.error = null;
+        console.log(`[HTTP SUCCESS] Fallback delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
+        recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+        return entry;
       }
+    } catch (fallbackErr) {
+      console.error(`[HTTP FALLBACK FAILED]`, fallbackErr.message);
+      entry.error += ` | HTTP fallback: ${fallbackErr.message}`;
     }
 
     entry.status = "Failed";

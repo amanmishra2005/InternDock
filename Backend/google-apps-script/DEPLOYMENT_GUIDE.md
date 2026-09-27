@@ -30,4 +30,8 @@ This Google Apps Script Web App synchronizes **only essential, future-useful bus
 8. Click **Deploy**.
 9. If permissions are requested, click **Authorize Access** and select your Google account (`support.interndock@gmail.com`).
 
-Once deployed, records will automatically organize into cleanly formatted, auto-sized tabs with styled header rows.
+Once deployed, business records will automatically organize into cleanly formatted, auto-sized tabs with styled header rows.
+
+### Bonus: Native Gmail HTTPS Relay for Cloud Deployments (e.g., Render)
+Cloud hosts like Render Free Tier block outbound SMTP ports (25, 465, 587). This Google Apps Script deployment automatically acts as an **HTTPS Webhook Relay** over Port 443 (which is never blocked). It sends transactional emails directly via your authenticated Google account (`support.interndock@gmail.com`), ensuring 100% free and reliable delivery to students and admins alike without touching or polluting your spreadsheet!
+

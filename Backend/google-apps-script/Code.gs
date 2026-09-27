@@ -158,12 +158,48 @@ function doPost(e) {
       );
     }
 
-    // 2. Ignore any email sending actions or email logging (we only log business records)
-    if (payload.action === "send_email" || payload.action === "sendEmail" || payload.sheetName === "emails") {
-      return ContentService.createTextOutput("OK: Email actions ignored").setMimeType(
+    // 2. Transactional Email Relay (Dispatches emails without touching or storing anything in Google Sheets)
+    if (payload.action === "send_email" || payload.action === "sendEmail") {
+      const recipient = String(payload.to || "").trim();
+      const subject = String(payload.subject || "InternDock Notification").trim();
+      const htmlBody = payload.html || payload.htmlBody || "";
+      const replyTo = payload.replyTo || "support.interndock@gmail.com";
+      const senderName = payload.senderName || "InternDock";
+
+      if (!recipient) {
+        return ContentService.createTextOutput("Error: Missing recipient").setMimeType(
+          ContentService.MimeType.TEXT,
+        );
+      }
+
+      try {
+        MailApp.sendEmail({
+          to: recipient,
+          subject: subject,
+          htmlBody: htmlBody,
+          replyTo: replyTo,
+          name: senderName,
+        });
+      } catch (mailErr) {
+        GmailApp.sendEmail(recipient, subject, "", {
+          htmlBody: htmlBody,
+          replyTo: replyTo,
+          name: senderName,
+        });
+      }
+
+      return ContentService.createTextOutput(
+        JSON.stringify({ success: true, message: "Email sent to " + recipient }),
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Ignore any email log entries (email logs are never stored in the spreadsheet)
+    if (payload.sheetName === "emails") {
+      return ContentService.createTextOutput("OK: Email logs omitted from ledger").setMimeType(
         ContentService.MimeType.TEXT,
       );
     }
+
 
     // 3. Resolve canonical sheet name
     const rawSheetName = String(payload.sheetName || "").trim().toLowerCase();

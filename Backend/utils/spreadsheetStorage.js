@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const LEDGER_DIR = process.env.LEDGER_DIR || path.join(__dirname, "..", "uploads", "spreadsheet_ledger");
+const LEDGER_DIR =
+  process.env.LEDGER_DIR ||
+  path.join(__dirname, "..", "uploads", "spreadsheet_ledger");
 const writeQueues = new Map();
 
 if (!fs.existsSync(LEDGER_DIR)) {
@@ -30,7 +32,11 @@ function headerToCamelCase(header) {
     .replace(/[^\w\s]/g, "")
     .trim()
     .split(/\s+/)
-    .map((word, idx) => (idx === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
+    .map((word, idx) =>
+      idx === 0
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+    )
     .join("");
 }
 
@@ -45,14 +51,28 @@ const SHEET_SCHEMAS = {
       { header: "Student Name", get: (r) => r.studentName || "-" },
       { header: "Student Email", get: (r) => r.studentEmail || r.email || "-" },
       { header: "Phone Number", get: (r) => r.phoneNumber || r.phone || "-" },
-      { header: "College / University", get: (r) => r.collegeName || r.college || "-" },
+      {
+        header: "College / University",
+        get: (r) => r.collegeName || r.college || "-",
+      },
       { header: "Degree / Branch", get: (r) => r.degree || "-" },
       { header: "Graduation Year", get: (r) => r.graduationYear || "-" },
-      { header: "Internship Domain", get: (r) => r.domainName || r.domain || "-" },
-      { header: "Track Duration", get: (r) => r.durationLabel || (r.durationWeeks ? `${r.durationWeeks} Weeks Track` : "-") },
+      {
+        header: "Internship Domain",
+        get: (r) => r.domainName || r.domain || "-",
+      },
+      {
+        header: "Track Duration",
+        get: (r) =>
+          r.durationLabel ||
+          (r.durationWeeks ? `${r.durationWeeks} Weeks Track` : "-"),
+      },
       { header: "Start Date", get: (r) => formatDateString(r.startDate) },
       { header: "End Date", get: (r) => formatDateString(r.endDate) },
-      { header: "Program Fee (INR)", get: (r) => (r.fee !== undefined ? r.fee : r.amount || 0) },
+      {
+        header: "Program Fee (INR)",
+        get: (r) => (r.fee !== undefined ? r.fee : r.amount || 0),
+      },
       { header: "Payment Status", get: (r) => r.paymentStatus || "Pending" },
       { header: "Application Status", get: (r) => r.status || "Submitted" },
     ],
@@ -63,11 +83,26 @@ const SHEET_SCHEMAS = {
       { header: "Timestamp", get: (r) => formatTimestamp(r.timestamp) },
       { header: "Application ID", get: (r) => r.applicationId || "-" },
       { header: "Student Name", get: (r) => r.studentName || "-" },
-      { header: "Student Email", get: (r) => r.studentEmail || r.registeredEmail || r.email || "-" },
-      { header: "Internship Domain", get: (r) => r.domainName || r.domain || "-" },
-      { header: "Amount (INR)", get: (r) => (r.amount !== undefined ? r.amount : r.fee || 0) },
-      { header: "Payment Status", get: (r) => r.status || r.paymentStatus || "Pending" },
-      { header: "UTR / Transaction ID", get: (r) => r.utrNumber || r.paymentId || "-" },
+      {
+        header: "Student Email",
+        get: (r) => r.studentEmail || r.registeredEmail || r.email || "-",
+      },
+      {
+        header: "Internship Domain",
+        get: (r) => r.domainName || r.domain || "-",
+      },
+      {
+        header: "Amount (INR)",
+        get: (r) => (r.amount !== undefined ? r.amount : r.fee || 0),
+      },
+      {
+        header: "Payment Status",
+        get: (r) => r.status || r.paymentStatus || "Pending",
+      },
+      {
+        header: "UTR / Transaction ID",
+        get: (r) => r.utrNumber || r.paymentId || "-",
+      },
       { header: "Payer Name", get: (r) => r.payerName || r.studentName || "-" },
       { header: "Order ID", get: (r) => r.orderId || "-" },
     ],
@@ -76,12 +111,21 @@ const SHEET_SCHEMAS = {
     name: "offer_letters",
     columns: [
       { header: "Timestamp", get: (r) => formatTimestamp(r.timestamp) },
-      { header: "Offer Reference ID", get: (r) => r.referenceId || r.offerReferenceId || "-" },
+      {
+        header: "Offer Reference ID",
+        get: (r) => r.referenceId || r.offerReferenceId || "-",
+      },
       { header: "Application ID", get: (r) => r.applicationId || "-" },
       { header: "Student Name", get: (r) => r.studentName || "-" },
       { header: "Student Email", get: (r) => r.studentEmail || r.email || "-" },
-      { header: "College / University", get: (r) => r.collegeName || r.college || "-" },
-      { header: "Internship Domain", get: (r) => r.domainName || r.domain || "-" },
+      {
+        header: "College / University",
+        get: (r) => r.collegeName || r.college || "-",
+      },
+      {
+        header: "Internship Domain",
+        get: (r) => r.domainName || r.domain || "-",
+      },
       { header: "Track Duration", get: (r) => r.durationLabel || "-" },
       { header: "Start Date", get: (r) => formatDateString(r.startDate) },
       { header: "End Date", get: (r) => formatDateString(r.endDate) },
@@ -96,13 +140,25 @@ const SHEET_SCHEMAS = {
       { header: "Application ID", get: (r) => r.applicationId || "-" },
       { header: "Student Name", get: (r) => r.studentName || "-" },
       { header: "Student Email", get: (r) => r.studentEmail || r.email || "-" },
-      { header: "Internship Domain", get: (r) => r.domainName || r.domain || "-" },
-      { header: "Task Number", get: (r) => r.taskNumber || r.assignmentNumber || "-" },
-      { header: "Task Title", get: (r) => r.taskTitle || r.assignmentTitle || r.title || "-" },
+      {
+        header: "Internship Domain",
+        get: (r) => r.domainName || r.domain || "-",
+      },
+      {
+        header: "Task Number",
+        get: (r) => r.taskNumber || r.assignmentNumber || "-",
+      },
+      {
+        header: "Task Title",
+        get: (r) => r.taskTitle || r.assignmentTitle || r.title || "-",
+      },
       { header: "GitHub URL", get: (r) => r.githubUrl || "-" },
       { header: "Live Demo URL", get: (r) => r.liveUrl || r.hostedUrl || "-" },
       { header: "Submission Status", get: (r) => r.status || "Submitted" },
-      { header: "Notes / Comments", get: (r) => r.notes || r.textContent || "-" },
+      {
+        header: "Notes / Comments",
+        get: (r) => r.notes || r.textContent || "-",
+      },
     ],
   },
   final_projects: {
@@ -112,12 +168,24 @@ const SHEET_SCHEMAS = {
       { header: "Application ID", get: (r) => r.applicationId || "-" },
       { header: "Student Name", get: (r) => r.studentName || "-" },
       { header: "Student Email", get: (r) => r.studentEmail || r.email || "-" },
-      { header: "College / University", get: (r) => r.collegeName || r.college || "-" },
-      { header: "Internship Domain", get: (r) => r.domainName || r.domain || "-" },
+      {
+        header: "College / University",
+        get: (r) => r.collegeName || r.college || "-",
+      },
+      {
+        header: "Internship Domain",
+        get: (r) => r.domainName || r.domain || "-",
+      },
       { header: "Project Title", get: (r) => r.projectTitle || r.title || "-" },
       { header: "GitHub Repository URL", get: (r) => r.githubUrl || "-" },
-      { header: "Hosted Live Demo URL", get: (r) => r.liveUrl || r.hostedUrl || "-" },
-      { header: "Executive Summary", get: (r) => r.executiveSummary || r.textContent || "-" },
+      {
+        header: "Hosted Live Demo URL",
+        get: (r) => r.liveUrl || r.hostedUrl || "-",
+      },
+      {
+        header: "Executive Summary",
+        get: (r) => r.executiveSummary || r.textContent || "-",
+      },
       { header: "Project Status", get: (r) => r.status || "Submitted" },
     ],
   },
@@ -129,8 +197,14 @@ const SHEET_SCHEMAS = {
       { header: "Application ID", get: (r) => r.applicationId || "-" },
       { header: "Student Name", get: (r) => r.studentName || "-" },
       { header: "Student Email", get: (r) => r.studentEmail || r.email || "-" },
-      { header: "College / University", get: (r) => r.collegeName || r.college || "-" },
-      { header: "Internship Domain", get: (r) => r.domainName || r.domain || "-" },
+      {
+        header: "College / University",
+        get: (r) => r.collegeName || r.college || "-",
+      },
+      {
+        header: "Internship Domain",
+        get: (r) => r.domainName || r.domain || "-",
+      },
       { header: "Track Duration", get: (r) => r.durationLabel || "-" },
       { header: "Start Date", get: (r) => formatDateString(r.startDate) },
       { header: "End Date", get: (r) => formatDateString(r.endDate) },
@@ -182,7 +256,9 @@ const SHEET_NAME_ALIASES = {
 const ALLOWED_SHEETS = new Set(Object.values(SHEET_NAME_ALIASES));
 
 function resolveSheetSchema(sheetName) {
-  const normalized = String(sheetName || "").trim().toLowerCase();
+  const normalized = String(sheetName || "")
+    .trim()
+    .toLowerCase();
   const canonical = SHEET_NAME_ALIASES[normalized];
   if (!canonical) return null;
   return SHEET_SCHEMAS[canonical];
@@ -256,15 +332,21 @@ function ensureFileHeaderMatchesSchema(filePath, expectedHeaders) {
     const lines = content.split("\n").filter((l) => l.trim().length > 0);
     if (lines.length === 0) return;
 
-    const currentHeaders = lines[0].split(",").map((h) => h.replace(/^"|"$/g, ""));
-    const matches = currentHeaders.length === expectedHeaders.length && currentHeaders.every((h, i) => h === expectedHeaders[i]);
+    const currentHeaders = lines[0]
+      .split(",")
+      .map((h) => h.replace(/^"|"$/g, ""));
+    const matches =
+      currentHeaders.length === expectedHeaders.length &&
+      currentHeaders.every((h, i) => h === expectedHeaders[i]);
     if (matches) return;
 
     // Header mismatch detected: upgrade CSV file to canonical schema
     const newLines = [expectedHeaders.map((h) => `"${h}"`).join(",")];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map((v) => v.replace(/^"|"$/g, ""));
+      const values = lines[i]
+        .split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/)
+        .map((v) => v.replace(/^"|"$/g, ""));
       if (values.length === expectedHeaders.length) {
         newLines.push(lines[i]);
       } else {
@@ -275,19 +357,92 @@ function ensureFileHeaderMatchesSchema(filePath, expectedHeaders) {
           if (camel) oldRow[camel] = values[idx] || "";
         });
 
+        const legacyValueLookup = {
+          "Offer Reference ID": (row) =>
+            row.referenceId ||
+            row.offerReferenceId ||
+            row.offerId ||
+            row.offer_id ||
+            row.reference ||
+            "-",
+          "Application ID": (row) =>
+            row.applicationId || row.appId || row.id || "-",
+          "Student Name": (row) => row.studentName || row.name || "-",
+          "Student Email": (row) =>
+            row.studentEmail || row.email || row["Email"] || "-",
+          "College / University": (row) =>
+            row.collegeName || row.college || row["College"] || "-",
+          "Internship Domain": (row) =>
+            row.domainName || row.domain || row["Domain"] || "-",
+          "Track Duration": (row) =>
+            row.durationLabel ||
+            row.trackDuration ||
+            row.duration ||
+            row.durationWeeks
+              ? `${row.durationWeeks || row.duration || ""} Weeks Track`.replace(
+                  /\s+Weeks Track$/,
+                  " Weeks Track",
+                )
+              : "-",
+          "Program Fee (INR)": (row) =>
+            row.fee ?? row.amount ?? row["Program Fee (INR)"] ?? 0,
+          "Payment Status": (row) =>
+            row.paymentStatus || row.status || "Pending",
+          "Application Status": (row) =>
+            row.status || row.applicationStatus || "Submitted",
+          "UTR / Transaction ID": (row) =>
+            row.utrNumber || row.paymentId || row["UTR"] || "-",
+          "Payer Name": (row) => row.payerName || row.studentName || "-",
+          "Order ID": (row) => row.orderId || "-",
+          "Certificate ID": (row) =>
+            row.certificateId || row["Certificate ID"] || "-",
+          "Verification ID": (row) => row.verificationId || row.verifyId || "-",
+          "Issue Date": (row) => row.issueDate || row.date || "-",
+          "Start Date": (row) => row.startDate || row.start || "-",
+          "End Date": (row) => row.endDate || row.end || "-",
+          "Task Number": (row) => row.taskNumber || row.assignmentNumber || "-",
+          "Task Title": (row) =>
+            row.taskTitle || row.assignmentTitle || row.title || "-",
+          "GitHub URL": (row) => row.githubUrl || row.github || "-",
+          "Live Demo URL": (row) => row.liveUrl || row.hostedUrl || "-",
+          "Notes / Comments": (row) => row.notes || row.textContent || "-",
+          "Project Title": (row) => row.projectTitle || row.title || "-",
+          "GitHub Repository URL": (row) => row.githubUrl || row.github || "-",
+          "Hosted Live Demo URL": (row) => row.liveUrl || row.hostedUrl || "-",
+          "Executive Summary": (row) =>
+            row.executiveSummary || row.textContent || "-",
+          "Project Status": (row) => row.status || "Submitted",
+        };
+
         const remapped = expectedHeaders.map((header) => {
           const camel = headerToCamelCase(header);
           let val = oldRow[header] || oldRow[camel];
           if (val === undefined || val === null || val === "") {
-            if (header === "Program Fee (INR)") val = oldRow.fee || oldRow.amount || 0;
-            else if (header === "Track Duration") val = oldRow.durationWeeks ? `${oldRow.durationWeeks} Weeks Track` : (oldRow.durationLabel || "-");
-            else if (header === "Internship Domain") val = oldRow.domainName || oldRow.domain || "-";
-            else if (header === "Application ID") val = oldRow.applicationId || "-";
-            else if (header === "Student Name") val = oldRow.studentName || "-";
-            else if (header === "Student Email") val = oldRow.studentEmail || oldRow.email || "-";
-            else if (header === "Payment Status") val = oldRow.paymentStatus || "Pending";
-            else if (header === "Application Status") val = oldRow.status || "Submitted";
-            else val = "-";
+            const legacyLookup = legacyValueLookup[header];
+            if (legacyLookup) {
+              val = legacyLookup(oldRow);
+            }
+            if (val === undefined || val === null || val === "") {
+              if (header === "Program Fee (INR)")
+                val = oldRow.fee || oldRow.amount || 0;
+              else if (header === "Track Duration")
+                val = oldRow.durationWeeks
+                  ? `${oldRow.durationWeeks} Weeks Track`
+                  : oldRow.durationLabel || "-";
+              else if (header === "Internship Domain")
+                val = oldRow.domainName || oldRow.domain || "-";
+              else if (header === "Application ID")
+                val = oldRow.applicationId || "-";
+              else if (header === "Student Name")
+                val = oldRow.studentName || "-";
+              else if (header === "Student Email")
+                val = oldRow.studentEmail || oldRow.email || "-";
+              else if (header === "Payment Status")
+                val = oldRow.paymentStatus || "Pending";
+              else if (header === "Application Status")
+                val = oldRow.status || "Submitted";
+              else val = "-";
+            }
           }
           return `"${String(val).replace(/"/g, '""')}"`;
         });
@@ -308,7 +463,9 @@ function ensureFileHeaderMatchesSchema(filePath, expectedHeaders) {
 function appendToSpreadsheet(sheetName, recordData) {
   const sanitized = sanitizeAndFormatRecord(sheetName, recordData);
   if (!sanitized) {
-    console.warn(`[SPREADSHEET WARNING] Sheet "${sheetName}" is not an allowed business ledger. Ignoring append.`);
+    console.warn(
+      `[SPREADSHEET WARNING] Sheet "${sheetName}" is not an allowed business ledger. Ignoring append.`,
+    );
     return Promise.resolve(false);
   }
 
@@ -320,10 +477,15 @@ function appendToSpreadsheet(sheetName, recordData) {
     .catch(() => {})
     .then(async () => {
       // 1. Synchronize to Google Sheets webhook
-      const cloudResult = await syncToGoogleSheet(canonicalSheetName, cleanRecord);
+      const cloudResult = await syncToGoogleSheet(
+        canonicalSheetName,
+        cleanRecord,
+      );
       if (!cloudResult.ok) {
         if (cloudResult.reason !== "missing webhook URL") {
-          console.warn(`Google Sheets sync notice for ${canonicalSheetName}: ${cloudResult.reason}`);
+          console.warn(
+            `Google Sheets sync notice for ${canonicalSheetName}: ${cloudResult.reason}`,
+          );
         }
       }
 
@@ -339,11 +501,18 @@ function appendToSpreadsheet(sheetName, recordData) {
         ensureFileHeaderMatchesSchema(filePath, canonicalHeaders);
       }
 
-      await fs.promises.appendFile(filePath, formatCsvLine(cleanRecord) + "\n", "utf8");
+      await fs.promises.appendFile(
+        filePath,
+        formatCsvLine(cleanRecord) + "\n",
+        "utf8",
+      );
       return true;
     })
     .catch((err) => {
-      console.error(`Spreadsheet append error for ${canonicalSheetName}:`, err.message);
+      console.error(
+        `Spreadsheet append error for ${canonicalSheetName}:`,
+        err.message,
+      );
       return false;
     });
 
@@ -368,7 +537,10 @@ function writeSpreadsheetRecords(sheetName, records) {
   const lines = [headers.map((h) => `"${h}"`).join(",")];
   records.forEach((record) => {
     const row = headers.map((key) => {
-      const value = record[key] === null || record[key] === undefined ? "" : String(record[key]);
+      const value =
+        record[key] === null || record[key] === undefined
+          ? ""
+          : String(record[key]);
       return `"${value.replace(/"/g, '""')}"`;
     });
     lines.push(row.join(","));
@@ -404,7 +576,10 @@ function readSpreadsheet(sheetName) {
     const filePath = path.join(LEDGER_DIR, `${schema.name}.csv`);
     if (!fs.existsSync(filePath)) return [];
 
-    ensureFileHeaderMatchesSchema(filePath, schema.columns.map((c) => c.header));
+    ensureFileHeaderMatchesSchema(
+      filePath,
+      schema.columns.map((c) => c.header),
+    );
 
     const content = fs.readFileSync(filePath, "utf8");
     const lines = content.split("\n").filter((l) => l.trim().length > 0);
@@ -414,7 +589,9 @@ function readSpreadsheet(sheetName) {
     const records = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map((v) => v.replace(/^"|"$/g, ""));
+      const values = lines[i]
+        .split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/)
+        .map((v) => v.replace(/^"|"$/g, ""));
       const item = {};
       headers.forEach((h, idx) => {
         const val = values[idx] || "";
@@ -427,9 +604,11 @@ function readSpreadsheet(sheetName) {
 
       // Convenience aliases for common lookup fields
       if (item["Application ID"]) item.applicationId = item["Application ID"];
-      if (item["Offer Reference ID"]) item.referenceId = item["Offer Reference ID"];
+      if (item["Offer Reference ID"])
+        item.referenceId = item["Offer Reference ID"];
       if (item["Certificate ID"]) item.certificateId = item["Certificate ID"];
-      if (item["Verification ID"]) item.verificationId = item["Verification ID"];
+      if (item["Verification ID"])
+        item.verificationId = item["Verification ID"];
       if (item["Student Name"]) item.studentName = item["Student Name"];
       if (item["Student Email"]) item.studentEmail = item["Student Email"];
       if (item["Internship Domain"]) {

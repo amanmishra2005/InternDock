@@ -75,6 +75,28 @@ function getPreferredFromAddress() {
   return `${display} <${smtpUser}>`;
 }
 
+function shouldSkipForResendFreeTier(subject = "") {
+  if (process.env.RESEND_FREE_TIER_MODE !== "true") return false;
+
+  const normalized = String(subject || "").toLowerCase();
+  const criticalTokens = [
+    "verification code",
+    "verify your email",
+    "new student application",
+    "payment confirmation",
+    "payment received",
+    "offer letter",
+    "internship offer",
+    "certificate of completion",
+    "certificate issued",
+    "final capstone",
+    "application confirmed",
+    "final report",
+  ];
+
+  return !criticalTokens.some((token) => normalized.includes(token));
+}
+
 function getResendFromAddress() {
   const customFrom = String(process.env.RESEND_FROM || "").trim();
   const isWebmailCustom =
@@ -552,6 +574,16 @@ async function sendEmail({ to, subject, html, replyTo }) {
 
   emailLog.unshift(entry);
   if (emailLog.length > 200) emailLog.pop();
+
+  if (shouldSkipForResendFreeTier(subject)) {
+    entry.status = "Skipped";
+    entry.error =
+      "Skipped by Resend free-tier policy to stay within the daily 100-email limit.";
+    console.warn(
+      `[RESEND FREE TIER] Skipping non-critical email to ${safeTo}: "${subject}"`,
+    );
+    return entry;
+  }
 
   if (!safeTo || recipients.length === 0) {
     entry.status = "Failed";

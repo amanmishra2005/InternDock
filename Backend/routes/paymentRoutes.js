@@ -14,7 +14,10 @@ async function findApplicationByIdentifier(identifier) {
   if (!identifier) return null;
 
   if (mongoose.Types.ObjectId.isValid(identifier)) {
-    return Application.findById(identifier).populate("duration").populate("domain").populate("student");
+    return Application.findById(identifier)
+      .populate("duration")
+      .populate("domain")
+      .populate("student");
   }
 
   return Application.findOne({ applicationId: identifier })
@@ -28,8 +31,13 @@ router.post("/create-order", protect, async (req, res) => {
   try {
     const { applicationId } = req.body;
     const application = await findApplicationByIdentifier(applicationId);
-    if (!application) return res.status(404).json({ message: "Application not found" });
-    if (String(application.student?._id || application.student) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+    if (!application)
+      return res.status(404).json({ message: "Application not found" });
+    if (
+      String(application.student?._id || application.student) !==
+      String(req.user._id)
+    )
+      return res.status(403).json({ message: "Forbidden" });
 
     const orderId = `order_${uuidv4().slice(0, 12)}`;
     const payment = await Payment.create({
@@ -63,7 +71,8 @@ router.post("/create-order", protect, async (req, res) => {
 // POST /api/payments/confirm (Instant UPI & Gateway Confirmation)
 router.post("/confirm", protect, async (req, res) => {
   try {
-    const { applicationId, orderId, utrNumber, payerName, registeredEmail } = req.body;
+    const { applicationId, orderId, utrNumber, payerName, registeredEmail } =
+      req.body;
     let application = null;
     let payment = null;
 
@@ -74,15 +83,24 @@ router.post("/confirm", protect, async (req, res) => {
     if (orderId) {
       payment = await Payment.findOne({ orderId });
       if (payment && !application) {
-        application = await findApplicationByIdentifier(payment.application?.toString?.() || payment.application);
+        application = await findApplicationByIdentifier(
+          payment.application?.toString?.() || payment.application,
+        );
       }
     }
 
     if (!application) {
-      return res.status(404).json({ message: "Application record not found for payment confirmation." });
+      return res
+        .status(404)
+        .json({
+          message: "Application record not found for payment confirmation.",
+        });
     }
 
-    if (String(application.student?._id || application.student) !== String(req.user._id)) {
+    if (
+      String(application.student?._id || application.student) !==
+      String(req.user._id)
+    ) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -103,7 +121,9 @@ router.post("/confirm", protect, async (req, res) => {
     }
 
     payment.status = "Successful";
-    payment.paymentId = utrNumber ? `UTR-${utrNumber}` : `pay_${uuidv4().slice(0, 10)}`;
+    payment.paymentId = utrNumber
+      ? `UTR-${utrNumber}`
+      : `pay_${uuidv4().slice(0, 10)}`;
     if (utrNumber) payment.utrNumber = utrNumber;
     if (payerName) payment.payerName = payerName;
     if (registeredEmail) payment.registeredEmail = registeredEmail;
@@ -111,8 +131,10 @@ router.post("/confirm", protect, async (req, res) => {
 
     appendToSpreadsheet("payments", {
       applicationId: application.applicationId || application._id,
-      studentName: req.user.fullName || application.student?.fullName || payerName || "-",
-      studentEmail: registeredEmail || req.user.email || application.student?.email || "-",
+      studentName:
+        req.user.fullName || application.student?.fullName || payerName || "-",
+      studentEmail:
+        registeredEmail || req.user.email || application.student?.email || "-",
       domainName: application.domain?.name || "Internship Track",
       amount: feeAmount,
       status: "Successful",
@@ -123,7 +145,9 @@ router.post("/confirm", protect, async (req, res) => {
 
     // Instantly update application paymentStatus & unlock Active workspace
     application.paymentStatus = "Successful";
-    if (["Submitted", "Under Review", "Selected"].includes(application.status)) {
+    if (
+      ["Submitted", "Under Review", "Selected"].includes(application.status)
+    ) {
       application.status = "Active";
     }
 
@@ -137,44 +161,10 @@ router.post("/confirm", protect, async (req, res) => {
 
     await application.save();
 
-    const studentUser = application.student || req.user;
-    const studentEmail = studentUser.email || registeredEmail;
-    const studentName = studentUser.fullName || payerName || "Student";
-    const appId = application.applicationId || String(application._id);
-    const adminNotificationEmail = supportTargetEmail();
-
-    const studentReceiptT = templates.paymentSuccess(studentName, feeAmount, appId);
-    const adminPaymentT = templates.newPaymentAdminNotification(
-      studentName,
-      studentEmail,
-      feeAmount,
-      payment.utrNumber,
-      appId
-    );
-
-    Promise.allSettled([
-      studentEmail ? sendEmail({ to: studentEmail, replyTo: "support.interndock@gmail.com", ...studentReceiptT }) : Promise.resolve(),
-      sendEmail({ to: adminNotificationEmail, replyTo: studentEmail || "support.interndock@gmail.com", ...adminPaymentT })
-    ]).then(([studentRes, adminRes]) => {
-      if (studentRes.status === "fulfilled" && studentRes.value?.success) {
-        console.log(`[PAYMENT EMAIL SUCCESS] Receipt delivered to ${studentEmail} (ID: ${studentRes.value.messageId})`);
-      } else if (studentEmail) {
-        const err = studentRes.status === "fulfilled" ? studentRes.value?.error : studentRes.reason?.message;
-        console.error(`[PAYMENT EMAIL FAILURE] Receipt failed for ${studentEmail}: ${err}`);
-      }
-      if (adminRes.status === "fulfilled" && adminRes.value?.success) {
-        console.log(`[PAYMENT EMAIL SUCCESS] Admin notification delivered to ${adminNotificationEmail} (ID: ${adminRes.value.messageId})`);
-      } else {
-        const err = adminRes.status === "fulfilled" ? adminRes.value?.error : adminRes.reason?.message;
-        console.error(`[PAYMENT EMAIL FAILURE] Admin notification failed for ${adminNotificationEmail}: ${err}`);
-      }
-    }).catch((err) => {
-      console.error("[PAYMENT EMAIL ERROR]", err.message);
-    });
-
     res.json({
       success: true,
-      message: "Payment confirmed successfully! Account verified and workspace activated.",
+      message:
+        "Payment confirmed successfully! Account verified and workspace activated.",
       payment,
       application,
     });
@@ -186,7 +176,9 @@ router.post("/confirm", protect, async (req, res) => {
 
 // GET /api/payments/mine
 router.get("/mine", protect, async (req, res) => {
-  const payments = await Payment.find({ student: req.user._id }).sort({ createdAt: -1 });
+  const payments = await Payment.find({ student: req.user._id }).sort({
+    createdAt: -1,
+  });
   res.json(payments);
 });
 

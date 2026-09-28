@@ -58,6 +58,23 @@ test("classifySmtpError correctly detects Google Apps Script testing-only relay 
   assert.ok(classified.message.includes("testing-only mode"));
 });
 
+test("sendEmail skips non-critical mail when Resend free tier mode is active", async () => {
+  const previousMode = process.env.RESEND_FREE_TIER_MODE;
+  process.env.RESEND_FREE_TIER_MODE = "true";
+
+  const result = await sendEmail({
+    to: "student@example.com",
+    subject: "Welcome to InternDock",
+    html: "<p>Welcome!</p>",
+  });
+
+  assert.equal(result.status, "Skipped");
+  assert.match(result.error, /Resend free-tier policy|daily 100-email limit/i);
+
+  if (previousMode === undefined) delete process.env.RESEND_FREE_TIER_MODE;
+  else process.env.RESEND_FREE_TIER_MODE = previousMode;
+});
+
 test("sendEmail returns clean failure when recipients are empty or invalid", async () => {
   const result = await sendEmail({
     to: "",

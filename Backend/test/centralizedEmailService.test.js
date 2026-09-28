@@ -10,7 +10,9 @@ const {
 const { supportTargetEmail } = require("../utils/emailTargets");
 
 test("classifySmtpError correctly detects auth failures", () => {
-  const err = new Error("Invalid login: 535-5.7.8 Username and Password not accepted");
+  const err = new Error(
+    "Invalid login: 535-5.7.8 Username and Password not accepted",
+  );
   err.code = "EAUTH";
   err.responseCode = 535;
 
@@ -46,6 +48,16 @@ test("classifySmtpError correctly detects 5xx SMTP rejections", () => {
   assert.equal(classified.type, "SMTP rejection");
 });
 
+test("classifySmtpError correctly detects Google Apps Script testing-only relay restrictions", () => {
+  const err = new Error(
+    "Google Apps Script Relay did not dispatch email. Response: You can only send testing emails to your own email address",
+  );
+
+  const classified = classifySmtpError(err);
+  assert.equal(classified.type, "Google Apps Script testing-only restriction");
+  assert.ok(classified.message.includes("testing-only mode"));
+});
+
 test("sendEmail returns clean failure when recipients are empty or invalid", async () => {
   const result = await sendEmail({
     to: "",
@@ -64,8 +76,16 @@ test("sendEmail deduplicates identical messages dispatched within window", async
   const testHtml = `<p>Unique body ${Math.random()}</p>`;
 
   // When SMTP is configured, the first will send or skip, and the second within 30s will be marked duplicateSuppressed
-  const res1 = await sendEmail({ to: testRecipient, subject: testSubject, html: testHtml });
-  const res2 = await sendEmail({ to: testRecipient, subject: testSubject, html: testHtml });
+  const res1 = await sendEmail({
+    to: testRecipient,
+    subject: testSubject,
+    html: testHtml,
+  });
+  const res2 = await sendEmail({
+    to: testRecipient,
+    subject: testSubject,
+    html: testHtml,
+  });
 
   assert.equal(res2.success, true);
   assert.equal(res2.status, "Sent");
@@ -81,7 +101,12 @@ test("Contact form workflow routes to support.interndock@gmail.com and uses send
   const subject = "Course Enrollment";
   const message = "How can I enroll?";
 
-  const t = templates.newContactQueryNotification(name, userEmail, subject, message);
+  const t = templates.newContactQueryNotification(
+    name,
+    userEmail,
+    subject,
+    message,
+  );
   assert.ok(t.subject.includes(subject));
   assert.ok(t.html.includes(name));
   assert.ok(t.html.includes(userEmail));
@@ -108,7 +133,7 @@ test("Application confirmation email templates include correct student and admin
     4,
     appId,
     "2026-10-01",
-    "2026-10-28"
+    "2026-10-28",
   );
   assert.ok(adminT.subject.includes("[New Student Application]"));
   assert.ok(adminT.html.includes(studentName));
@@ -124,7 +149,12 @@ test("Final report submission email templates include student and admin delivera
   const domain = "Artificial Intelligence & ML";
   const projectTitle = "Autonomous Vision Agent";
 
-  const studentT = templates.finalReportStudentConfirmation(studentName, appId, domain, projectTitle);
+  const studentT = templates.finalReportStudentConfirmation(
+    studentName,
+    appId,
+    domain,
+    projectTitle,
+  );
   assert.ok(studentT.subject.includes("Final Capstone Project Submitted"));
   assert.ok(studentT.html.includes(projectTitle));
   assert.ok(studentT.html.includes(appId));
@@ -137,7 +167,7 @@ test("Final report submission email templates include student and admin delivera
     projectTitle,
     "https://github.com/grad/ai-agent",
     "https://ai-agent.demo.com",
-    "Completed model training."
+    "Completed model training.",
   );
   assert.ok(adminT.subject.includes("[Final Capstone Submission]"));
   assert.ok(adminT.html.includes(studentEmail));
@@ -146,7 +176,11 @@ test("Final report submission email templates include student and admin delivera
 });
 
 test("Payment confirmation templates include payment amount and application ID", () => {
-  const studentT = templates.paymentSuccess("Sam Student", 499, "IND-2026-5555");
+  const studentT = templates.paymentSuccess(
+    "Sam Student",
+    499,
+    "IND-2026-5555",
+  );
   assert.ok(studentT.subject.includes("Payment Confirmed"));
   assert.ok(studentT.html.includes("499"));
   assert.ok(studentT.html.includes("IND-2026-5555"));
@@ -156,7 +190,7 @@ test("Payment confirmation templates include payment amount and application ID",
     "sam@example.com",
     499,
     "UTR99998888",
-    "IND-2026-5555"
+    "IND-2026-5555",
   );
   assert.ok(adminT.subject.includes("[Payment Confirmation]"));
   assert.ok(adminT.html.includes("UTR99998888"));

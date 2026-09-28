@@ -60,7 +60,10 @@ function getPreferredFromAddress() {
   }
 
   const configuredDisplay = configuredFrom.includes("<")
-    ? configuredFrom.slice(0, configuredFrom.indexOf("<")).trim().replace(/^"|"$/g, "") || "InternDock"
+    ? configuredFrom
+        .slice(0, configuredFrom.indexOf("<"))
+        .trim()
+        .replace(/^"|"$/g, "") || "InternDock"
     : configuredFrom || "InternDock";
 
   const display = configuredDisplay || "InternDock";
@@ -74,14 +77,26 @@ function getPreferredFromAddress() {
 
 function getResendFromAddress() {
   const customFrom = String(process.env.RESEND_FROM || "").trim();
-  const isWebmailCustom = /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(customFrom);
-  if (customFrom && customFrom !== "undefined" && !isWebmailCustom && !customFrom.toLowerCase().includes("@gmail.")) {
+  const isWebmailCustom =
+    /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(customFrom);
+  if (
+    customFrom &&
+    customFrom !== "undefined" &&
+    !isWebmailCustom &&
+    !customFrom.toLowerCase().includes("@gmail.")
+  ) {
     return customFrom;
   }
 
   const configuredFrom = String(process.env.EMAIL_FROM || "").trim();
-  const isWebmailConfigured = /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(configuredFrom);
-  if (configuredFrom && configuredFrom !== "undefined" && !isWebmailConfigured && !configuredFrom.toLowerCase().includes("@gmail.")) {
+  const isWebmailConfigured =
+    /@(gmail|googlemail|yahoo|hotmail|outlook)\.com/i.test(configuredFrom);
+  if (
+    configuredFrom &&
+    configuredFrom !== "undefined" &&
+    !isWebmailConfigured &&
+    !configuredFrom.toLowerCase().includes("@gmail.")
+  ) {
     return configuredFrom;
   }
 
@@ -89,7 +104,6 @@ function getResendFromAddress() {
   // The official free testing sender recognized by Resend is onboarding@resend.dev.
   return "InternDock <onboarding@resend.dev>";
 }
-
 
 function escapeHtml(value = "") {
   return String(value)
@@ -109,18 +123,34 @@ function getSmtpConfig() {
   const pass = (process.env.SMTP_PASS || "").trim();
   const secure = process.env.SMTP_SECURE === "true" || port === 465;
   const requireTLS = process.env.SMTP_REQUIRE_TLS !== "false";
-  const connectionTimeout = Math.min(Math.max(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 2500, 1500), 30000);
-  const socketTimeout = Math.min(Math.max(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 6000, 2500), 45000);
+  const connectionTimeout = Math.min(
+    Math.max(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 2500, 1500),
+    30000,
+  );
+  const socketTimeout = Math.min(
+    Math.max(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 6000, 2500),
+    45000,
+  );
 
-
-  return { host, port, user, pass, secure, requireTLS, connectionTimeout, socketTimeout };
+  return {
+    host,
+    port,
+    user,
+    pass,
+    secure,
+    requireTLS,
+    connectionTimeout,
+    socketTimeout,
+  };
 }
-
 
 function createTransporter(port, secure) {
   const config = getSmtpConfig();
   const effectivePort = port || config.port;
-  const effectiveSecure = secure !== undefined ? secure : (process.env.SMTP_SECURE === "true" || effectivePort === 465);
+  const effectiveSecure =
+    secure !== undefined
+      ? secure
+      : process.env.SMTP_SECURE === "true" || effectivePort === 465;
 
   return nodemailer.createTransport({
     host: config.host,
@@ -154,6 +184,18 @@ function classifySmtpError(err) {
   const msg = String(err?.message || "").toLowerCase();
   const code = String(err?.code || "").toUpperCase();
   const responseCode = err?.responseCode || 0;
+
+  if (
+    msg.includes("only send testing emails to your own email address") ||
+    msg.includes("testing emails to your own email") ||
+    (msg.includes("google apps script") && msg.includes("testing"))
+  ) {
+    return {
+      type: "Google Apps Script testing-only restriction",
+      message:
+        "Google Apps Script is in testing-only mode and can only send to the script owner. Configure a production email provider such as Resend or a verified SMTP relay.",
+    };
+  }
 
   if (
     code === "EAUTH" ||
@@ -210,12 +252,20 @@ function classifySmtpError(err) {
   };
 }
 
-async function sendRecipientBatch(transporter, from, recipients, subject, html, replyTo) {
+async function sendRecipientBatch(
+  transporter,
+  from,
+  recipients,
+  subject,
+  html,
+  replyTo,
+) {
   if (!Array.isArray(recipients) || recipients.length === 0) {
     return [];
   }
 
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
+  const effectiveReplyTo =
+    replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
 
   const results = await Promise.allSettled(
     recipients.map(async (recipient) => {
@@ -227,7 +277,7 @@ async function sendRecipientBatch(transporter, from, recipients, subject, html, 
         html,
       };
       return transporter.sendMail(mailOptions);
-    })
+    }),
   );
 
   return results;
@@ -240,7 +290,8 @@ async function sendViaResendFallback(recipients, subject, html, replyTo) {
   if (!resendApiKey) return null;
 
   const from = getResendFromAddress();
-  const effectiveReplyTo = replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
+  const effectiveReplyTo =
+    replyTo || process.env.REPLY_TO || "support.interndock@gmail.com";
 
   const results = await Promise.allSettled(
     recipients.map(async (recipient) => {
@@ -260,17 +311,22 @@ async function sendViaResendFallback(recipients, subject, html, replyTo) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(`Resend API (${res.status}): ${data.message || JSON.stringify(data)}`);
+        throw new Error(
+          `Resend API (${res.status}): ${data.message || JSON.stringify(data)}`,
+        );
       }
       return { recipient, messageId: data.id };
-    })
+    }),
   );
 
   const fulfilled = results.filter((r) => r.status === "fulfilled");
   const rejected = results.filter((r) => r.status === "rejected");
 
   if (fulfilled.length > 0) {
-    const messageId = fulfilled.map((f) => f.value?.messageId).filter(Boolean).join(", ");
+    const messageId = fulfilled
+      .map((f) => f.value?.messageId)
+      .filter(Boolean)
+      .join(", ");
     const sentTo = fulfilled.map((f) => f.value?.recipient);
     return { status: "fulfilled", value: { messageId, sentTo } };
   }
@@ -308,10 +364,22 @@ async function sendViaGoogleAppsScript(recipients, subject, html, replyTo) {
         if (text.toLowerCase().includes("email sent")) dispatched = true;
       }
       if (!res.ok || !dispatched) {
-        throw new Error(`Google Apps Script Relay did not dispatch email. Response: ${text.slice(0, 120) || "(empty)"}`);
+        const responseText = text.slice(0, 220) || "(empty)";
+        const loweredText = responseText.toLowerCase();
+        if (
+          loweredText.includes("only send testing emails") ||
+          loweredText.includes("testing emails to your own email")
+        ) {
+          throw new Error(
+            `Google Apps Script is in testing-only mode: ${responseText}`,
+          );
+        }
+        throw new Error(
+          `Google Apps Script Relay did not dispatch email. Response: ${responseText}`,
+        );
       }
       return { recipient, messageId: `gas_${Date.now()}` };
-    })
+    }),
   );
 
   const fulfilled = results.filter((r) => r.status === "fulfilled");
@@ -349,7 +417,9 @@ async function sendViaBrevo(recipients, subject, html, replyTo) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(`Brevo API (${res.status}): ${data.message || JSON.stringify(data)}`);
+    throw new Error(
+      `Brevo API (${res.status}): ${data.message || JSON.stringify(data)}`,
+    );
   }
   return {
     status: "fulfilled",
@@ -368,14 +438,20 @@ async function dispatchViaHttpFallbacks(recipients, subject, html, replyTo) {
   // 1. Resend API (Delivers to support.interndock@gmail.com & verified domains)
   if (process.env.RESEND_API_KEY && pending.length > 0) {
     try {
-      console.log(`[HTTP DISPATCH] Attempting Resend API for: ${pending.join(", ")}`);
+      console.log(
+        `[HTTP DISPATCH] Attempting Resend API for: ${pending.join(", ")}`,
+      );
       const res = await sendViaResendFallback(pending, subject, html, replyTo);
       if (res?.value?.sentTo) {
-        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        const sent = Array.isArray(res.value.sentTo)
+          ? res.value.sentTo
+          : [res.value.sentTo];
         delivered.push(...sent);
         if (res.value.messageId) messageIds.push(res.value.messageId);
         const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
-        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+        pending = pending.filter(
+          (r) => !sentLower.has(String(r).toLowerCase()),
+        );
       }
     } catch (err) {
       console.warn(`[HTTP RESEND NOTICE]`, err.message);
@@ -383,16 +459,31 @@ async function dispatchViaHttpFallbacks(recipients, subject, html, replyTo) {
   }
 
   // 2. Google Apps Script Webhook Relay (Over HTTPS Port 443; sends from support.interndock@gmail.com)
-  if (process.env.GOOGLE_SHEET_WEBHOOK_URL && process.env.GOOGLE_SHEET_WEBHOOK_TOKEN && pending.length > 0) {
+  if (
+    process.env.GOOGLE_SHEET_WEBHOOK_URL &&
+    process.env.GOOGLE_SHEET_WEBHOOK_TOKEN &&
+    pending.length > 0
+  ) {
     try {
-      console.log(`[HTTP DISPATCH] Attempting Google Apps Script Relay for: ${pending.join(", ")}`);
-      const res = await sendViaGoogleAppsScript(pending, subject, html, replyTo);
+      console.log(
+        `[HTTP DISPATCH] Attempting Google Apps Script Relay for: ${pending.join(", ")}`,
+      );
+      const res = await sendViaGoogleAppsScript(
+        pending,
+        subject,
+        html,
+        replyTo,
+      );
       if (res?.value?.sentTo) {
-        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        const sent = Array.isArray(res.value.sentTo)
+          ? res.value.sentTo
+          : [res.value.sentTo];
         delivered.push(...sent);
         if (res.value.messageId) messageIds.push(res.value.messageId);
         const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
-        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+        pending = pending.filter(
+          (r) => !sentLower.has(String(r).toLowerCase()),
+        );
       }
     } catch (err) {
       console.warn(`[HTTP GOOGLE APPS SCRIPT NOTICE]`, err.message);
@@ -402,14 +493,20 @@ async function dispatchViaHttpFallbacks(recipients, subject, html, replyTo) {
   // 3. Brevo API (if configured)
   if (process.env.BREVO_API_KEY && pending.length > 0) {
     try {
-      console.log(`[HTTP DISPATCH] Attempting Brevo API for: ${pending.join(", ")}`);
+      console.log(
+        `[HTTP DISPATCH] Attempting Brevo API for: ${pending.join(", ")}`,
+      );
       const res = await sendViaBrevo(pending, subject, html, replyTo);
       if (res?.value?.sentTo) {
-        const sent = Array.isArray(res.value.sentTo) ? res.value.sentTo : [res.value.sentTo];
+        const sent = Array.isArray(res.value.sentTo)
+          ? res.value.sentTo
+          : [res.value.sentTo];
         delivered.push(...sent);
         if (res.value.messageId) messageIds.push(res.value.messageId);
         const sentLower = new Set(sent.map((s) => String(s).toLowerCase()));
-        pending = pending.filter((r) => !sentLower.has(String(r).toLowerCase()));
+        pending = pending.filter(
+          (r) => !sentLower.has(String(r).toLowerCase()),
+        );
       }
     } catch (err) {
       console.warn(`[HTTP BREVO NOTICE]`, err.message);
@@ -459,7 +556,9 @@ async function sendEmail({ to, subject, html, replyTo }) {
   if (!safeTo || recipients.length === 0) {
     entry.status = "Failed";
     entry.error = "No valid recipients specified";
-    console.warn(`[EMAIL WARNING] Attempted to send email with no valid recipients: "${to}"`);
+    console.warn(
+      `[EMAIL WARNING] Attempted to send email with no valid recipients: "${to}"`,
+    );
     return entry;
   }
 
@@ -467,8 +566,13 @@ async function sendEmail({ to, subject, html, replyTo }) {
   pruneRecentDispatches();
   const dispatchKey = getDispatchKey(recipients, subject, html);
   const existingDispatch = recentDispatches.get(dispatchKey);
-  if (existingDispatch && (Date.now() - existingDispatch.timestamp < DEDUPLICATION_WINDOW_MS)) {
-    console.log(`[EMAIL DEDUPLICATION] Suppressed duplicate email to "${safeTo}" with subject "${subject}" (sent ${Math.round((Date.now() - existingDispatch.timestamp) / 1000)}s ago).`);
+  if (
+    existingDispatch &&
+    Date.now() - existingDispatch.timestamp < DEDUPLICATION_WINDOW_MS
+  ) {
+    console.log(
+      `[EMAIL DEDUPLICATION] Suppressed duplicate email to "${safeTo}" with subject "${subject}" (sent ${Math.round((Date.now() - existingDispatch.timestamp) / 1000)}s ago).`,
+    );
     entry.success = true;
     entry.status = "Sent";
     entry.messageId = existingDispatch.messageId || "duplicate-suppressed";
@@ -477,31 +581,49 @@ async function sendEmail({ to, subject, html, replyTo }) {
     return entry;
   }
 
-  const preferResend = process.env.PREFER_RESEND === "true" || process.env.ENABLE_SMTP === "false";
+  const preferResend =
+    process.env.PREFER_RESEND === "true" || process.env.ENABLE_SMTP === "false";
   const isSmtpCircuitBroken = Date.now() < smtpCircuitBrokenUntil;
 
   // Direct fast path: If SMTP is known to be blocked on this host or Resend is preferred, dispatch via HTTP directly
   if (preferResend || isSmtpCircuitBroken) {
     if (isSmtpCircuitBroken) {
-      console.log(`[SMTP CIRCUIT BREAKER ACTIVE] Outbound SMTP ports blocked on host. Routing directly via Resend / HTTP API for ${safeTo}...`);
+      console.log(
+        `[SMTP CIRCUIT BREAKER ACTIVE] Outbound SMTP ports blocked on host. Routing directly via Resend / HTTP API for ${safeTo}...`,
+      );
     } else {
-      console.log(`[PREFER RESEND] Direct Resend dispatch configured. Routing via Resend / HTTP API for ${safeTo}...`);
+      console.log(
+        `[PREFER RESEND] Direct Resend dispatch configured. Routing via Resend / HTTP API for ${safeTo}...`,
+      );
     }
 
     try {
-      const fallbackRes = await dispatchViaHttpFallbacks(recipients, subject, html, replyTo);
+      const fallbackRes = await dispatchViaHttpFallbacks(
+        recipients,
+        subject,
+        html,
+        replyTo,
+      );
       if (fallbackRes?.value) {
         entry.success = true;
         entry.status = "Sent";
         entry.messageId = fallbackRes.value.messageId;
         entry.sentTo = fallbackRes.value.sentTo;
         entry.error = null;
-        console.log(`[HTTP SUCCESS] Delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
-        recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+        console.log(
+          `[HTTP SUCCESS] Delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`,
+        );
+        recentDispatches.set(dispatchKey, {
+          timestamp: Date.now(),
+          messageId: entry.messageId,
+        });
         return entry;
       }
     } catch (fallbackErr) {
-      console.error(`[HTTP RELAY ERROR] HTTP fallbacks failed:`, fallbackErr.message);
+      console.error(
+        `[HTTP RELAY ERROR] HTTP fallbacks failed:`,
+        fallbackErr.message,
+      );
       entry.error = `HTTP: ${fallbackErr.message}`;
     }
 
@@ -512,39 +634,61 @@ async function sendEmail({ to, subject, html, replyTo }) {
   const config = getSmtpConfig();
   const smtpConfigured = Boolean(config.user && config.pass);
 
-
   if (!smtpConfigured) {
     entry.status = "Skipped";
-    entry.error = "Missing environment variables: SMTP_USER or SMTP_PASS is not configured.";
-    console.warn(`[EMAIL CONFIG WARNING] SMTP credentials missing in process.env (SMTP_USER or SMTP_PASS).`);
+    entry.error =
+      "Missing environment variables: SMTP_USER or SMTP_PASS is not configured.";
+    console.warn(
+      `[EMAIL CONFIG WARNING] SMTP credentials missing in process.env (SMTP_USER or SMTP_PASS).`,
+    );
 
     if (process.env.NODE_ENV !== "production") {
       console.log(`\n----- EMAIL SIMULATION (SMTP Not Configured) -----`);
-      console.log(`To: ${safeTo}\nReply-To: ${replyTo || "default"}\nSubject: ${subject}\nBody: ${html.slice(0, 300)}...`);
+      console.log(
+        `To: ${safeTo}\nReply-To: ${replyTo || "default"}\nSubject: ${subject}\nBody: ${html.slice(0, 300)}...`,
+      );
       console.log(`--------------------------------------------------\n`);
       entry.success = true;
       entry.messageId = `sim_${Date.now()}`;
       entry.sentTo = recipients;
-      recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+      recentDispatches.set(dispatchKey, {
+        timestamp: Date.now(),
+        messageId: entry.messageId,
+      });
       return entry;
     }
 
     // Try HTTP fallbacks if available
     try {
-      console.log(`[EMAIL NOTICE] Attempting HTTP fallback relay since SMTP is not configured...`);
-      const fallbackRes = await dispatchViaHttpFallbacks(recipients, subject, html, replyTo);
+      console.log(
+        `[EMAIL NOTICE] Attempting HTTP fallback relay since SMTP is not configured...`,
+      );
+      const fallbackRes = await dispatchViaHttpFallbacks(
+        recipients,
+        subject,
+        html,
+        replyTo,
+      );
       if (fallbackRes?.value) {
         entry.success = true;
         entry.status = "Sent";
         entry.messageId = fallbackRes.value.messageId;
         entry.sentTo = fallbackRes.value.sentTo;
         entry.error = null;
-        console.log(`[HTTP SUCCESS] Delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
-        recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+        console.log(
+          `[HTTP SUCCESS] Delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`,
+        );
+        recentDispatches.set(dispatchKey, {
+          timestamp: Date.now(),
+          messageId: entry.messageId,
+        });
         return entry;
       }
     } catch (fallbackErr) {
-      console.error(`[HTTP RELAY ERROR] HTTP fallbacks failed:`, fallbackErr.message);
+      console.error(
+        `[HTTP RELAY ERROR] HTTP fallbacks failed:`,
+        fallbackErr.message,
+      );
       entry.error += ` | HTTP: ${fallbackErr.message}`;
     }
 
@@ -556,7 +700,14 @@ async function sendEmail({ to, subject, html, replyTo }) {
     const transporter = getTransporter();
     const from = getPreferredFromAddress();
 
-    let results = await sendRecipientBatch(transporter, from, recipients, subject, html, replyTo);
+    let results = await sendRecipientBatch(
+      transporter,
+      from,
+      recipients,
+      subject,
+      html,
+      replyTo,
+    );
     let successes = results.filter((r) => r.status === "fulfilled");
     let failures = results.filter((r) => r.status === "rejected");
 
@@ -564,17 +715,31 @@ async function sendEmail({ to, subject, html, replyTo }) {
     if (successes.length === 0 && failures.length > 0) {
       const isNetworkFailure = failures.some((f) => {
         const msg = (f.reason?.message || "").toLowerCase();
-        return msg.includes("timeout") || msg.includes("econn") || msg.includes("enetunreach") || msg.includes("esocket");
+        return (
+          msg.includes("timeout") ||
+          msg.includes("econn") ||
+          msg.includes("enetunreach") ||
+          msg.includes("esocket")
+        );
       });
 
       if (isNetworkFailure) {
         const currentPort = Number(process.env.SMTP_PORT) || 587;
         const altPort = currentPort === 465 ? 587 : 465;
         const altSecure = altPort === 465;
-        console.warn(`[SMTP FAILOVER] Primary port ${currentPort} timed out. Retrying on port ${altPort} (secure: ${altSecure})...`);
+        console.warn(
+          `[SMTP FAILOVER] Primary port ${currentPort} timed out. Retrying on port ${altPort} (secure: ${altSecure})...`,
+        );
 
         const altTransporter = createTransporter(altPort, altSecure);
-        const altResults = await sendRecipientBatch(altTransporter, from, recipients, subject, html, replyTo);
+        const altResults = await sendRecipientBatch(
+          altTransporter,
+          from,
+          recipients,
+          subject,
+          html,
+          replyTo,
+        );
         const altSuccesses = altResults.filter((r) => r.status === "fulfilled");
 
         if (altSuccesses.length > 0) {
@@ -587,15 +752,24 @@ async function sendEmail({ to, subject, html, replyTo }) {
     }
 
     if (successes.length > 0) {
-      const delivered = recipients.filter((_, idx) => results[idx]?.status === "fulfilled");
-      const messageIds = successes.map((s) => s.value?.messageId).filter(Boolean);
+      const delivered = recipients.filter(
+        (_, idx) => results[idx]?.status === "fulfilled",
+      );
+      const messageIds = successes
+        .map((s) => s.value?.messageId)
+        .filter(Boolean);
       entry.success = true;
       entry.status = "Sent";
       entry.messageId = messageIds.join(", ");
       entry.sentTo = delivered;
       entry.error = null;
-      console.log(`[SMTP SUCCESS] Delivered to ${delivered.join(", ")} | Subject: "${subject}" | MessageID: ${entry.messageId}`);
-      recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+      console.log(
+        `[SMTP SUCCESS] Delivered to ${delivered.join(", ")} | Subject: "${subject}" | MessageID: ${entry.messageId}`,
+      );
+      recentDispatches.set(dispatchKey, {
+        timestamp: Date.now(),
+        messageId: entry.messageId,
+      });
       return entry;
     }
 
@@ -607,21 +781,35 @@ async function sendEmail({ to, subject, html, replyTo }) {
 
     if (classified.type === "Connection failure") {
       smtpCircuitBrokenUntil = Date.now() + 15 * 60 * 1000;
-      console.warn(`[SMTP CIRCUIT BREAKER ACTIVATED] Outbound SMTP timed out. Future emails will route directly via Resend / HTTP API without waiting.`);
+      console.warn(
+        `[SMTP CIRCUIT BREAKER ACTIVATED] Outbound SMTP timed out. Future emails will route directly via Resend / HTTP API without waiting.`,
+      );
     }
 
     // 2. Secondary fallback: Multi-layer HTTP API dispatch (Resend, Google Apps Script, Brevo)
     try {
-      console.log(`[SMTP FALLBACK] Attempting HTTP API fallbacks for ${safeTo}...`);
-      const fallbackRes = await dispatchViaHttpFallbacks(recipients, subject, html, replyTo);
+      console.log(
+        `[SMTP FALLBACK] Attempting HTTP API fallbacks for ${safeTo}...`,
+      );
+      const fallbackRes = await dispatchViaHttpFallbacks(
+        recipients,
+        subject,
+        html,
+        replyTo,
+      );
       if (fallbackRes?.value) {
         entry.success = true;
         entry.status = "Sent";
         entry.messageId = fallbackRes.value.messageId;
         entry.sentTo = fallbackRes.value.sentTo;
         entry.error = null;
-        console.log(`[HTTP SUCCESS] Fallback delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
-        recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+        console.log(
+          `[HTTP SUCCESS] Fallback delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`,
+        );
+        recentDispatches.set(dispatchKey, {
+          timestamp: Date.now(),
+          messageId: entry.messageId,
+        });
         return entry;
       }
     } catch (fallbackErr) {
@@ -633,7 +821,9 @@ async function sendEmail({ to, subject, html, replyTo }) {
     return entry;
   } catch (err) {
     const classified = classifySmtpError(err);
-    console.error(`[EMAIL EXCEPTION - ${classified.type}] ${classified.message}`);
+    console.error(
+      `[EMAIL EXCEPTION - ${classified.type}] ${classified.message}`,
+    );
     entry.error = classified.message;
 
     if (classified.type === "Connection failure") {
@@ -641,15 +831,25 @@ async function sendEmail({ to, subject, html, replyTo }) {
     }
 
     try {
-      const fallbackRes = await dispatchViaHttpFallbacks(recipients, subject, html, replyTo);
+      const fallbackRes = await dispatchViaHttpFallbacks(
+        recipients,
+        subject,
+        html,
+        replyTo,
+      );
       if (fallbackRes?.value) {
         entry.success = true;
         entry.status = "Sent";
         entry.messageId = fallbackRes.value.messageId;
         entry.sentTo = fallbackRes.value.sentTo;
         entry.error = null;
-        console.log(`[HTTP SUCCESS] Fallback delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
-        recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+        console.log(
+          `[HTTP SUCCESS] Fallback delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`,
+        );
+        recentDispatches.set(dispatchKey, {
+          timestamp: Date.now(),
+          messageId: entry.messageId,
+        });
         return entry;
       }
     } catch (fallbackErr) {
@@ -660,7 +860,6 @@ async function sendEmail({ to, subject, html, replyTo }) {
     return entry;
   }
 }
-
 
 function getEmailLog() {
   return emailLog.slice(0, 200);
@@ -702,7 +901,15 @@ const templates = {
       </div>
     `,
   }),
-  newApplicationAdminNotification: (studentName, studentEmail, domainName, durationWeeks, applicationId, startDate, endDate) => ({
+  newApplicationAdminNotification: (
+    studentName,
+    studentEmail,
+    domainName,
+    durationWeeks,
+    applicationId,
+    startDate,
+    endDate,
+  ) => ({
     subject: `[New Student Application] ${escapeHtml(studentName)} applied for ${escapeHtml(domainName)}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; color: #000000;">
@@ -727,7 +934,7 @@ const templates = {
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; color: #000000;">
         <h2 style="color: #000000; margin-top: 0;">📩 New Contact Form Message Received</h2>
         <p style="color: #000000; font-size: 14px;"><strong>From:</strong> ${escapeHtml(name)} (&lt;${escapeHtml(email)}&gt;)</p>
-        <p style="color: #000000; font-size: 14px;"><strong>Subject:</strong> ${escapeHtml(subject || 'General Inquiry')}</p>
+        <p style="color: #000000; font-size: 14px;"><strong>Subject:</strong> ${escapeHtml(subject || "General Inquiry")}</p>
         <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #4f46e5; border-radius: 4px; margin: 16px 0;">
           <p style="margin: 0; color: #000000; white-space: pre-wrap; font-size: 15px;">${escapeHtml(message)}</p>
         </div>
@@ -735,7 +942,13 @@ const templates = {
       </div>
     `,
   }),
-  newPaymentAdminNotification: (studentName, studentEmail, amount, utrNumber, applicationId) => ({
+  newPaymentAdminNotification: (
+    studentName,
+    studentEmail,
+    amount,
+    utrNumber,
+    applicationId,
+  ) => ({
     subject: `[Payment Confirmation] ₹${escapeHtml(amount)} registered by ${escapeHtml(studentName)}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
@@ -784,7 +997,16 @@ const templates = {
       </div>
     `,
   }),
-  finalReportSubmitted: (studentName, arg2, arg3, arg4, arg5, arg6, arg7, arg8) => {
+  finalReportSubmitted: (
+    studentName,
+    arg2,
+    arg3,
+    arg4,
+    arg5,
+    arg6,
+    arg7,
+    arg8,
+  ) => {
     let studentEmail = "";
     let applicationId = "";
     let domainName = "";
@@ -827,7 +1049,12 @@ const templates = {
       `,
     };
   },
-  finalReportStudentConfirmation: (name, applicationId, domainName, projectTitle) => ({
+  finalReportStudentConfirmation: (
+    name,
+    applicationId,
+    domainName,
+    projectTitle,
+  ) => ({
     subject: `Final Capstone Project Submitted: ${escapeHtml(domainName || "Internship Track")} (${escapeHtml(applicationId)})`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
@@ -858,7 +1085,13 @@ const templates = {
       </div>
     `,
   }),
-  assignmentSubmitted: (studentName, studentEmail, applicationId, assignmentTitle, githubUrl) => ({
+  assignmentSubmitted: (
+    studentName,
+    studentEmail,
+    applicationId,
+    assignmentTitle,
+    githubUrl,
+  ) => ({
     subject: `[Milestone Submission] ${escapeHtml(studentName)} submitted ${escapeHtml(assignmentTitle)} (${escapeHtml(applicationId)})`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
@@ -875,7 +1108,13 @@ const templates = {
       </div>
     `,
   }),
-  certificateIssued: (name, applicationId, domainName, certificateId, verificationId) => {
+  certificateIssued: (
+    name,
+    applicationId,
+    domainName,
+    certificateId,
+    verificationId,
+  ) => {
     const certId = certificateId || "Verified";
     const domain = domainName || "Internship Track";
     const appId = applicationId || "";
@@ -917,7 +1156,14 @@ const templates = {
       `,
     };
   },
-  newCertificateAdminNotification: (studentName, studentEmail, applicationId, domainName, certificateId, verificationId) => ({
+  newCertificateAdminNotification: (
+    studentName,
+    studentEmail,
+    applicationId,
+    domainName,
+    certificateId,
+    verificationId,
+  ) => ({
     subject: `[Certificate Issued] ${escapeHtml(studentName)} - ${escapeHtml(certificateId || applicationId)} (${escapeHtml(domainName || "Track")})`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">

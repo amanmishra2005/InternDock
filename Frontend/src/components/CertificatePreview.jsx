@@ -27,7 +27,7 @@ export default function CertificatePreview({
       verificationId,
       orgName,
     },
-    { mode: "preview", bodyOnly: true }
+    { mode: "preview", bodyOnly: false },
   );
 
   return (

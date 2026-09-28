@@ -29,7 +29,7 @@ export default function OfferLetterPreview({
       verificationId,
       orgName,
     },
-    { mode: "preview", bodyOnly: true }
+    { mode: "preview", bodyOnly: false },
   );
 
   return (

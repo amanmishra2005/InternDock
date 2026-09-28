@@ -1,6 +1,6 @@
 /**
  * InternDock Google Sheets Business Ledger Sync
- * 
+ *
  * Synchronizes only essential, future-useful business data into Google Sheets.
  * Strictly organized into 7 clean, human-readable tabs:
  * 1. applications
@@ -10,7 +10,7 @@
  * 5. final_projects
  * 6. certificates
  * 7. contact_queries
- * 
+ *
  * NOTE: Transactional email logs, sent/received mail, and raw database IDs are NEVER stored.
  */
 
@@ -140,6 +140,106 @@ const SHEET_ALIASES = {
   contact_queries: "contact_queries",
 };
 
+function keyVariantsForHeader(header) {
+  const raw = String(header || "").trim();
+  if (!raw) return [];
+
+  const cleaned = raw
+    .replace(/&/g, " and ")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .trim();
+
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  const camel = words
+    .map((word, index) => {
+      const value = word.replace(/[^a-zA-Z0-9]/g, "");
+      if (!value) return "";
+      return index === 0
+        ? value.charAt(0).toLowerCase() + value.slice(1)
+        : value.charAt(0).toUpperCase() + value.slice(1);
+    })
+    .join("");
+
+  const compact = raw.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const titleCase = words
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+
+  return Array.from(
+    new Set([
+      raw,
+      raw.toLowerCase(),
+      raw.replace(/\s+/g, ""),
+      raw.replace(/\s+/g, "").toLowerCase(),
+      raw.replace(/\s+/g, " ").trim(),
+      camel,
+      compact,
+      titleCase,
+      titleCase.replace(/\s+/g, ""),
+    ]),
+  );
+}
+
+function getPayloadValueForHeader(payload, header) {
+  const candidates = keyVariantsForHeader(header);
+  const aliasMap = {
+    "Application ID": ["applicationId", "appId", "id"],
+    "Student Name": ["studentName", "name"],
+    "Student Email": ["studentEmail", "email"],
+    "Phone Number": ["phoneNumber", "phone", "mobileNumber"],
+    "College / University": ["collegeName", "college", "university"],
+    "Degree / Branch": ["degreeBranch", "degree", "branch"],
+    "Graduation Year": ["graduationYear", "yearOfGraduation"],
+    "Internship Domain": ["domainName", "domain", "internshipDomain"],
+    "Track Duration": ["durationLabel", "trackDuration", "duration"],
+    "Start Date": ["startDate", "start"],
+    "End Date": ["endDate", "end"],
+    "Program Fee (INR)": ["programFeeInr", "programFee", "fee", "amount"],
+    "Payment Status": ["paymentStatus", "status"],
+    "Application Status": ["applicationStatus", "status"],
+    Timestamp: ["timestamp", "createdAt"],
+    "Offer Reference ID": ["referenceId", "offerReferenceId", "offerId"],
+    "UTR / Transaction ID": ["utrNumber", "transactionId", "utr", "paymentId"],
+    "Payer Name": ["payerName", "studentName"],
+    "Order ID": ["orderId"],
+    "Certificate ID": ["certificateId", "id"],
+    "Verification ID": ["verificationId", "verifyId"],
+    "Issue Date": ["issueDate", "date"],
+    "Task Number": ["taskNumber", "assignmentNumber"],
+    "Task Title": ["taskTitle", "assignmentTitle", "title"],
+    "GitHub URL": ["githubUrl", "github"],
+    "Live Demo URL": ["liveDemoUrl", "liveUrl", "demoUrl"],
+    "Submission Status": ["submissionStatus", "status"],
+    "Notes / Comments": ["notes", "comments", "textContent"],
+    "Project Title": ["projectTitle", "title"],
+    "GitHub Repository URL": [
+      "githubRepositoryUrl",
+      "githubUrl",
+      "repositoryUrl",
+    ],
+    "Hosted Live Demo URL": [
+      "hostedLiveDemoUrl",
+      "liveDemoUrl",
+      "liveUrl",
+      "demoUrl",
+    ],
+    "Executive Summary": ["executiveSummary", "summary", "textContent"],
+    "Project Status": ["projectStatus", "status"],
+    Name: ["name"],
+    Email: ["email"],
+    Subject: ["subject"],
+    Message: ["message"],
+    Status: ["status"],
+  };
+
+  const aliasCandidates = aliasMap[header] || [];
+  for (const key of [...candidates, ...aliasCandidates]) {
+    if (payload[key] !== undefined) return payload[key];
+  }
+
+  return "-";
+}
+
 function doGet(e) {
   return ContentService.createTextOutput(
     "InternDock Google Sheets Business Ledger Sync is active.",
@@ -161,15 +261,17 @@ function doPost(e) {
     // 2. Transactional Email Relay (Dispatches emails without touching or storing anything in Google Sheets)
     if (payload.action === "send_email" || payload.action === "sendEmail") {
       const recipient = String(payload.to || "").trim();
-      const subject = String(payload.subject || "InternDock Notification").trim();
+      const subject = String(
+        payload.subject || "InternDock Notification",
+      ).trim();
       const htmlBody = payload.html || payload.htmlBody || "";
       const replyTo = payload.replyTo || "support.interndock@gmail.com";
       const senderName = payload.senderName || "InternDock";
 
       if (!recipient) {
-        return ContentService.createTextOutput("Error: Missing recipient").setMimeType(
-          ContentService.MimeType.TEXT,
-        );
+        return ContentService.createTextOutput(
+          "Error: Missing recipient",
+        ).setMimeType(ContentService.MimeType.TEXT);
       }
 
       try {
@@ -189,26 +291,30 @@ function doPost(e) {
       }
 
       return ContentService.createTextOutput(
-        JSON.stringify({ success: true, message: "Email sent to " + recipient }),
+        JSON.stringify({
+          success: true,
+          message: "Email sent to " + recipient,
+        }),
       ).setMimeType(ContentService.MimeType.JSON);
     }
 
     // Ignore any email log entries (email logs are never stored in the spreadsheet)
     if (payload.sheetName === "emails") {
-      return ContentService.createTextOutput("OK: Email logs omitted from ledger").setMimeType(
-        ContentService.MimeType.TEXT,
-      );
+      return ContentService.createTextOutput(
+        "OK: Email logs omitted from ledger",
+      ).setMimeType(ContentService.MimeType.TEXT);
     }
 
-
     // 3. Resolve canonical sheet name
-    const rawSheetName = String(payload.sheetName || "").trim().toLowerCase();
+    const rawSheetName = String(payload.sheetName || "")
+      .trim()
+      .toLowerCase();
     const canonicalName = SHEET_ALIASES[rawSheetName];
 
     if (!canonicalName || !ORDERED_COLUMNS[canonicalName]) {
-      return ContentService.createTextOutput("Ignored: Not an authorized business sheet").setMimeType(
-        ContentService.MimeType.TEXT,
-      );
+      return ContentService.createTextOutput(
+        "Ignored: Not an authorized business sheet",
+      ).setMimeType(ContentService.MimeType.TEXT);
     }
 
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -235,7 +341,9 @@ function doPost(e) {
       const currentHeaders = sheet
         .getRange(1, 1, 1, sheet.getLastColumn())
         .getValues()[0];
-      const missing = expectedHeaders.filter((h) => !currentHeaders.includes(h));
+      const missing = expectedHeaders.filter(
+        (h) => !currentHeaders.includes(h),
+      );
       if (missing.length > 0) {
         const startColumn = currentHeaders.length + 1;
         const missingRange = sheet.getRange(1, startColumn, 1, missing.length);
@@ -251,11 +359,9 @@ function doPost(e) {
       .getRange(1, 1, 1, sheet.getLastColumn())
       .getValues()[0];
 
-    const row = activeHeaders.map((header) => {
-      // Find matching key in payload (by header text or camelCase variation)
-      if (payload[header] !== undefined) return payload[header];
-      return "-";
-    });
+    const row = activeHeaders.map((header) =>
+      getPayloadValueForHeader(payload, header),
+    );
 
     sheet.appendRow(row);
 

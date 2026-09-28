@@ -110,9 +110,17 @@ const TRUSTED_DOMAINS = new Set([
   "proton.me",
   "zoho.com",
   "zoho.in",
+  "zoho.eu",
+  "zoho.com.au",
+  "zohomail.com",
+  "zohomail.in",
+  "zohomail.eu",
+  "zohomail.com.au",
+  "interndock.in",
   "rediffmail.com",
   "aol.com",
 ]);
+
 
 // In-memory cache for validated domains to prevent redundant DNS lookups
 const domainCache = new Map();

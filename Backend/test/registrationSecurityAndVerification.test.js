@@ -53,6 +53,23 @@ test("emailValidator accepts genuine academic and consumer email domains", async
   }
 });
 
+test("emailValidator accepts Zoho Mail and official platform domains", async () => {
+  const zohoEmails = [
+    "user@zohomail.com",
+    "user@zohomail.in",
+    "user@zohomail.eu",
+    "user@zoho.com",
+    "user@zoho.in",
+    "candidate@interndock.in",
+  ];
+
+  for (const email of zohoEmails) {
+    const result = await validateRegistrationEmail(email);
+    assert.equal(result.isValid, true, `Expected ${email} to be accepted: ${result.reason}`);
+  }
+});
+
+
 test("emailValidator rejects malformed email syntax", async () => {
   const badSyntaxes = [
     "plainaddress",

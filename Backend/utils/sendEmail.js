@@ -109,8 +109,9 @@ function getSmtpConfig() {
   const pass = (process.env.SMTP_PASS || "").trim();
   const secure = process.env.SMTP_SECURE === "true" || port === 465;
   const requireTLS = process.env.SMTP_REQUIRE_TLS !== "false";
-  const connectionTimeout = Math.min(Math.max(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 4000, 2000), 30000);
-  const socketTimeout = Math.min(Math.max(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 8000, 3000), 45000);
+  const connectionTimeout = Math.min(Math.max(Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 2500, 1500), 30000);
+  const socketTimeout = Math.min(Math.max(Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 6000, 2500), 45000);
+
 
   return { host, port, user, pass, secure, requireTLS, connectionTimeout, socketTimeout };
 }
@@ -426,6 +427,9 @@ async function dispatchViaHttpFallbacks(recipients, subject, html, replyTo) {
  * Uses primary SMTP configuration with automatic failover between ports 587 and 465,
  * duplicate suppression, rich error logging, and optional HTTP fallback if SMTP ports are blocked.
  */
+// Circuit breaker for environments where outbound SMTP ports are blocked (e.g. Render Free Tier)
+let smtpCircuitBrokenUntil = 0;
+
 async function sendEmail({ to, subject, html, replyTo }) {
   const recipients = normalizeRecipientsForDispatch(to);
   const safeTo = recipients.join(", ");
@@ -466,8 +470,41 @@ async function sendEmail({ to, subject, html, replyTo }) {
     return entry;
   }
 
+  const preferResend = process.env.PREFER_RESEND === "true" || process.env.ENABLE_SMTP === "false";
+  const isSmtpCircuitBroken = Date.now() < smtpCircuitBrokenUntil;
+
+  // Direct fast path: If SMTP is known to be blocked on this host or Resend is preferred, dispatch via HTTP directly
+  if (preferResend || isSmtpCircuitBroken) {
+    if (isSmtpCircuitBroken) {
+      console.log(`[SMTP CIRCUIT BREAKER ACTIVE] Outbound SMTP ports blocked on host. Routing directly via Resend / HTTP API for ${safeTo}...`);
+    } else {
+      console.log(`[PREFER RESEND] Direct Resend dispatch configured. Routing via Resend / HTTP API for ${safeTo}...`);
+    }
+
+    try {
+      const fallbackRes = await dispatchViaHttpFallbacks(recipients, subject, html, replyTo);
+      if (fallbackRes?.value) {
+        entry.success = true;
+        entry.status = "Sent";
+        entry.messageId = fallbackRes.value.messageId;
+        entry.sentTo = fallbackRes.value.sentTo;
+        entry.error = null;
+        console.log(`[HTTP SUCCESS] Delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
+        recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+        return entry;
+      }
+    } catch (fallbackErr) {
+      console.error(`[HTTP RELAY ERROR] HTTP fallbacks failed:`, fallbackErr.message);
+      entry.error = `HTTP: ${fallbackErr.message}`;
+    }
+
+    entry.status = "Failed";
+    return entry;
+  }
+
   const config = getSmtpConfig();
   const smtpConfigured = Boolean(config.user && config.pass);
+
 
   if (!smtpConfigured) {
     entry.status = "Skipped";
@@ -561,6 +598,11 @@ async function sendEmail({ to, subject, html, replyTo }) {
     console.error(`[SMTP ERROR - ${classified.type}] ${classified.message}`);
     entry.error = classified.message;
 
+    if (classified.type === "Connection failure") {
+      smtpCircuitBrokenUntil = Date.now() + 15 * 60 * 1000;
+      console.warn(`[SMTP CIRCUIT BREAKER ACTIVATED] Outbound SMTP timed out. Future emails will route directly via Resend / HTTP API without waiting.`);
+    }
+
     // 2. Secondary fallback: Multi-layer HTTP API dispatch (Resend, Google Apps Script, Brevo)
     try {
       console.log(`[SMTP FALLBACK] Attempting HTTP API fallbacks for ${safeTo}...`);
@@ -585,11 +627,33 @@ async function sendEmail({ to, subject, html, replyTo }) {
   } catch (err) {
     const classified = classifySmtpError(err);
     console.error(`[EMAIL EXCEPTION - ${classified.type}] ${classified.message}`);
-    entry.status = "Failed";
     entry.error = classified.message;
+
+    if (classified.type === "Connection failure") {
+      smtpCircuitBrokenUntil = Date.now() + 15 * 60 * 1000;
+    }
+
+    try {
+      const fallbackRes = await dispatchViaHttpFallbacks(recipients, subject, html, replyTo);
+      if (fallbackRes?.value) {
+        entry.success = true;
+        entry.status = "Sent";
+        entry.messageId = fallbackRes.value.messageId;
+        entry.sentTo = fallbackRes.value.sentTo;
+        entry.error = null;
+        console.log(`[HTTP SUCCESS] Fallback delivered to ${entry.sentTo.join(", ")} | ID: ${entry.messageId}`);
+        recentDispatches.set(dispatchKey, { timestamp: Date.now(), messageId: entry.messageId });
+        return entry;
+      }
+    } catch (fallbackErr) {
+      entry.error += ` | HTTP fallback: ${fallbackErr.message}`;
+    }
+
+    entry.status = "Failed";
     return entry;
   }
 }
+
 
 function getEmailLog() {
   return emailLog.slice(0, 200);

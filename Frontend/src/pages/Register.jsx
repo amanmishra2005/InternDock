@@ -589,42 +589,43 @@ export default function Register() {
         .full-width { width: 100%; }
         .turnstile-container { margin: 1rem 0; min-height: 65px; display: flex; justify-content: center; }
         
-        .email-chip-box { display: flex; align-items: center; gap: 0.75rem; background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.25); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; }
+        .email-chip-box { display: flex; align-items: center; gap: 0.75rem; background: #f0f9ff; border: 1.5px solid #bae6fd; padding: 0.85rem 1.15rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; }
         .email-chip-icon { color: #0284c7; display: flex; }
         .email-chip-content { flex: 1; display: flex; flex-direction: column; font-size: 0.85rem; }
-        .email-chip-label { color: var(--text-muted); font-size: 0.75rem; }
-        .email-chip-address { color: #ffffff; word-break: break-all; }
-        .email-chip-change-btn { background: none; border: none; color: #0284c7; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline; }
+        .email-chip-label { color: #475569; font-size: 0.78rem; font-weight: 500; }
+        .email-chip-address { color: #000000 !important; font-size: 0.95rem; font-weight: 700; word-break: break-all; }
+        .email-chip-change-btn { background: none; border: none; color: #0284c7; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-decoration: underline; }
         .otp-box-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; width: 100%; }
-        .otp-boxes-label-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
-        .otp-label-icon { color: #6366f1; }
+        .otp-boxes-label-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #000000; font-size: 0.92rem; font-weight: 700; }
+        .otp-label-icon { color: #4f46e5; }
         .mb-0 { margin-bottom: 0 !important; }
         .otp-boxes-container { display: flex; gap: 0.65rem; justify-content: center; margin-bottom: 0.65rem; width: 100%; }
         .otp-box-digit {
           width: 52px;
           height: 60px;
           text-align: center;
-          font-size: 1.65rem;
-          font-weight: 700;
+          font-size: 1.75rem;
+          font-weight: 800;
           font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-          background: rgba(15, 23, 42, 0.85);
-          border: 1.5px solid rgba(255, 255, 255, 0.16);
+          background: #ffffff;
+          border: 2px solid #cbd5e1;
           border-radius: 12px;
-          color: #ffffff;
+          color: #000000 !important;
           outline: none;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
         .otp-box-digit:focus {
-          border-color: #6366f1;
-          background: rgba(99, 102, 241, 0.14);
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), 0 6px 18px rgba(99, 102, 241, 0.35);
+          border-color: #4f46e5;
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2), 0 4px 12px rgba(79, 70, 229, 0.15);
           transform: translateY(-2px);
+          color: #000000 !important;
         }
         .otp-box-digit.filled {
-          border-color: rgba(99, 102, 241, 0.6);
-          background: rgba(30, 41, 59, 0.95);
-          color: #38bdf8;
+          border-color: #4f46e5;
+          background: #f8fafc;
+          color: #000000 !important;
         }
         @media (max-width: 480px) {
           .otp-boxes-container { gap: 0.35rem; }

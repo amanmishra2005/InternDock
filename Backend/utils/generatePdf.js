@@ -26,7 +26,7 @@ const GOLD = "#c9962f";
 const GRAY = "#64748b";
 
 // Bump this any time the offer letter / certificate design changes
-const TEMPLATE_VERSION = "2026-09-28-v7-unified";
+const TEMPLATE_VERSION = "2026-09-28-v8-watermark";
 
 function getAssetBase64(filename) {
   const p = path.join(ASSETS_DIR, filename);
@@ -92,7 +92,7 @@ function convertHtmlToPdfWithChrome(htmlContent, destPdfPath) {
 
   try {
     execSync(
-      `"${chromePath}" --headless --disable-gpu --no-pdf-header-footer --run-all-compositor-stages-before-draw --print-to-pdf="${destPdfPath}" "${tempHtmlPath}"`,
+      `"${chromePath}" --headless --disable-gpu --no-pdf-header-footer --print-background --run-all-compositor-stages-before-draw --print-to-pdf="${destPdfPath}" "${tempHtmlPath}"`,
       { stdio: "pipe", timeout: 20000 }
     );
     return fs.existsSync(destPdfPath) && fs.statSync(destPdfPath).size > 1000;
@@ -116,6 +116,17 @@ function drawDottedBackground(doc, w, h, margin = 26, spacing = 16) {
       doc.circle(x, y, 0.55).fill();
     }
   }
+  doc.restore();
+}
+
+function drawWatermarkLogo(doc, w, h, size = 260) {
+  const p = fs.existsSync(LOGO_MARK_PATH) ? LOGO_MARK_PATH : (fs.existsSync(COMPANY_LOGO_PATH) ? COMPANY_LOGO_PATH : null);
+  if (!p) return;
+  doc.save();
+  doc.opacity(0.085);
+  const x = (w - size) / 2;
+  const y = (h - size) / 2;
+  doc.image(p, x, y, { fit: [size, size], align: "center", valign: "center" });
   doc.restore();
 }
 

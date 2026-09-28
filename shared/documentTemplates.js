@@ -81,12 +81,15 @@ const DOCUMENT_STYLES = `
     border: 1px solid #0f172a;
     border-radius: 4px;
     padding: 2.25rem 2rem 1.25rem 2rem;
-    background: radial-gradient(#d8d2c2 0.75px, transparent 0.75px), #fffdf8;
+    background-color: #fffdf8;
+    background-image: radial-gradient(#d8d2c2 0.85px, transparent 0.85px);
     background-size: 16px 16px;
     position: relative;
     overflow: hidden;
     min-width: 0;
     box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Decorative Corner L-Brackets */
@@ -96,6 +99,8 @@ const DOCUMENT_STYLES = `
     height: 16px;
     pointer-events: none;
     z-index: 3;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .corner-tl {
@@ -128,18 +133,25 @@ const DOCUMENT_STYLES = `
     position: absolute;
     top: 50%;
     left: 50%;
-    width: min(48%, 320px);
+    width: min(52%, 310px);
     aspect-ratio: 1;
     transform: translate(-50%, -50%);
-    opacity: 0.09;
+    opacity: 0.085;
     pointer-events: none;
     z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .doc-company-watermark img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Header Row */

@@ -317,6 +317,12 @@ function doPost(e) {
       ).setMimeType(ContentService.MimeType.TEXT);
     }
 
+    if (!SPREADSHEET_ID || SPREADSHEET_ID === "PASTE_YOUR_GOOGLE_SHEET_ID_HERE") {
+      return ContentService.createTextOutput(
+        "Error: SPREADSHEET_ID is not configured in Code.gs. Please paste your Google Sheet ID.",
+      ).setMimeType(ContentService.MimeType.TEXT);
+    }
+
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     let sheet = spreadsheet.getSheetByName(canonicalName);
 

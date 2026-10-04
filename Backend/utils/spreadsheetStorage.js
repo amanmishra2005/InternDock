@@ -304,9 +304,30 @@ async function syncToGoogleSheet(sheetName, recordData) {
       signal: AbortSignal.timeout(timeoutMs),
     });
 
+    const text = (await response.text().catch(() => "")).trim();
+
     if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      return { ok: false, reason: `HTTP ${response.status}: ${text}` };
+      return { ok: false, reason: `HTTP ${response.status}: ${text.slice(0, 200)}` };
+    }
+
+    if (text.includes("Unauthorized")) {
+      return {
+        ok: false,
+        reason:
+          "Webhook returned Unauthorized. The token in Backend/.env does not match EXPECTED_TOKEN in your Google Apps Script, or the Apps Script Web App needs a 'New version' deployment.",
+      };
+    }
+
+    if (
+      text.includes("Error:") ||
+      text.includes("<html") ||
+      text.includes("<!DOCTYPE") ||
+      text.includes("Page not found")
+    ) {
+      return {
+        ok: false,
+        reason: `Webhook returned error or HTML page: ${text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160)}`,
+      };
     }
 
     return { ok: true, reason: "synced" };

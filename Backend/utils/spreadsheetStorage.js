@@ -524,7 +524,9 @@ function appendToSpreadsheet(sheetName, recordData) {
         const uniqueKey =
           cleanRecord["Offer Reference ID"] ||
           cleanRecord["Certificate ID"] ||
-          (canonicalSheetName === "applications" ? cleanRecord["Application ID"] : null);
+          (canonicalSheetName === "applications" ? cleanRecord["Application ID"] : null) ||
+          (canonicalSheetName === "final_projects" ? cleanRecord["Application ID"] : null) ||
+          (canonicalSheetName === "payments" ? cleanRecord["Order ID"] : null);
         if (uniqueKey && uniqueKey !== "-" && existingContent.includes(`"${uniqueKey}"`)) {
           return true; // Already recorded, avoid duplicate row
         }
@@ -639,11 +641,22 @@ function readSpreadsheet(sheetName) {
       if (item["Verification ID"])
         item.verificationId = item["Verification ID"];
       if (item["Student Name"]) item.studentName = item["Student Name"];
-      if (item["Student Email"]) item.studentEmail = item["Student Email"];
+      if (item["College / University"]) {
+        item.college = item["College / University"];
+        item.collegeName = item["College / University"];
+      }
       if (item["Internship Domain"]) {
         item.domain = item["Internship Domain"];
         item.domainName = item["Internship Domain"];
       }
+      if (item["Track Duration"]) {
+        item.duration = item["Track Duration"];
+        item.durationLabel = item["Track Duration"];
+        item.trackDuration = item["Track Duration"];
+      }
+      if (item["Start Date"]) item.startDate = item["Start Date"];
+      if (item["End Date"]) item.endDate = item["End Date"];
+      if (item["Issue Date"]) item.issueDate = item["Issue Date"];
 
       records.push(item);
     }

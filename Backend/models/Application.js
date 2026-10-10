@@ -39,6 +39,7 @@ const applicationSchema = new mongoose.Schema(
     offerLetterIssued: { type: Boolean, default: false },
     offerLetterRef: { type: String, trim: true },
     certificateIssued: { type: Boolean, default: false },
+    certificateId: { type: String, trim: true },
   },
   { timestamps: true }
 );

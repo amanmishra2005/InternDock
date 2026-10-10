@@ -3,6 +3,7 @@ const router = express.Router();
 const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet } = require("../utils/spreadsheetStorage");
 const { supportTargetEmail } = require("../utils/emailTargets");
+const ContactQuery = require("../models/ContactQuery");
 
 // POST /api/contact - Submit contact form query to support.interndock@gmail.com
 router.post("/", async (req, res) => {
@@ -23,14 +24,33 @@ router.post("/", async (req, res) => {
       recipientEmail: supportTarget,
     };
 
-    appendToSpreadsheet("contact_queries", {
-      contactId: `contact_${Date.now()}`,
-      name,
-      email,
-      subject: subject || "General Inquiry",
-      message,
-      recipientEmail: supportTarget,
-    });
+    // Persist to MongoDB
+    let mongoQuery = null;
+    try {
+      mongoQuery = await ContactQuery.create({
+        name,
+        email,
+        subject: subject || "General Inquiry",
+        message,
+        recipientEmail: supportTarget,
+      });
+    } catch (dbErr) {
+      console.warn("MongoDB contact query write failed:", dbErr.message);
+    }
+
+    // Persist to spreadsheet (awaited)
+    try {
+      await appendToSpreadsheet("contact_queries", {
+        contactId: mongoQuery?._id ? String(mongoQuery._id) : `contact_${Date.now()}`,
+        name,
+        email,
+        subject: subject || "General Inquiry",
+        message,
+        recipientEmail: supportTarget,
+      });
+    } catch (sheetErr) {
+      console.warn("Spreadsheet contact query write failed:", sheetErr.message);
+    }
 
     const notifyTemplate = templates.newContactQueryNotification(name, email, subject, message);
     const autoReplyHtml = `

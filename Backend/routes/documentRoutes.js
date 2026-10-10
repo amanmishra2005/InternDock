@@ -292,18 +292,27 @@ router.get("/certificate/:applicationId", protect, async (req, res) => {
         });
       }
 
-      appendToSpreadsheet("certificates", {
+      try {
+        await appendToSpreadsheet("certificates", {
+          certificateId: cert.certificateId,
+          applicationId: application.applicationId || application._id,
+          studentName: details.studentName,
+          studentEmail: details.studentEmail,
+          collegeName: details.collegeName || "-",
+          domainName: details.domainName,
+          durationLabel: details.durationLabel || "4 Weeks Track",
+          startDate: details.startDate,
+          endDate: details.endDate,
+          issueDate,
+          verificationId,
+        });
+      } catch (sheetErr) {
+        console.warn("Spreadsheet append error for certificate:", sheetErr.message);
+      }
+
+      await Application.findByIdAndUpdate(application._id, {
+        certificateIssued: true,
         certificateId: cert.certificateId,
-        applicationId: application.applicationId || application._id,
-        studentName: details.studentName,
-        studentEmail: details.studentEmail,
-        collegeName: details.collegeName || "-",
-        domainName: details.domainName,
-        durationLabel: details.durationLabel || "4 Weeks Track",
-        startDate: details.startDate,
-        endDate: details.endDate,
-        issueDate,
-        verificationId,
       });
     }
 
@@ -350,18 +359,22 @@ router.post("/final-report", protect, async (req, res) => {
     const studentName = req.user.fullName || application.student?.fullName || "Student";
     const studentEmail = req.user.email || application.student?.email;
 
-    appendToSpreadsheet("final_projects", {
-      applicationId: application.applicationId || applicationId,
-      studentName,
-      studentEmail,
-      collegeName: application.student?.college || req.user.college || "-",
-      domainName: application.domain?.name || "Internship Track",
-      projectTitle: rest.title || "Capstone Final Project",
-      githubUrl: rest.githubUrl || "-",
-      liveUrl: rest.hostedUrl || "-",
-      executiveSummary: rest.executiveSummary || "-",
-      status: "Submitted",
-    });
+    try {
+      await appendToSpreadsheet("final_projects", {
+        applicationId: application.applicationId || applicationId,
+        studentName,
+        studentEmail,
+        collegeName: application.student?.college || req.user.college || "-",
+        domainName: application.domain?.name || "Internship Track",
+        projectTitle: rest.title || "Capstone Final Project",
+        githubUrl: rest.githubUrl || "-",
+        liveUrl: rest.hostedUrl || "-",
+        executiveSummary: rest.executiveSummary || "-",
+        status: "Submitted",
+      });
+    } catch (sheetErr) {
+      console.warn("Spreadsheet append error for final project:", sheetErr.message);
+    }
 
     const notifyTarget = supportTargetEmail();
     const domainName = application.domain?.name || "Internship Track";
@@ -428,11 +441,11 @@ router.get("/verify/offer/:id", async (req, res) => {
     const payload = {
       valid: true,
       studentName: offerRow.studentName || "Intern Student",
-      collegeName: offerRow.collegeName || "",
+      collegeName: offerRow.collegeName || offerRow["College / University"] || "",
       startDate: offerRow.startDate || "",
       endDate: offerRow.endDate || "",
-      domain: offerRow.domain || "Tech Internship Track",
-      duration: "4 Weeks Track",
+      domain: offerRow.domainName || offerRow.internshipDomain || offerRow.domain || "Tech Internship Track",
+      duration: offerRow.durationLabel || offerRow.trackDuration || offerRow.duration || "4 Weeks Track",
       referenceId: offerRow.referenceId,
       issueDate: offerRow.timestamp ? new Date(offerRow.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
       status: "Verified Official Selection Record",
@@ -524,11 +537,11 @@ router.get("/verify/certificate/:id", async (req, res) => {
     const payload = {
       valid: true,
       studentName: certRow.studentName || "Intern Student",
-      collegeName: certRow.collegeName || "",
+      collegeName: certRow.collegeName || certRow["College / University"] || "",
       startDate: certRow.startDate || "",
       endDate: certRow.endDate || "",
-      domain: certRow.domain || "Tech Internship Track",
-      duration: "4 Weeks Track",
+      domain: certRow.domainName || certRow.internshipDomain || certRow.domain || "Tech Internship Track",
+      duration: certRow.durationLabel || certRow.trackDuration || certRow.duration || "4 Weeks Track",
       certificateId: certRow.certificateId,
       issueDate: certRow.timestamp ? new Date(certRow.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
       status: "Cryptographically Verified Certificate",

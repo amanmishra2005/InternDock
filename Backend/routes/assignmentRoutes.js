@@ -8,6 +8,8 @@ const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 const { isValidGithubUrl, GITHUB_URL_ERROR_MESSAGE } = require("../../shared/submissionValidation");
+const { sendEmail, templates } = require("../utils/sendEmail");
+const { supportTargetEmail } = require("../utils/emailTargets");
 
 
 async function findApplicationByIdentifier(identifier) {
@@ -227,7 +229,11 @@ router.post("/:assignmentId/submit", protect, async (req, res) => {
       studentName: req.user.fullName,
       studentEmail: req.user.email,
       domainName: application.domain?.name || "Internship Track",
-      taskNumber: assignment.day ? `Day ${assignment.day}` : assignment.weekNumber ? `Week ${assignment.weekNumber}` : `Task ${assignment.order || 1}`,
+      taskNumber: assignment.week
+        ? `Week ${assignment.week}`
+        : assignment.day
+        ? `Day ${assignment.day}`
+        : `Task ${assignment.order || 1}`,
       taskTitle: assignment.title || "Internship Milestone Task",
       githubUrl: githubUrl || "-",
       liveUrl: liveUrl || "-",
@@ -236,9 +242,28 @@ router.post("/:assignmentId/submit", protect, async (req, res) => {
       status: "Submitted",
     };
 
-    appendToSpreadsheet("submissions", submission);
+    try {
+      await appendToSpreadsheet("submissions", submission);
+    } catch (sheetErr) {
+      console.warn("Spreadsheet append error for submission:", sheetErr.message);
+    }
 
-
+    // Dispatch milestone notification to support/admin
+    const adminNotificationEmail = supportTargetEmail();
+    const milestoneT = templates.assignmentSubmitted(
+      req.user.fullName,
+      req.user.email,
+      application.applicationId || applicationId,
+      assignment.title || "Internship Milestone Task",
+      githubUrl || ""
+    );
+    sendEmail({
+      to: adminNotificationEmail,
+      replyTo: req.user.email,
+      ...milestoneT,
+    }).catch((err) => {
+      console.warn("Milestone submission email notice failed:", err.message);
+    });
 
     return res.status(201).json(submission);
   } catch (err) {

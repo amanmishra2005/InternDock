@@ -297,19 +297,26 @@ router.put("/applications/:id/status", async (req, res) => {
         });
       }
 
-      appendToSpreadsheet("certificates", {
-        certificateId: cert.certificateId,
-        applicationId: application.applicationId || application._id,
-        studentName: details.studentName,
-        studentEmail: details.studentEmail,
-        collegeName: details.collegeName || "-",
-        domainName: details.domainName,
-        durationLabel: details.durationLabel || "4 Weeks Track",
-        startDate: details.startDate,
-        endDate: details.endDate,
-        issueDate,
-        verificationId,
-      });
+      application.certificateId = certificateId;
+      await application.save();
+
+      try {
+        await appendToSpreadsheet("certificates", {
+          certificateId: cert.certificateId,
+          applicationId: application.applicationId || application._id,
+          studentName: details.studentName,
+          studentEmail: details.studentEmail,
+          collegeName: details.collegeName || "-",
+          domainName: details.domainName,
+          durationLabel: details.durationLabel || "4 Weeks Track",
+          startDate: details.startDate,
+          endDate: details.endDate,
+          issueDate,
+          verificationId,
+        });
+      } catch (sheetErr) {
+        console.error(`[SPREADSHEET ERROR] Failed writing certificate ${cert.certificateId} to spreadsheet:`, sheetErr);
+      }
 
       const studentT = templates.certificateIssued(
         details.studentName,
@@ -363,18 +370,48 @@ router.put("/applications/:id/mark-payment", async (req, res) => {
   await application.save();
 
   let payment = await Payment.findOne({ application: application._id });
+  const paymentAmount = application.duration?.fee || 100;
   if (!payment) {
     payment = new Payment({
       application: application._id,
       student: application.student._id,
       orderId: `admin_approved_${Date.now()}`,
-      amount: application.duration?.fee || 100,
+      amount: paymentAmount,
       currency: "INR",
     });
   }
   payment.status = "Successful";
   payment.paymentId = `ADMIN_VERIFIED_${Date.now()}`;
+  payment.payerName = application.student?.fullName || application.studentName || "Candidate";
+  payment.registeredEmail = application.student?.email || application.studentEmail;
   await payment.save();
+
+  try {
+    await appendToSpreadsheet("payments", {
+      applicationId: application.applicationId || application._id,
+      studentName: payment.payerName,
+      studentEmail: payment.registeredEmail,
+      domainName: application.domain?.name || "Internship Track",
+      amount: paymentAmount,
+      status: "Successful",
+      utrNumber: payment.paymentId,
+      payerName: payment.payerName,
+      orderId: payment.orderId,
+    });
+  } catch (sheetErr) {
+    console.error("[SPREADSHEET ERROR] Failed writing payment to spreadsheet:", sheetErr);
+  }
+
+  // Dispatch payment confirmation notifications
+  const studentEmail = payment.registeredEmail;
+  const adminNotificationEmail = supportTargetEmail();
+  const paymentStudentT = templates.paymentSuccess(payment.payerName, paymentAmount, application.applicationId || application._id);
+  const paymentAdminT = templates.newPaymentAdminNotification(payment.payerName, payment.registeredEmail, application.applicationId || application._id, paymentAmount);
+
+  Promise.allSettled([
+    studentEmail ? sendEmail({ to: studentEmail, replyTo: "support.interndock@gmail.com", ...paymentStudentT }) : Promise.resolve(),
+    sendEmail({ to: adminNotificationEmail, replyTo: studentEmail || "support.interndock@gmail.com", ...paymentAdminT }),
+  ]).catch(() => {});
 
   res.json({ success: true, application, payment });
 });
@@ -649,19 +686,26 @@ router.post("/applications/:id/issue-certificate", async (req, res) => {
     });
   }
 
-  appendToSpreadsheet("certificates", {
-    certificateId: cert.certificateId,
-    applicationId: application.applicationId || application._id,
-    studentName: details.studentName,
-    studentEmail: details.studentEmail,
-    collegeName: details.collegeName || "-",
-    domainName: details.domainName,
-    durationLabel: details.durationLabel || "4 Weeks Track",
-    startDate: details.startDate,
-    endDate: details.endDate,
-    issueDate,
-    verificationId,
-  });
+  application.certificateId = certificateId;
+  await application.save();
+
+  try {
+    await appendToSpreadsheet("certificates", {
+      certificateId: cert.certificateId,
+      applicationId: application.applicationId || application._id,
+      studentName: details.studentName,
+      studentEmail: details.studentEmail,
+      collegeName: details.collegeName || "-",
+      domainName: details.domainName,
+      durationLabel: details.durationLabel || "4 Weeks Track",
+      startDate: details.startDate,
+      endDate: details.endDate,
+      issueDate,
+      verificationId,
+    });
+  } catch (sheetErr) {
+    console.error(`[SPREADSHEET ERROR] Failed writing certificate ${cert.certificateId} to spreadsheet:`, sheetErr);
+  }
 
   const studentT = templates.certificateIssued(
     details.studentName,

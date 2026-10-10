@@ -49,17 +49,21 @@ router.post("/create-order", protect, async (req, res) => {
       status: "Pending",
     });
 
-    appendToSpreadsheet("payments", {
-      applicationId: application.applicationId || String(application._id),
-      studentName: req.user.fullName || application.student?.fullName || "-",
-      studentEmail: req.user.email || application.student?.email || "-",
-      domainName: application.domain?.name || "Internship Track",
-      amount: application.duration?.fee || 100,
-      status: "Pending",
-      utrNumber: "-",
-      payerName: req.user.fullName || "-",
-      orderId,
-    });
+    try {
+      await appendToSpreadsheet("payments", {
+        applicationId: application.applicationId || String(application._id),
+        studentName: req.user.fullName || application.student?.fullName || "-",
+        studentEmail: req.user.email || application.student?.email || "-",
+        domainName: application.domain?.name || "Internship Track",
+        amount: application.duration?.fee || 100,
+        status: "Pending",
+        utrNumber: "-",
+        payerName: req.user.fullName || "-",
+        orderId,
+      });
+    } catch (sheetErr) {
+      console.warn("Payment order spreadsheet write failed:", sheetErr.message);
+    }
 
     res.status(201).json(payment);
   } catch (err) {
@@ -129,19 +133,35 @@ router.post("/confirm", protect, async (req, res) => {
     if (registeredEmail) payment.registeredEmail = registeredEmail;
     await payment.save();
 
-    appendToSpreadsheet("payments", {
-      applicationId: application.applicationId || application._id,
-      studentName:
-        req.user.fullName || application.student?.fullName || payerName || "-",
-      studentEmail:
-        registeredEmail || req.user.email || application.student?.email || "-",
-      domainName: application.domain?.name || "Internship Track",
-      amount: feeAmount,
-      status: "Successful",
-      utrNumber: payment.utrNumber || utrNumber || "-",
-      payerName: payerName || payment.payerName || req.user.fullName || "-",
-      orderId: payment.orderId,
-    });
+    try {
+      await appendToSpreadsheet("payments", {
+        applicationId: application.applicationId || application._id,
+        studentName:
+          req.user.fullName || application.student?.fullName || payerName || "-",
+        studentEmail:
+          registeredEmail || req.user.email || application.student?.email || "-",
+        domainName: application.domain?.name || "Internship Track",
+        amount: feeAmount,
+        status: "Successful",
+        utrNumber: payment.utrNumber || utrNumber || "-",
+        payerName: payerName || payment.payerName || req.user.fullName || "-",
+        orderId: payment.orderId,
+      });
+    } catch (sheetErr) {
+      console.error("[SPREADSHEET ERROR] Failed writing payment confirmation:", sheetErr);
+    }
+
+    // Dispatch payment confirmation notifications
+    const studentTargetEmail = registeredEmail || req.user.email || application.student?.email;
+    const adminNotificationEmail = supportTargetEmail();
+    const payerResolvedName = payerName || payment.payerName || req.user.fullName || "Student";
+    const paymentStudentT = templates.paymentSuccess(payerResolvedName, feeAmount, application.applicationId || application._id);
+    const paymentAdminT = templates.newPaymentAdminNotification(payerResolvedName, studentTargetEmail, application.applicationId || application._id, feeAmount);
+
+    Promise.allSettled([
+      studentTargetEmail ? sendEmail({ to: studentTargetEmail, replyTo: "support.interndock@gmail.com", ...paymentStudentT }) : Promise.resolve(),
+      sendEmail({ to: adminNotificationEmail, replyTo: studentTargetEmail || "support.interndock@gmail.com", ...paymentAdminT }),
+    ]).catch(() => {});
 
     // Instantly update application paymentStatus & unlock Active workspace
     application.paymentStatus = "Successful";

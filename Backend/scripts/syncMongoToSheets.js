@@ -184,7 +184,7 @@ async function run() {
     // --- 3. OFFER LETTERS ---
     console.log("\nFetching Offer Letters from MongoDB...");
     const offerLetters = await OfferLetter.find()
-      .populate("application")
+      .populate({ path: "application", populate: ["domain", "duration"] })
       .populate("student")
       .sort({ createdAt: 1 })
       .lean();
@@ -200,8 +200,8 @@ async function run() {
         studentName: student.fullName || app.studentName || "-",
         studentEmail: student.email || app.studentEmail || "-",
         collegeName: student.college || app.collegeName || "-",
-        domainName: "-",
-        durationLabel: "-",
+        domainName: app.domain?.name || "-",
+        durationLabel: app.duration?.label || `${app.duration?.weeks || 4} Weeks Track`,
         startDate: app.startDate,
         endDate: app.endDate,
         issueDate: offer.issueDate || offer.createdAt,
@@ -277,7 +277,7 @@ async function run() {
     // --- 6. CERTIFICATES ---
     console.log("\nFetching Certificates from MongoDB...");
     const certificates = await Certificate.find()
-      .populate("application")
+      .populate({ path: "application", populate: ["domain", "duration"] })
       .populate("student")
       .sort({ createdAt: 1 })
       .lean();
@@ -293,8 +293,8 @@ async function run() {
         studentName: student.fullName || app.studentName || "-",
         studentEmail: student.email || app.studentEmail || "-",
         collegeName: student.college || app.collegeName || "-",
-        domainName: "-",
-        durationLabel: "-",
+        domainName: app.domain?.name || "-",
+        durationLabel: app.duration?.label || `${app.duration?.weeks || 4} Weeks Track`,
         startDate: app.startDate,
         endDate: app.endDate,
         issueDate: cert.issueDate || cert.createdAt,

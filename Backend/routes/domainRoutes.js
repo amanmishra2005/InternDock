@@ -8,29 +8,65 @@ const Assignment = require("../models/Assignment");
 const { protect } = require("../middleware/auth");
 const { getCache, setCache, clearCache } = require("../utils/cache");
 
-// GET /api/domains (final public catalog available to everyone, with in-memory caching)
-// NOTE: Only admin-managed public domains appear in this list.
-// Personalized domains created by students are private and NEVER added to the final public domain list.
+// GET /api/domains (catalog endpoint)
+// Other students & public guests ONLY see the 26 official platform domains.
+// If a student personalized a domain, that personalized domain is ONLY shown to the student who created it,
+// so that only they can view and apply through it.
 router.get("/", async (req, res) => {
   try {
     const { search, category } = req.query;
-    const cacheKey = `domains_${search || ""}_${category || ""}`;
 
-    // Return cached response if available
-    const cached = getCache(cacheKey);
-    if (cached) return res.json(cached);
+    let requestingUserId = null;
+    const header = req.headers.authorization || "";
+    const token = header.startsWith("Bearer ") ? header.split(" ")[1] : null;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        requestingUserId = decoded.id;
+      } catch (e) {}
+    }
 
-    const filter = {
-      isActive: true,
-      isPersonalized: { $ne: true },
-      isPublic: { $ne: false },
-    };
+    // Cache is used for public requests (unauthenticated / other students without custom domains)
+    const publicCacheKey = `domains_public_${search || ""}_${category || ""}`;
+    if (!requestingUserId) {
+      const cached = getCache(publicCacheKey);
+      if (cached) return res.json(cached);
+    }
+
+    let filter;
+    if (requestingUserId) {
+      // Show official 26 domains PLUS this specific student's personalized domains
+      filter = {
+        $or: [
+          { isActive: true, isPersonalized: { $ne: true }, isPublic: { $ne: false } },
+          { isActive: true, isPersonalized: true, createdBy: requestingUserId },
+        ],
+      };
+    } else {
+      // Public / guest view: strictly the 26 fixed official platform domains
+      filter = {
+        isActive: true,
+        isPersonalized: { $ne: true },
+        isPublic: { $ne: false },
+      };
+    }
+
     if (category && category !== "All") filter.category = category;
     if (search) filter.name = { $regex: search, $options: "i" };
 
-    // Use .lean() for fast execution & minimal memory consumption
-    const domains = await Domain.find(filter).populate("availableDurations").sort({ name: 1 }).lean();
-    setCache(cacheKey, domains, 600); // 10 minutes cache
+    const domains = await Domain.find(filter).populate("availableDurations").lean();
+
+    // Sort: Personalized domains for this student appear at the top, followed by alphabetical order
+    domains.sort((a, b) => {
+      if (a.isPersonalized && !b.isPersonalized) return -1;
+      if (!a.isPersonalized && b.isPersonalized) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    if (!requestingUserId) {
+      setCache(publicCacheKey, domains, 600); // 10 minutes cache
+    }
+
     return res.json(domains);
   } catch (err) {
     console.error("Fetch domains error:", err.message);

@@ -113,3 +113,61 @@ test("Personalized domain is only accessible and applicable by the creator stude
   // Another student CANNOT access or apply
   assert.equal(canAccessOrApply({ _id: otherStudentId, role: "student" }, personalizedDomain), false);
 });
+
+test("Personalized domain is visible in catalog only to the student who created it, other students only see fixed domains", () => {
+  const studentA = "64f1a2b3c4d5e6f7a8b9c0d1";
+  const studentB = "64f1a2b3c4d5e6f7a8b9c0d2";
+
+  // 26 fixed official platform domains + 1 personalized domain created by student A
+  const allDatabaseDomains = [];
+  for (let i = 1; i <= 26; i++) {
+    allDatabaseDomains.push({
+      _id: `fixed_${i}`,
+      name: `Official Platform Domain ${i}`,
+      isPersonalized: false,
+      isPublic: true,
+      isActive: true,
+    });
+  }
+
+  // Student A's personalized domain
+  allDatabaseDomains.push({
+    _id: "custom_domain_student_a",
+    name: "Student A Personalized AI Robotics",
+    isPersonalized: true,
+    isPublic: false,
+    isActive: true,
+    createdBy: studentA,
+  });
+
+  function getDomainsCatalogForUser(userId) {
+    let filter;
+    if (userId) {
+      filter = (d) =>
+        d.isActive &&
+        ((!d.isPersonalized && d.isPublic !== false) ||
+         (d.isPersonalized && String(d.createdBy) === String(userId)));
+    } else {
+      filter = (d) => d.isActive && !d.isPersonalized && d.isPublic !== false;
+    }
+
+    return allDatabaseDomains.filter(filter);
+  }
+
+  // Public/guest sees strictly the 26 fixed official domains
+  const publicCatalog = getDomainsCatalogForUser(null);
+  assert.equal(publicCatalog.length, 26);
+  assert.ok(!publicCatalog.some(d => d.isPersonalized));
+
+  // Student B (another student) sees strictly the 26 fixed official domains
+  const studentBCatalog = getDomainsCatalogForUser(studentB);
+  assert.equal(studentBCatalog.length, 26);
+  assert.ok(!studentBCatalog.some(d => d.isPersonalized));
+  assert.ok(!studentBCatalog.some(d => d.name.includes("Student A")));
+
+  // Student A (creator) sees the 26 fixed domains PLUS their personalized domain (total 27)
+  const studentACatalog = getDomainsCatalogForUser(studentA);
+  assert.equal(studentACatalog.length, 27);
+  assert.ok(studentACatalog.some(d => d._id === "custom_domain_student_a"));
+});
+

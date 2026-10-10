@@ -151,17 +151,7 @@ router.post("/confirm", protect, async (req, res) => {
       console.error("[SPREADSHEET ERROR] Failed writing payment confirmation:", sheetErr);
     }
 
-    // Dispatch payment confirmation notifications
-    const studentTargetEmail = registeredEmail || req.user.email || application.student?.email;
-    const adminNotificationEmail = supportTargetEmail();
-    const payerResolvedName = payerName || payment.payerName || req.user.fullName || "Student";
-    const paymentStudentT = templates.paymentSuccess(payerResolvedName, feeAmount, application.applicationId || application._id);
-    const paymentAdminT = templates.newPaymentAdminNotification(payerResolvedName, studentTargetEmail, application.applicationId || application._id, feeAmount);
-
-    Promise.allSettled([
-      studentTargetEmail ? sendEmail({ to: studentTargetEmail, replyTo: "support.interndock@gmail.com", ...paymentStudentT }) : Promise.resolve(),
-      sendEmail({ to: adminNotificationEmail, replyTo: studentTargetEmail || "support.interndock@gmail.com", ...paymentAdminT }),
-    ]).catch(() => {});
+    // Payment-related emails to user and admin are explicitly disabled per policy
 
     // Instantly update application paymentStatus & unlock Active workspace
     application.paymentStatus = "Successful";

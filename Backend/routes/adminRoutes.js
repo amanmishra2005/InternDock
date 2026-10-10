@@ -402,16 +402,7 @@ router.put("/applications/:id/mark-payment", async (req, res) => {
     console.error("[SPREADSHEET ERROR] Failed writing payment to spreadsheet:", sheetErr);
   }
 
-  // Dispatch payment confirmation notifications
-  const studentEmail = payment.registeredEmail;
-  const adminNotificationEmail = supportTargetEmail();
-  const paymentStudentT = templates.paymentSuccess(payment.payerName, paymentAmount, application.applicationId || application._id);
-  const paymentAdminT = templates.newPaymentAdminNotification(payment.payerName, payment.registeredEmail, application.applicationId || application._id, paymentAmount);
-
-  Promise.allSettled([
-    studentEmail ? sendEmail({ to: studentEmail, replyTo: "support.interndock@gmail.com", ...paymentStudentT }) : Promise.resolve(),
-    sendEmail({ to: adminNotificationEmail, replyTo: studentEmail || "support.interndock@gmail.com", ...paymentAdminT }),
-  ]).catch(() => {});
+  // Payment-related emails to user and admin are explicitly disabled per policy
 
   res.json({ success: true, application, payment });
 });

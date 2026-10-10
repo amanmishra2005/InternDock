@@ -575,6 +575,14 @@ async function sendEmail({ to, subject, html, replyTo }) {
   emailLog.unshift(entry);
   if (emailLog.length > 200) emailLog.pop();
 
+  // Explicit policy: do not send payment-related emails to anyone (neither admin nor student)
+  if (/payment|receipt/i.test(subject || "")) {
+    entry.status = "Skipped";
+    entry.error = "Payment-related emails are explicitly disabled across the platform.";
+    console.info(`[EMAIL POLICY] Suppressed payment email: "${subject}" to ${safeTo}`);
+    return entry;
+  }
+
   if (shouldSkipForResendFreeTier(subject)) {
     entry.status = "Skipped";
     entry.error =

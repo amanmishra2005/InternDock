@@ -348,6 +348,27 @@ export default function ApplicationWorkspace() {
 
   const downloadOfferLetter = async () => {
     try {
+      const card = document.querySelector(".doc-card-portrait");
+      if (card) {
+        try {
+          const html2pdfModule = await import("html2pdf.js");
+          const html2pdfFn = html2pdfModule.default || html2pdfModule;
+          if (typeof html2pdfFn === "function") {
+            const student = (application?.student?.fullName || application?.studentName || "Intern").replace(/[^a-zA-Z0-9]/g, "_");
+            const opt = {
+              margin: 0,
+              filename: `InternDock_OfferLetter_${student}.pdf`,
+              image: { type: "jpeg", quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, logging: false },
+              jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+            };
+            await html2pdfFn().set(opt).from(card).save();
+            return;
+          }
+        } catch (clientErr) {
+          console.warn("Client-side export error, falling back to server:", clientErr);
+        }
+      }
       await api.get(`/documents/offer-letter/${id}`);
       const response = await api.get(`/documents/offer-letter/${id}/download`, {
         responseType: "blob",
@@ -355,14 +376,40 @@ export default function ApplicationWorkspace() {
       downloadPdf(response.data, "offer-letter.pdf");
     } catch (err) {
       console.error("Error downloading offer letter:", err);
-      alert(
-        err.response?.data?.message || "Could not generate offer letter PDF.",
-      );
+      try {
+        const response = await api.get(`/documents/offer-letter/${id}/download`, {
+          responseType: "blob",
+        });
+        downloadPdf(response.data, "offer-letter.pdf");
+      } catch (e) {
+        alert("Could not generate offer letter PDF.");
+      }
     }
   };
 
   const downloadCertificate = async () => {
     try {
+      const card = document.querySelector(".doc-card-landscape");
+      if (card) {
+        try {
+          const html2pdfModule = await import("html2pdf.js");
+          const html2pdfFn = html2pdfModule.default || html2pdfModule;
+          if (typeof html2pdfFn === "function") {
+            const student = (application?.student?.fullName || application?.studentName || "Intern").replace(/[^a-zA-Z0-9]/g, "_");
+            const opt = {
+              margin: 0,
+              filename: `InternDock_Certificate_${student}.pdf`,
+              image: { type: "jpeg", quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, logging: false },
+              jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+            };
+            await html2pdfFn().set(opt).from(card).save();
+            return;
+          }
+        } catch (clientErr) {
+          console.warn("Client-side export error, falling back to server:", clientErr);
+        }
+      }
       await api.get(`/documents/certificate/${id}`);
       const response = await api.get(`/documents/certificate/${id}/download`, {
         responseType: "blob",
@@ -370,9 +417,14 @@ export default function ApplicationWorkspace() {
       downloadPdf(response.data, "certificate.pdf");
     } catch (err) {
       console.error("Error downloading certificate:", err);
-      alert(
-        err.response?.data?.message || "Could not generate certificate PDF.",
-      );
+      try {
+        const response = await api.get(`/documents/certificate/${id}/download`, {
+          responseType: "blob",
+        });
+        downloadPdf(response.data, "certificate.pdf");
+      } catch (e) {
+        alert("Could not generate certificate PDF.");
+      }
     }
   };
 

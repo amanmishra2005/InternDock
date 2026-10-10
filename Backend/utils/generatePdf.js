@@ -91,13 +91,20 @@ function convertHtmlToPdfWithChrome(htmlContent, destPdfPath) {
   fs.writeFileSync(tempHtmlPath, htmlContent, "utf8");
 
   try {
-    execSync(
-      `"${chromePath}" --headless --disable-gpu --no-pdf-header-footer --print-background --run-all-compositor-stages-before-draw --print-to-pdf="${destPdfPath}" "${tempHtmlPath}"`,
-      { stdio: "pipe", timeout: 20000 }
-    );
-    return fs.existsSync(destPdfPath) && fs.statSync(destPdfPath).size > 1000;
-  } catch (err) {
-    console.error("Chrome headless render failed:", err.message);
+    const flags = ["--headless=new", "--headless"];
+    for (const flag of flags) {
+      try {
+        execSync(
+          `"${chromePath}" ${flag} --disable-gpu --no-pdf-header-footer --print-background --run-all-compositor-stages-before-draw --print-to-pdf="${destPdfPath}" "${tempHtmlPath}"`,
+          { stdio: "pipe", timeout: 20000 }
+        );
+        if (fs.existsSync(destPdfPath) && fs.statSync(destPdfPath).size > 1000) {
+          return true;
+        }
+      } catch (err) {
+        // Try next headless mode
+      }
+    }
     return false;
   } finally {
     try {

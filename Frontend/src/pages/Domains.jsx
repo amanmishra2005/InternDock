@@ -72,6 +72,14 @@ export default function Domains() {
   const handleCustomSubmit = async (e) => {
     e.preventDefault();
     if (!customForm.name) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please log in to personalize your custom internship domain track.");
+      navigate("/login?redirect=/domains");
+      return;
+    }
+
     setCustomSubmitting(true);
     try {
       const res = await api.post("/domains/request-custom", customForm);
@@ -82,7 +90,13 @@ export default function Domains() {
         navigate(`/domains/${res.data.domain.slug}`);
       }
     } catch (err) {
-      alert("Could not submit custom domain.");
+      if (err.response?.data?.isFixedDomain && err.response?.data?.domain?.slug) {
+        alert(err.response.data.message);
+        setShowCustomModal(false);
+        navigate(`/domains/${err.response.data.domain.slug}`);
+      } else {
+        alert(err.response?.data?.message || "Could not submit custom domain.");
+      }
     } finally {
       setCustomSubmitting(false);
     }

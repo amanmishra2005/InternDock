@@ -1,9 +1,16 @@
 const express = require("express");
 const router = express.Router();
+const jwt = require("jsonwebtoken");
 const Domain = require("../models/Domain");
+const User = require("../models/User");
+const Duration = require("../models/Duration");
+const Assignment = require("../models/Assignment");
+const { protect } = require("../middleware/auth");
 const { getCache, setCache, clearCache } = require("../utils/cache");
 
-// GET /api/domains (public, with in-memory caching to withstand heavy traffic)
+// GET /api/domains (final public catalog available to everyone, with in-memory caching)
+// NOTE: Only admin-managed public domains appear in this list.
+// Personalized domains created by students are private and NEVER added to the final public domain list.
 router.get("/", async (req, res) => {
   try {
     const { search, category } = req.query;
@@ -13,8 +20,12 @@ router.get("/", async (req, res) => {
     const cached = getCache(cacheKey);
     if (cached) return res.json(cached);
 
-    const filter = { isActive: true };
-    if (category) filter.category = category;
+    const filter = {
+      isActive: true,
+      isPersonalized: { $ne: true },
+      isPublic: { $ne: false },
+    };
+    if (category && category !== "All") filter.category = category;
     if (search) filter.name = { $regex: search, $options: "i" };
 
     // Use .lean() for fast execution & minimal memory consumption
@@ -27,15 +38,57 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /api/domains/mine/personalized (fetch student's own personalized domains)
+router.get("/mine/personalized", protect, async (req, res) => {
+  try {
+    const domains = await Domain.find({
+      isPersonalized: true,
+      createdBy: req.user._id,
+      isActive: true,
+    })
+      .populate("availableDurations")
+      .sort({ createdAt: -1 })
+      .lean();
+    return res.json(domains);
+  } catch (err) {
+    return res.status(500).json({ message: "Error fetching personalized domains" });
+  }
+});
+
 // GET /api/domains/:slug
 router.get("/:slug", async (req, res) => {
   try {
+    const domain = await Domain.findOne({ slug: req.params.slug, isActive: true }).populate("availableDurations").lean();
+    if (!domain) return res.status(404).json({ message: "Domain not found" });
+
+    // If personalized, only the creator student (or admin) can access it
+    if (domain.isPersonalized) {
+      let requestingUserId = null;
+      let isAdmin = false;
+      const header = req.headers.authorization || "";
+      const token = header.startsWith("Bearer ") ? header.split(" ")[1] : null;
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          requestingUserId = decoded.id;
+          const user = await User.findById(decoded.id).select("role").lean();
+          if (user?.role === "admin") isAdmin = true;
+        } catch (e) {}
+      }
+
+      if (!isAdmin && (!requestingUserId || String(domain.createdBy) !== String(requestingUserId))) {
+        return res.status(403).json({
+          message: "This personalized domain is private and only available for the student who requested it.",
+        });
+      }
+
+      // Do not store private personalized domains in public cache
+      return res.json(domain);
+    }
+
     const cacheKey = `domain_slug_${req.params.slug}`;
     const cached = getCache(cacheKey);
     if (cached) return res.json(cached);
-
-    const domain = await Domain.findOne({ slug: req.params.slug, isActive: true }).populate("availableDurations").lean();
-    if (!domain) return res.status(404).json({ message: "Domain not found" });
 
     setCache(cacheKey, domain, 600);
     return res.json(domain);
@@ -45,46 +98,75 @@ router.get("/:slug", async (req, res) => {
 });
 
 // POST /api/domains/request-custom
-router.post("/request-custom", async (req, res) => {
+// Personalized domain is strictly for the requesting student to apply,
+// NEVER added to the final public domain list, and CANNOT tamper with fixed domain names.
+router.post("/request-custom", protect, async (req, res) => {
   try {
-    const { name, category, description, skills } = req.body;
+    const name = (req.body.name || "").trim();
+    const { category, description, skills } = req.body;
     if (!name) return res.status(400).json({ message: "Domain name is required" });
 
-    const Duration = require("../models/Duration");
-    const Assignment = require("../models/Assignment");
+    const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    let domain = await Domain.findOne({ slug });
+    // Guard: Prevent tampering with fixed/official platform domains
+    const fixedConflict = await Domain.findOne({
+      $or: [
+        { slug: cleanSlug },
+        { name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } },
+      ],
+      isPersonalized: { $ne: true },
+    });
+
+    if (fixedConflict) {
+      return res.status(400).json({
+        message: `"${fixedConflict.name}" is already a fixed official domain. Fixed domain names cannot be modified. You can apply directly to "${fixedConflict.name}".`,
+        isFixedDomain: true,
+        domain: fixedConflict,
+      });
+    }
+
+    // Personalized slug is namespaced to the student so it never collides or tampers with public domains
+    const studentSuffix = req.user._id.toString().slice(-6);
+    const personalizedSlug = `${cleanSlug}-${studentSuffix}`;
+
+    let domain = await Domain.findOne({ slug: personalizedSlug, createdBy: req.user._id });
 
     if (!domain) {
       const durations = await Duration.find({});
       domain = await Domain.create({
         name,
-        slug,
+        slug: personalizedSlug,
         category: category || "Custom Track",
-        description: description || `Custom internship track in ${name}.`,
-        skills: Array.isArray(skills) ? skills : (skills ? skills.split(",").map(s => s.trim()) : ["Practical Project Work"]),
-        availableDurations: durations.map(d => d._id),
+        description: description || `Custom personalized internship track in ${name}.`,
+        skills: Array.isArray(skills) ? skills : (skills ? skills.split(",").map((s) => s.trim()) : ["Practical Project Work"]),
+        availableDurations: durations.map((d) => d._id),
         isActive: true,
+        isPersonalized: true,
+        isPublic: false,
+        createdBy: req.user._id,
       });
 
-      // Seed 4 assignments
+      // Seed 4 weekly assignments for the personalized domain
       const assignments = [
-        { week: 1, title: "Week 1: Setup & Roadmap", description: `Initialize ${name} environment and task plan.`, instructions: "Submit GitHub repo link.", submissionType: "github" },
-        { week: 2, title: "Week 2: Core Foundations", description: `Implement foundational components for ${name}.`, instructions: "Submit GitHub repo link.", submissionType: "github" },
-        { week: 3, title: "Week 3: Applied Mini-Project", description: `Build working module for ${name}.`, instructions: "Submit GitHub repo link.", submissionType: "github" },
-        { week: 4, title: "Week 4: Capstone & Final Report", description: `Complete capstone project for ${name}.`, instructions: "Submit GitHub repo link and final report.", submissionType: "github" },
-      ].map(a => ({ ...a, domain: domain._id }));
+        { week: 1, title: `Week 1: Setup & Roadmap for ${name}`, description: `Initialize ${name} environment and task plan.`, instructions: "Submit GitHub repo link.", submissionType: "github" },
+        { week: 2, title: `Week 2: Core Foundations in ${name}`, description: `Implement foundational components for ${name}.`, instructions: "Submit GitHub repo link.", submissionType: "github" },
+        { week: 3, title: `Week 3: Applied Mini-Project for ${name}`, description: `Build working module for ${name}.`, instructions: "Submit GitHub repo link.", submissionType: "github" },
+        { week: 4, title: `Week 4: Capstone & Final Report`, description: `Complete capstone project for ${name}.`, instructions: "Submit GitHub repo link and final report.", submissionType: "github" },
+      ].map((a) => ({ ...a, domain: domain._id }));
 
       await Assignment.insertMany(assignments);
-      clearCache(); // Invalidate cache on new domain creation
+      // Public domain cache is NOT cleared because personalized domains are not in the public catalog
     }
 
-    return res.status(201).json({ message: "Custom domain created successfully!", domain });
+    return res.status(201).json({
+      message: "Personalized domain created successfully! You can now proceed to apply.",
+      domain,
+    });
   } catch (err) {
-    console.error("Custom domain creation error:", err);
-    return res.status(500).json({ message: "Failed to create custom domain" });
+    console.error("Personalized domain creation error:", err);
+    return res.status(500).json({ message: "Failed to create personalized domain" });
   }
 });
 
 module.exports = router;
+

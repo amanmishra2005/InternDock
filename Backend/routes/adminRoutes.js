@@ -69,7 +69,7 @@ router.get("/stats", async (req, res) => {
 
 // ---- Domain CRUD ----
 router.get("/domains", async (req, res) => {
-  const domains = await Domain.find().populate("availableDurations").sort({ createdAt: -1 });
+  const domains = await Domain.find().populate("availableDurations").populate("createdBy", "fullName email").sort({ createdAt: -1 });
   res.json(domains);
 });
 
@@ -80,6 +80,8 @@ router.post("/domains", async (req, res) => {
       ...req.body,
       availableDurations: req.body.availableDurations?.length ? req.body.availableDurations : durationDocs.map((d) => d._id),
       isActive: req.body.isActive !== undefined ? req.body.isActive : true,
+      isPersonalized: false,
+      isPublic: true,
     };
     const domain = await Domain.create(domainData);
 

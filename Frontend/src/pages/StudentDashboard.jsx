@@ -137,7 +137,13 @@ export default function StudentDashboard() {
         navigate(`/domains/${res.data.domain.slug}`);
       }
     } catch (err) {
-      alert("Could not submit custom domain.");
+      if (err.response?.data?.isFixedDomain && err.response?.data?.domain?.slug) {
+        alert(err.response.data.message);
+        setShowCustomModal(false);
+        navigate(`/domains/${err.response.data.domain.slug}`);
+      } else {
+        alert(err.response?.data?.message || "Could not submit custom domain.");
+      }
     } finally {
       setCustomSubmitting(false);
     }

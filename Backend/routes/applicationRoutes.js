@@ -77,6 +77,15 @@ router.post("/", protect, async (req, res) => {
     if (!domain || !domain.isActive) return res.status(404).json({ message: "Domain not found" });
     if (!duration || !duration.isActive) return res.status(404).json({ message: "Duration not found" });
 
+    // Guard: Personalized domain can only be applied to by the student who requested it (or admin)
+    if (domain.isPersonalized) {
+      if (req.user.role !== "admin" && String(domain.createdBy) !== String(req.user._id)) {
+        return res.status(403).json({
+          message: "This personalized domain is private and only available for the student who requested it to apply.",
+        });
+      }
+    }
+
     const parsedStartDate = new Date(startDate);
     const parsedEndDate = new Date(endDate);
     if (!startDate || !endDate || Number.isNaN(parsedStartDate.getTime()) || Number.isNaN(parsedEndDate.getTime()) || parsedEndDate <= parsedStartDate) {

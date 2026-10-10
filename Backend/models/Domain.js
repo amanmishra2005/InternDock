@@ -11,6 +11,9 @@ const domainSchema = new mongoose.Schema(
     prerequisites: [String],
     availableDurations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Duration" }],
     isActive: { type: Boolean, default: true },
+    isPersonalized: { type: Boolean, default: false },
+    isPublic: { type: Boolean, default: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true }
 );

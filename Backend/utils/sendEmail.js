@@ -96,6 +96,8 @@ function shouldSkipForResendFreeTier(subject = "") {
     "assignment",
     "weekly task",
     "task submitted",
+    "selected",
+    "thank you for trusting",
   ];
 
   return !criticalTokens.some((token) => normalized.includes(token));
@@ -587,6 +589,31 @@ async function sendEmail({ to, subject, html, replyTo }) {
     return entry;
   }
 
+  // Admin policy: Admin ONLY receives contacts query, internship applied, final capstone submission. Not more than this.
+  const isAdminTarget = recipients.some((r) =>
+    String(r).toLowerCase().includes("support.interndock@gmail.com")
+  );
+  if (isAdminTarget) {
+    const norm = String(subject || "").toLowerCase();
+    const isAllowedAdminMail =
+      norm.includes("new website inquiry") ||
+      norm.includes("contact") ||
+      norm.includes("new student application") ||
+      norm.includes("final capstone submission") ||
+      norm.includes("diagnostic test") ||
+      norm.includes("test");
+
+    if (!isAllowedAdminMail) {
+      entry.status = "Skipped";
+      entry.error =
+        "Suppressed: Admin only receives contact inquiries, internship applications, and final capstone submissions.";
+      console.info(
+        `[ADMIN EMAIL POLICY] Suppressed non-whitelisted admin email: "${subject}" to ${safeTo}`
+      );
+      return entry;
+    }
+  }
+
   if (shouldSkipForResendFreeTier(subject)) {
     entry.status = "Skipped";
     entry.error =
@@ -1009,9 +1036,82 @@ const templates = {
       </div>
     `,
   }),
-  selected: (name, domainName) => ({
-    subject: "Congratulations! You have been selected",
-    html: `<p>Hi ${escapeHtml(name)},</p><p>You have been selected for the <b>${escapeHtml(domainName)}</b> internship program. Your offer letter is now available on your dashboard.</p>`,
+  selected: (name, domainName, applicationId, offerRef, durationLabel) => {
+    const domain = domainName || "Internship Track";
+    const appId = applicationId || "";
+    const ref = offerRef || "";
+    const duration = durationLabel || "Standard Track";
+
+    return {
+      subject: `🎉 Congratulations! Selected & Offer Letter Issued: ${escapeHtml(domain)} - InternDock`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; color: #000000;">
+          <h2 style="color: #000000; margin-top: 0;">🎉 Congratulations! You Have Been Selected</h2>
+          <p style="color: #000000; font-size: 15px;">Dear ${escapeHtml(name)},</p>
+          <p style="color: #000000; font-size: 15px; line-height: 1.6;">We are pleased to inform you that you have been selected for the <strong>${escapeHtml(domain)}</strong> internship program on <strong>InternDock</strong>. Your official <strong>Internship Offer Letter &amp; Appointment Letter</strong> has been issued and is now ready in your workspace.</p>
+          
+          <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #0284c7; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #000000;">
+            ${appId ? `<p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(appId)}</p>` : ""}
+            ${ref ? `<p style="margin: 4px 0;"><strong>Offer Letter Reference:</strong> ${escapeHtml(ref)}</p>` : ""}
+            <p style="margin: 4px 0;"><strong>Domain Track:</strong> ${escapeHtml(domain)}</p>
+            <p style="margin: 4px 0;"><strong>Track Duration:</strong> ${escapeHtml(duration)}</p>
+            <p style="margin: 4px 0;"><strong>Status:</strong> Selected &amp; Offer Letter Issued</p>
+          </div>
+
+          <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 16px; margin: 20px 0;">
+            <p style="margin: 0; color: #065f46; font-size: 14.5px; line-height: 1.6;">
+              <strong>Thank you for placing your trust in InternDock!</strong> We are honored to accompany you on your technical career journey and look forward to empowering you with real-world engineering experience.
+            </p>
+          </div>
+
+          <h3 style="color: #000000; font-size: 16px; margin-bottom: 8px;">Next Steps:</h3>
+          <ul style="color: #000000; font-size: 14px; line-height: 1.6; padding-left: 20px; margin-top: 0;">
+            <li>Log in to your <a href="https://www.interndock.in/dashboard" style="color: #0284c7; font-weight: bold; text-decoration: none;">InternDock Student Dashboard</a>.</li>
+            <li>Review and download your official Offer Letter document.</li>
+            <li>Unlock your workspace to access weekly guided milestone assignments and project resources.</li>
+          </ul>
+
+          <p style="margin-top: 24px;">
+            <a href="https://www.interndock.in/dashboard" style="display: inline-block; background: #0284c7; color: #ffffff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">View Offer Letter on Dashboard</a>
+          </p>
+
+          <p style="color: #334155; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+            Best regards,<br />
+            <strong>InternDock Admissions &amp; Academic Cohort Team</strong><br />
+            <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none;">www.interndock.in</a>
+          </p>
+        </div>
+      `,
+    };
+  },
+  thankYouForTrusting: (name, domainName) => ({
+    subject: "Thank You for Trusting InternDock - Welcome to Your Tech Journey!",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; color: #000000;">
+        <h2 style="color: #000000; margin-top: 0;">💙 Thank You for Trusting InternDock</h2>
+        <p style="color: #000000; font-size: 15px;">Dear ${escapeHtml(name)},</p>
+        <p style="color: #000000; font-size: 15px; line-height: 1.6;">On behalf of the entire <strong>InternDock</strong> team, we would like to extend our heartfelt gratitude for trusting us with your technical training and career development${domainName ? ` in <strong>${escapeHtml(domainName)}</strong>` : ""}.</p>
+        
+        <p style="color: #000000; font-size: 14.5px; line-height: 1.6;">Our mission is to bridge academic learning with real-world engineering standards. We are fully committed to providing you with industry-grade project mentorship, practical portfolio building, and verifiable credentials that empower your future career.</p>
+
+        <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #10b981; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #000000;">
+          <p style="margin: 0; font-size: 14px; line-height: 1.6;">
+            <strong>Our Commitment to You:</strong><br />
+            • Hands-on milestone-based assignments.<br />
+            • Thorough evaluation and mentor review on your deliverables.<br />
+            • Secure, cryptographically verifiable credentials for recruiter verification.
+          </p>
+        </div>
+
+        <p style="color: #000000; font-size: 14px; line-height: 1.6;">Whenever you need support or guidance, our dedicated team is always here for you at <a href="mailto:support.interndock@gmail.com" style="color: #0284c7; font-weight: bold;">InternDock</a>.</p>
+
+        <p style="color: #334155; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          With warm regards &amp; best wishes,<br />
+          <strong>Founder &amp; Academic Board, InternDock</strong><br />
+          <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none;">www.interndock.in</a>
+        </p>
+      </div>
+    `,
   }),
   rejected: (name, domainName) => ({
     subject: "Update on your application",
@@ -1220,7 +1320,11 @@ const templates = {
             <a href="https://www.interndock.in/dashboard" style="display: inline-block; background: #0284c7; color: #ffffff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">View &amp; Download Certificate</a>
           </p>
 
-          <p style="color: #334155; font-size: 14px; margin-top: 24px;">Thank you for your outstanding performance and dedication throughout the internship. We wish you immense success in your tech career!</p>
+          <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 14px; margin: 20px 0;">
+            <p style="margin: 0; color: #065f46; font-size: 14.5px; line-height: 1.6;">
+              <strong>Thank you for placing your trust in InternDock throughout your internship journey!</strong> We take immense pride in your achievements and wish you tremendous success in your engineering career.
+            </p>
+          </div>
           <p style="color: #64748b; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
             Best regards,<br />
             <strong>InternDock Certification &amp; Academic Board</strong><br />

@@ -95,26 +95,25 @@ test("certificate issuance templates produce valid emails for student and admin"
   assert.ok(adminEmail.html.includes("support.interndock@gmail.com"));
 });
 
-test("milestone task templates produce valid emails for both student and admin", () => {
-  const studentEmail = templates.assignmentStudentConfirmation(
+test("selected offer letter template includes offer letter issuance and gratitude", () => {
+  const email = templates.selected(
     "Eva Test",
+    "Artificial Intelligence",
     "IND-2026-4444",
-    "Week 1: Foundations",
-    "https://github.com/eva/foundations"
+    "OFFER-2026-0012",
+    "4 Weeks Track"
   );
-  assert.ok(studentEmail.subject.includes("Milestone Task Submitted"));
-  assert.ok(studentEmail.subject.includes("Week 1: Foundations"));
-  assert.ok(studentEmail.html.includes("Eva Test"));
-  assert.ok(studentEmail.html.includes("https://github.com/eva/foundations"));
+  assert.ok(email.subject.includes("Selected & Offer Letter Issued"));
+  assert.ok(email.subject.includes("Artificial Intelligence"));
+  assert.ok(email.html.includes("Eva Test"));
+  assert.ok(email.html.includes("OFFER-2026-0012"));
+  assert.ok(email.html.includes("Thank you for placing your trust in InternDock"));
+});
 
-  const adminEmail = templates.assignmentSubmitted(
-    "Eva Test",
-    "eva@example.com",
-    "IND-2026-4444",
-    "Week 1: Foundations",
-    "https://github.com/eva/foundations"
-  );
-  assert.ok(adminEmail.subject.includes("[Milestone Submission]"));
-  assert.ok(adminEmail.html.includes("https://github.com/eva/foundations"));
-  assert.ok(adminEmail.html.includes("support.interndock@gmail.com"));
+test("thankYouForTrusting template expresses sincere gratitude from founder and board", () => {
+  const email = templates.thankYouForTrusting("Frank Test", "Web Development");
+  assert.ok(email.subject.includes("Thank You for Trusting InternDock"));
+  assert.ok(email.html.includes("Frank Test"));
+  assert.ok(email.html.includes("Web Development"));
+  assert.ok(email.html.includes("gratitude for trusting us"));
 });

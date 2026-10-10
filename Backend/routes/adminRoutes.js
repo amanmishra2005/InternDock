@@ -325,22 +325,13 @@ router.put("/applications/:id/status", async (req, res) => {
         cert.certificateId,
         verificationId
       );
-      const adminT = templates.newCertificateAdminNotification(
-        details.studentName,
-        details.studentEmail || studentUser?.email || application.student?.email,
-        application.applicationId || application._id,
-        details.domainName,
-        cert.certificateId,
-        verificationId
-      );
 
       const targetEmail = details.studentEmail || studentUser?.email || application.student?.email;
-      const adminTarget = supportTargetEmail();
 
-      await Promise.allSettled([
-        targetEmail ? sendEmail({ to: targetEmail, replyTo: "support.interndock@gmail.com", ...studentT }) : Promise.resolve(),
-        sendEmail({ to: adminTarget, replyTo: targetEmail || "support.interndock@gmail.com", ...adminT }),
-      ]);
+      // Admin does NOT receive certificate emails per policy (admin only receives contacts, applications, final capstone)
+      if (targetEmail) {
+        await sendEmail({ to: targetEmail, replyTo: "support.interndock@gmail.com", ...studentT }).catch(() => {});
+      }
     } catch (certErr) {
       console.error("Auto certificate error on Completed status:", certErr);
     }
@@ -559,7 +550,13 @@ async function issueOfferLetterForApplication(applicationId) {
   // Send email notification to student
   const studentEmail = details.studentEmail || studentUser?.email || application.student?.email;
   if (studentEmail) {
-    const t = templates.selected(details.studentName, details.domainName);
+    const t = templates.selected(
+      details.studentName,
+      details.domainName,
+      application.applicationId || application._id,
+      offer.referenceId,
+      details.durationLabel
+    );
     sendEmail({ to: studentEmail, replyTo: "support.interndock@gmail.com", ...t }).catch((err) => {
       console.warn("[OFFER EMAIL WARNING] Could not send student selection email:", err.message);
     });
@@ -724,25 +721,16 @@ router.post("/applications/:id/issue-certificate", async (req, res) => {
     cert.certificateId,
     verificationId
   );
-  const adminT = templates.newCertificateAdminNotification(
-    details.studentName,
-    details.studentEmail || studentUser?.email || application.student?.email,
-    application.applicationId || application._id,
-    details.domainName,
-    cert.certificateId,
-    verificationId
-  );
 
   const targetEmail = details.studentEmail || studentUser?.email || application.student?.email;
-  const adminTarget = supportTargetEmail();
 
-  const [studentRes, adminRes] = await Promise.allSettled([
-    targetEmail ? sendEmail({ to: targetEmail, replyTo: "support.interndock@gmail.com", ...studentT }) : Promise.resolve(),
-    sendEmail({ to: adminTarget, replyTo: targetEmail || "support.interndock@gmail.com", ...adminT }),
-  ]);
+  // Admin does NOT receive certificate emails per policy (admin only receives contacts, applications, final capstone)
+  const studentRes = targetEmail
+    ? await sendEmail({ to: targetEmail, replyTo: "support.interndock@gmail.com", ...studentT })
+    : null;
 
   console.log(
-    `[CERTIFICATE DISPATCH] Student (${targetEmail}): ${studentRes.status === "fulfilled" ? studentRes.value?.status : studentRes.reason?.message} | Support (${adminTarget}): ${adminRes.status === "fulfilled" ? adminRes.value?.status : adminRes.reason?.message}`
+    `[CERTIFICATE DISPATCH] Student (${targetEmail}): ${studentRes?.status || "Skipped"}`
   );
 
   res.json({ success: true, message: "Certificate issued successfully!", application, certificate: cert });

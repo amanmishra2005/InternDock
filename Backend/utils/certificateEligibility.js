@@ -142,12 +142,15 @@ async function checkApplicationTaskStatus(application) {
 
     taskList.push({
       taskId: assign._id ? String(assign._id) : `milestone-${i + 1}`,
+      submissionId: sub?._id ? String(sub._id) : null,
       title: assign.title || `Milestone ${i + 1}`,
       week: assign.week || i + 1,
       status,
       isCompleted,
       reason,
       githubUrl: sub?.githubUrl || null,
+      liveUrl: sub?.liveUrl || null,
+      feedback: sub?.feedback || null,
     });
   }
 
@@ -188,10 +191,13 @@ async function checkApplicationTaskStatus(application) {
 
   taskList.push({
     taskId: "final-capstone-report",
+    finalReportId: finalReport?._id ? String(finalReport._id) : null,
     title: "Final Capstone Project Report",
     status: finalReportStatus,
     isCompleted: finalReportCompleted,
     reason: finalReportReason,
+    githubUrl: finalReport?.githubUrl || application?.finalReportUrl || null,
+    liveUrl: finalReport?.liveUrl || null,
   });
 
   const totalRequired = taskList.length;
@@ -199,9 +205,14 @@ async function checkApplicationTaskStatus(application) {
   const incompleteTasks = taskList
     .filter((t) => !t.isCompleted)
     .map((t) => ({
+      taskId: t.taskId,
+      submissionId: t.submissionId || null,
+      finalReportId: t.finalReportId || null,
       title: t.title,
       status: t.status,
       reason: t.reason,
+      githubUrl: t.githubUrl || null,
+      liveUrl: t.liveUrl || null,
     }));
   const incomplete = incompleteTasks.length;
   const allCompleted = incomplete === 0;

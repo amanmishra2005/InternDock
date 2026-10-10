@@ -455,6 +455,25 @@ router.put("/final-reports/:id/status", async (req, res) => {
   return res.json({ success: true, report });
 });
 
+// Update final report status by application ID
+router.put("/applications/:id/final-report-status", async (req, res) => {
+  const { status } = req.body;
+  const update = {};
+  if (status) update.status = status;
+  let report = await FinalReport.findOneAndUpdate({ application: req.params.id }, update, { new: true });
+  if (!report) {
+    const application = await Application.findById(req.params.id);
+    if (!application) return res.status(404).json({ message: "Application not found." });
+    report = await FinalReport.create({
+      application: application._id,
+      student: application.student,
+      title: "Capstone Final Project",
+      status: status || "Approved",
+    });
+  }
+  return res.json({ success: true, report });
+});
+
 // Issue and persist offer letter across MongoDB, Google Sheets, and local ledger
 async function issueOfferLetterForApplication(applicationId) {
   const application = await Application.findById(applicationId)

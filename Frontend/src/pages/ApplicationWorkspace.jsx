@@ -92,9 +92,38 @@ function AssignmentCardItem({ assignment, submission, onSubmit }) {
             : `Milestone ${assignment.week}`}
         </span>
         {submission ? (
-          <span className="badge-pill badge-pill-emerald flex items-center gap-1">
-            <CheckCircle2 size={13} />
-            <span>Solution Submitted</span>
+          <span
+            className={`badge-pill flex items-center gap-1 ${
+              submission.status === "Approved"
+                ? "badge-pill-emerald"
+                : submission.status === "Needs Revision"
+                ? "badge-pill-amber"
+                : submission.status === "Rejected"
+                ? "badge-pill-rose"
+                : "badge-pill-cyan"
+            }`}
+          >
+            {submission.status === "Approved" ? (
+              <>
+                <CheckCircle2 size={13} />
+                <span>Solution Approved</span>
+              </>
+            ) : submission.status === "Needs Revision" ? (
+              <>
+                <AlertCircle size={13} />
+                <span>Needs Revision</span>
+              </>
+            ) : submission.status === "Rejected" ? (
+              <>
+                <X size={13} />
+                <span>Submission Rejected</span>
+              </>
+            ) : (
+              <>
+                <Clock size={13} />
+                <span>Under Review</span>
+              </>
+            )}
           </span>
         ) : (
           <span className="badge-pill badge-pill-amber flex items-center gap-1">

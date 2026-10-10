@@ -12,6 +12,8 @@ import {
   X,
   AlertCircle,
   Loader2,
+  ExternalLink,
+  ListChecks,
 } from "lucide-react";
 import api from "../api/axios";
 
@@ -22,6 +24,12 @@ export default function AdminApplications() {
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+
+  // Task Review & Expanded States
+  const [tasksByApp, setTasksByApp] = useState({});
+  const [expandedTasksId, setExpandedTasksId] = useState(null);
+  const [loadingTasksId, setLoadingTasksId] = useState(null);
+  const [reviewingTaskId, setReviewingTaskId] = useState(null);
 
   // Tracks which application is actively in-flight for certificate issuance
   const [issuingId, setIssuingId] = useState(null);
@@ -62,6 +70,69 @@ export default function AdminApplications() {
       load();
     } catch (err) {
       alert(err.response?.data?.message || "Could not approve payment");
+    }
+  };
+
+  // Toggle tasks panel and load task completion & submission records
+  const toggleTasks = async (appId) => {
+    if (expandedTasksId === appId) {
+      setExpandedTasksId(null);
+      return;
+    }
+    setExpandedTasksId(appId);
+    if (!tasksByApp[appId]) {
+      setLoadingTasksId(appId);
+      try {
+        const { data } = await api.get(`/admin/applications/${appId}/task-status`);
+        setTasksByApp((prev) => ({ ...prev, [appId]: data }));
+      } catch (err) {
+        console.error("Failed to load task status:", err);
+      } finally {
+        setLoadingTasksId(null);
+      }
+    }
+  };
+
+  // Review a student submission (Approve, Needs Revision, Reject)
+  const reviewTaskSubmission = async (task, newStatus, targetAppId) => {
+    setReviewingTaskId(task.taskId || task.submissionId);
+    try {
+      if (task.submissionId) {
+        await api.put(`/admin/submissions/${task.submissionId}/status`, {
+          status: newStatus,
+        });
+      } else if (task.finalReportId || task.taskId === "final-capstone-report") {
+        await api.put(`/admin/applications/${targetAppId}/final-report-status`, {
+          status: newStatus,
+        });
+      } else {
+        alert("No submission record found to review for this task.");
+        return;
+      }
+
+      // Re-fetch task status to update the UI
+      const { data } = await api.get(`/admin/applications/${targetAppId}/task-status`);
+
+      // Update tasks panel in expanded table row
+      setTasksByApp((prev) => ({
+        ...prev,
+        [targetAppId]: data,
+      }));
+
+      // Update warning modal if open for this application
+      setWarningModal((prev) => {
+        if (prev.open && prev.application?._id === targetAppId) {
+          return {
+            ...prev,
+            taskSummary: data,
+          };
+        }
+        return prev;
+      });
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not update task status");
+    } finally {
+      setReviewingTaskId(null);
     }
   };
 
@@ -253,17 +324,29 @@ export default function AdminApplications() {
                       </div>
                     </td>
                     <td>
-                      <select
-                        className="select-field select-sm"
-                        value={app.status}
-                        onChange={(e) => changeStatus(app._id, e.target.value)}
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="review-action-cell">
+                        <select
+                          className="select-field select-sm"
+                          value={app.status}
+                          onChange={(e) => changeStatus(app._id, e.target.value)}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="btn-view-tasks"
+                          onClick={() => toggleTasks(app._id)}
+                          title="Inspect and review candidate assignment submissions"
+                        >
+                          <ListChecks size={12} />
+                          <span>{expandedTasksId === app._id ? "Hide Tasks" : "Review Tasks"}</span>
+                          {expandedTasksId === app._id ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                        </button>
+                      </div>
                     </td>
                     <td>
                       {app.offerLetterIssued ? (
@@ -315,6 +398,96 @@ export default function AdminApplications() {
                       </td>
                     </tr>
                   )}
+                  {expandedTasksId === app._id && (
+                    <tr className="tasks-review-row">
+                      <td colSpan={8}>
+                        {loadingTasksId === app._id ? (
+                          <div className="tasks-loading-panel">
+                            <Loader2 size={16} className="spinner-icon-sm" />
+                            <span>Loading milestone tasks and submissions...</span>
+                          </div>
+                        ) : tasksByApp[app._id] ? (
+                          <div className="tasks-review-panel">
+                            <div className="tasks-panel-header">
+                              <div className="flex items-center gap-2">
+                                <ListChecks size={16} className="text-indigo-600" />
+                                <strong>Candidate Internship Tasks &amp; Milestones</strong>
+                              </div>
+                              <div className="tasks-progress-badge">
+                                <span>Completed &amp; Approved: </span>
+                                <strong>
+                                  {tasksByApp[app._id].completed} / {tasksByApp[app._id].totalRequired}
+                                </strong>
+                              </div>
+                            </div>
+                            <div className="tasks-review-list">
+                              {tasksByApp[app._id].taskList?.map((t, idx) => (
+                                <div key={idx} className="task-review-card">
+                                  <div className="task-review-main">
+                                    <div className="task-title-row">
+                                      <span className="task-name-text">{t.title}</span>
+                                      {t.githubUrl && (
+                                        <a
+                                          href={t.githubUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="task-github-link"
+                                        >
+                                          <ExternalLink size={12} />
+                                          <span>View Code</span>
+                                        </a>
+                                      )}
+                                    </div>
+                                    <span className="task-reason-sub">{t.reason}</span>
+                                  </div>
+                                  <div className="task-review-right">
+                                    <span className={`task-status-tag status-${t.status?.toLowerCase().replace(/\s+/g, '-')}`}>
+                                      {t.status}
+                                    </span>
+                                    {(t.submissionId || t.finalReportId || t.githubUrl || t.status === "Pending Review" || t.status === "Under Review" || t.status === "Needs Revision") && (
+                                      <div className="task-quick-review-btns">
+                                        <button
+                                          type="button"
+                                          className="btn-review-mini btn-approve"
+                                          disabled={reviewingTaskId === (t.taskId || t.submissionId)}
+                                          onClick={() => reviewTaskSubmission(t, "Approved", app._id)}
+                                          title="Approve Submission"
+                                        >
+                                          ✓ Approve
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="btn-review-mini btn-revision"
+                                          disabled={reviewingTaskId === (t.taskId || t.submissionId)}
+                                          onClick={() => reviewTaskSubmission(t, "Needs Revision", app._id)}
+                                          title="Request Revision"
+                                        >
+                                          ⚠ Revision
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="btn-review-mini btn-reject"
+                                          disabled={reviewingTaskId === (t.taskId || t.submissionId)}
+                                          onClick={() => reviewTaskSubmission(t, "Rejected", app._id)}
+                                          title="Reject Submission"
+                                        >
+                                          ✕ Reject
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="tasks-loading-panel">
+                            <span>Unable to load tasks for this application.</span>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
                   </React.Fragment>
                 ))}
               </tbody>
@@ -353,12 +526,22 @@ export default function AdminApplications() {
             </div>
 
             <div className="warning-modal-body">
-              <div className="warning-notice-banner">
-                <AlertCircle size={18} className="notice-icon" />
-                <p>
-                  This student has not completed all required internship tasks and submissions. Please review the pending or incomplete items below before making a decision.
-                </p>
-              </div>
+              {warningModal.taskSummary?.allCompleted ? (
+                <div className="all-completed-banner">
+                  <CheckCircle2 size={20} className="text-emerald-600 flex-shrink-0" />
+                  <div>
+                    <strong>All Tasks Approved &amp; Completed!</strong>
+                    <p>All requirements are satisfied. You can now issue the certificate.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="warning-notice-banner">
+                  <AlertCircle size={18} className="notice-icon" />
+                  <p>
+                    This student has not completed all required internship tasks and submissions. You can review and approve submitted solutions below, or cancel.
+                  </p>
+                </div>
+              )}
 
               {/* Task Stat Counters */}
               <div className="task-stats-row">
@@ -376,7 +559,7 @@ export default function AdminApplications() {
                 </div>
               </div>
 
-              {/* Incomplete Tasks Breakdown */}
+              {/* Incomplete Tasks Breakdown & Direct Review Controls */}
               <div className="incomplete-tasks-section">
                 <h3 className="incomplete-tasks-heading">Remaining / Pending Tasks:</h3>
                 {warningModal.taskSummary?.incompleteTasks && warningModal.taskSummary.incompleteTasks.length > 0 ? (
@@ -384,17 +567,63 @@ export default function AdminApplications() {
                     {warningModal.taskSummary.incompleteTasks.map((t, idx) => (
                       <div key={idx} className="incomplete-task-item">
                         <div className="incomplete-task-info">
-                          <span className="task-name">{t.title}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="task-name">{t.title}</span>
+                            {t.githubUrl && (
+                              <a
+                                href={t.githubUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="task-github-link"
+                              >
+                                <ExternalLink size={12} />
+                                <span>View Code</span>
+                              </a>
+                            )}
+                          </div>
                           <span className="task-reason-text">{t.reason}</span>
                         </div>
-                        <span className={`task-status-tag status-${t.status?.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {t.status}
-                        </span>
+                        <div className="task-actions-col">
+                          <span className={`task-status-tag status-${t.status?.toLowerCase().replace(/\s+/g, '-')}`}>
+                            {t.status}
+                          </span>
+                          {(t.submissionId || t.finalReportId || t.githubUrl || t.status === "Pending Review" || t.status === "Under Review" || t.status === "Needs Revision") && (
+                            <div className="task-quick-review-btns">
+                              <button
+                                type="button"
+                                className="btn-review-mini btn-approve"
+                                disabled={reviewingTaskId === (t.taskId || t.submissionId)}
+                                onClick={() => reviewTaskSubmission(t, "Approved", warningModal.application._id)}
+                                title="Approve Submission"
+                              >
+                                ✓ Approve
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-review-mini btn-revision"
+                                disabled={reviewingTaskId === (t.taskId || t.submissionId)}
+                                onClick={() => reviewTaskSubmission(t, "Needs Revision", warningModal.application._id)}
+                                title="Request Revision"
+                              >
+                                ⚠ Revision
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-review-mini btn-reject"
+                                disabled={reviewingTaskId === (t.taskId || t.submissionId)}
+                                onClick={() => reviewTaskSubmission(t, "Rejected", warningModal.application._id)}
+                                title="Reject Submission"
+                              >
+                                ✕ Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="no-tasks-text">No specific pending tasks listed.</p>
+                  <p className="no-tasks-text">All tasks completed and approved!</p>
                 )}
               </div>
             </div>
@@ -406,23 +635,38 @@ export default function AdminApplications() {
                 onClick={closeWarningModal}
                 disabled={Boolean(issuingId)}
               >
-                Cancel
+                {warningModal.taskSummary?.allCompleted ? "Close" : "Cancel"}
               </button>
-              <button
-                type="button"
-                className="btn btn-warning-confirm"
-                onClick={confirmIssueAnyway}
-                disabled={Boolean(issuingId)}
-              >
-                {issuingId === warningModal.application._id ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 size={16} className="spinner-icon-sm" />
-                    <span>Issuing Certificate...</span>
-                  </span>
-                ) : (
-                  <span>Issue Certificate Anyway</span>
-                )}
-              </button>
+              {warningModal.taskSummary?.allCompleted ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    const app = warningModal.application;
+                    closeWarningModal();
+                    await issueCertificate(app);
+                  }}
+                  disabled={Boolean(issuingId)}
+                >
+                  Issue Certificate
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-warning-confirm"
+                  onClick={confirmIssueAnyway}
+                  disabled={Boolean(issuingId)}
+                >
+                  {issuingId === warningModal.application._id ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 size={16} className="spinner-icon-sm" />
+                      <span>Issuing Certificate...</span>
+                    </span>
+                  ) : (
+                    <span>Issue Certificate Anyway</span>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -698,6 +942,34 @@ export default function AdminApplications() {
           opacity: 0.6;
           cursor: not-allowed;
         }
+        .review-action-cell { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
+        .btn-view-tasks { display: inline-flex; align-items: center; gap: 0.35rem; background: #eef2ff; border: 1px solid #c7d2fe; color: #4338ca; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.55rem; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; }
+        .btn-view-tasks:hover { background: #e0e7ff; }
+        .tasks-review-row td { padding: 0 !important; border-bottom: 1px solid #e2e8f0; }
+        .tasks-loading-panel { padding: 1.5rem; display: flex; align-items: center; gap: 0.6rem; color: #64748b; font-size: 0.85rem; background: #f8fafc; }
+        .tasks-review-panel { padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+        .tasks-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .tasks-progress-badge { font-size: 0.85rem; color: #334155; }
+        .tasks-progress-badge strong { color: #047857; }
+        .tasks-review-list { display: flex; flex-direction: column; gap: 0.65rem; }
+        .task-review-card { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; gap: 1rem; }
+        .task-review-main { display: flex; flex-direction: column; gap: 0.2rem; }
+        .task-title-row { display: flex; align-items: center; gap: 0.65rem; }
+        .task-name-text { font-size: 0.88rem; font-weight: 700; color: #0f172a; }
+        .task-reason-sub { font-size: 0.75rem; color: #64748b; }
+        .task-github-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: #2563eb; font-weight: 600; text-decoration: none; padding: 0.15rem 0.4rem; background: #eff6ff; border-radius: 4px; border: 1px solid #bfdbfe; }
+        .task-github-link:hover { text-decoration: underline; background: #dbeafe; }
+        .task-review-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+        .task-actions-col { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; flex-shrink: 0; }
+        .task-quick-review-btns { display: flex; align-items: center; gap: 0.35rem; }
+        .btn-review-mini { padding: 0.25rem 0.55rem; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: none; cursor: pointer; transition: transform 0.15s, opacity 0.15s; }
+        .btn-review-mini:hover:not(:disabled) { transform: scale(1.05); }
+        .btn-review-mini:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-approve { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .btn-revision { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .btn-reject { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .all-completed-banner { display: flex; align-items: center; gap: 0.75rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.85rem 1rem; color: #166534; font-size: 0.85rem; margin-bottom: 1.25rem; }
+        .all-completed-banner p { margin: 0.15rem 0 0 0; font-size: 0.78rem; color: #15803d; }
         .spinner-icon-sm {
           animation: spin 1s linear infinite;
         }

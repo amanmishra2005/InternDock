@@ -248,22 +248,60 @@ router.post("/:assignmentId/submit", protect, async (req, res) => {
       console.warn("Spreadsheet append error for submission:", sheetErr.message);
     }
 
-    // Dispatch milestone notification to support/admin
+    // Dispatch milestone notifications to both admin and student
     const adminNotificationEmail = supportTargetEmail();
-    const milestoneT = templates.assignmentSubmitted(
-      req.user.fullName,
-      req.user.email,
-      application.applicationId || applicationId,
-      assignment.title || "Internship Milestone Task",
+    const studentEmail = req.user.email;
+    const studentName = req.user.fullName || "Student";
+    const appId = application.applicationId || applicationId;
+    const taskTitle = assignment.title || "Internship Milestone Task";
+
+    const milestoneAdminT = templates.assignmentSubmitted(
+      studentName,
+      studentEmail,
+      appId,
+      taskTitle,
       githubUrl || ""
     );
-    sendEmail({
-      to: adminNotificationEmail,
-      replyTo: req.user.email,
-      ...milestoneT,
-    }).catch((err) => {
-      console.warn("Milestone submission email notice failed:", err.message);
-    });
+
+    const milestoneStudentT = templates.assignmentStudentConfirmation(
+      studentName,
+      appId,
+      taskTitle,
+      githubUrl || ""
+    );
+
+    try {
+      const [adminResult, studentResult] = await Promise.allSettled([
+        sendEmail({
+          to: adminNotificationEmail,
+          replyTo: studentEmail,
+          ...milestoneAdminT,
+        }),
+        studentEmail
+          ? sendEmail({
+              to: studentEmail,
+              replyTo: "support.interndock@gmail.com",
+              ...milestoneStudentT,
+            })
+          : Promise.resolve(),
+      ]);
+
+      if (adminResult.status === "fulfilled" && adminResult.value?.success) {
+        console.log(`[MILESTONE EMAIL SUCCESS] Admin notification delivered to ${adminNotificationEmail} (ID: ${adminResult.value.messageId})`);
+      } else {
+        const err = adminResult.status === "fulfilled" ? adminResult.value?.error : adminResult.reason?.message;
+        console.warn(`[MILESTONE EMAIL NOTICE] Admin notification failed for ${adminNotificationEmail}: ${err}`);
+      }
+
+      if (studentResult.status === "fulfilled" && studentResult.value?.success) {
+        console.log(`[MILESTONE EMAIL SUCCESS] Student confirmation delivered to ${studentEmail} (ID: ${studentResult.value.messageId})`);
+      } else if (studentEmail) {
+        const err = studentResult.status === "fulfilled" ? studentResult.value?.error : studentResult.reason?.message;
+        console.warn(`[MILESTONE EMAIL NOTICE] Student confirmation failed for ${studentEmail}: ${err}`);
+      }
+    } catch (mailErr) {
+      console.warn("[MILESTONE EMAIL ERROR] Unexpected mail error:", mailErr.message);
+    }
 
     return res.status(201).json(submission);
   } catch (err) {

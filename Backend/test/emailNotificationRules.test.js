@@ -94,3 +94,27 @@ test("certificate issuance templates produce valid emails for student and admin"
   assert.ok(adminEmail.html.includes("CERT-2026-1234"));
   assert.ok(adminEmail.html.includes("support.interndock@gmail.com"));
 });
+
+test("milestone task templates produce valid emails for both student and admin", () => {
+  const studentEmail = templates.assignmentStudentConfirmation(
+    "Eva Test",
+    "IND-2026-4444",
+    "Week 1: Foundations",
+    "https://github.com/eva/foundations"
+  );
+  assert.ok(studentEmail.subject.includes("Milestone Task Submitted"));
+  assert.ok(studentEmail.subject.includes("Week 1: Foundations"));
+  assert.ok(studentEmail.html.includes("Eva Test"));
+  assert.ok(studentEmail.html.includes("https://github.com/eva/foundations"));
+
+  const adminEmail = templates.assignmentSubmitted(
+    "Eva Test",
+    "eva@example.com",
+    "IND-2026-4444",
+    "Week 1: Foundations",
+    "https://github.com/eva/foundations"
+  );
+  assert.ok(adminEmail.subject.includes("[Milestone Submission]"));
+  assert.ok(adminEmail.html.includes("https://github.com/eva/foundations"));
+  assert.ok(adminEmail.html.includes("support.interndock@gmail.com"));
+});

@@ -92,6 +92,10 @@ function shouldSkipForResendFreeTier(subject = "") {
     "final capstone",
     "application confirmed",
     "final report",
+    "milestone",
+    "assignment",
+    "weekly task",
+    "task submitted",
   ];
 
   return !criticalTokens.some((token) => normalized.includes(token));
@@ -1145,6 +1149,36 @@ const templates = {
           ${githubUrl ? `<p style="margin: 4px 0;"><strong>GitHub URL:</strong> <a href="${escapeHtml(githubUrl)}" target="_blank" style="color: #4f46e5; word-break: break-all;">${escapeHtml(githubUrl)}</a></p>` : ""}
         </div>
         <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">Dispatched to support.interndock@gmail.com | InternDock Evaluation Team</p>
+      </div>
+    `,
+  }),
+  assignmentStudentConfirmation: (
+    studentName,
+    applicationId,
+    assignmentTitle,
+    githubUrl,
+  ) => ({
+    subject: `Milestone Task Submitted: ${escapeHtml(assignmentTitle || "Internship Milestone")} (${escapeHtml(applicationId)})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <h2 style="color: #0f172a; margin-top: 0;">📌 Milestone Task Submitted Successfully!</h2>
+        <p style="color: #334155; font-size: 15px;">Dear ${escapeHtml(studentName)},</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.6;">Your milestone task deliverables for <strong>${escapeHtml(assignmentTitle || "Milestone Task")}</strong> have been received and recorded in your internship workspace.</p>
+
+        <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #0284c7; border-radius: 4px; margin: 20px 0; font-size: 14px; color: #334155;">
+          <p style="margin: 4px 0;"><strong>Application ID:</strong> ${escapeHtml(applicationId)}</p>
+          <p style="margin: 4px 0;"><strong>Milestone Task:</strong> ${escapeHtml(assignmentTitle)}</p>
+          ${githubUrl ? `<p style="margin: 4px 0;"><strong>Submitted Solution:</strong> <a href="${escapeHtml(githubUrl)}" target="_blank" style="color: #4f46e5; word-break: break-all;">${escapeHtml(githubUrl)}</a></p>` : ""}
+          <p style="margin: 4px 0;"><strong>Review Status:</strong> Under Review</p>
+        </div>
+
+        <p style="color: #334155; font-size: 14px; line-height: 1.6;">Our mentor evaluation board will review your submitted code repository. You can track your task review status and mentor feedback anytime directly inside your <a href="https://www.interndock.in/dashboard" style="color: #0284c7; text-decoration: none; font-weight: 500;">Internship Workspace</a>.</p>
+
+        <p style="color: #64748b; font-size: 13px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          Best regards,<br />
+          <strong>InternDock Evaluation &amp; Mentorship Board</strong><br />
+          <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none;">www.interndock.in</a>
+        </p>
       </div>
     `,
   }),

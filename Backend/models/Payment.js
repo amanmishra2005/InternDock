@@ -20,5 +20,6 @@ const paymentSchema = new mongoose.Schema(
 
 paymentSchema.index({ application: 1, createdAt: -1 });
 paymentSchema.index({ student: 1, createdAt: -1 });
+paymentSchema.index({ orderId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("Payment", paymentSchema);

@@ -1,10 +1,15 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { appendToSpreadsheet } = require('../utils/spreadsheetStorage');
+const {
+  appendToSpreadsheet,
+  readSpreadsheet,
+  writeSpreadsheetRecords,
+} = require('../utils/spreadsheetStorage');
 
 test('appendToSpreadsheet returns a promise-like write handle for the application ledger write', async () => {
+  const testId = `INT-PROMISE-TEST-${Date.now()}`;
   const writeHandle = appendToSpreadsheet('applications', {
-    applicationId: 'INT-2026-00001',
+    applicationId: testId,
     studentId: 'student-1',
     studentName: 'Test Student',
     studentEmail: 'student@example.com',
@@ -21,4 +26,11 @@ test('appendToSpreadsheet returns a promise-like write handle for the applicatio
   });
 
   assert.equal(typeof writeHandle?.then, 'function');
+  await writeHandle;
+
+  // Clean up so tests never pollute production ledger files
+  const cleaned = readSpreadsheet('applications').filter(
+    (r) => r.applicationId !== testId && r['Application ID'] !== testId
+  );
+  writeSpreadsheetRecords('applications', cleaned);
 });

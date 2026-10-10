@@ -13,5 +13,7 @@ const contactQuerySchema = new mongoose.Schema(
 );
 
 contactQuerySchema.index({ status: 1, createdAt: -1 });
+// Automatically purge old inquiries from MongoDB Atlas after 30 days; full business archive is kept in Google Sheets
+contactQuerySchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
 module.exports = mongoose.model("ContactQuery", contactQuerySchema);

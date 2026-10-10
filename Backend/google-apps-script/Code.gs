@@ -1,21 +1,21 @@
 /**
  * InternDock Google Sheets Business Ledger Sync
- *
- * Synchronizes only essential, future-useful business data into Google Sheets.
- * Strictly organized into 7 clean, human-readable tabs:
- * 1. applications
- * 2. payments
- * 3. offer_letters
- * 4. submissions
- * 5. final_projects
- * 6. certificates
- * 7. contact_queries
- *
- * NOTE: Transactional email logs, sent/received mail, and raw database IDs are NEVER stored.
+ * Spreadsheet: https://docs.google.com/spreadsheets/d/1aApAQ7BRt0iAevBRqjOMh4yDDCi0Gos07yvf1JlxjGI/edit
  */
 
-const SPREADSHEET_ID = "PASTE_YOUR_GOOGLE_SHEET_ID_HERE";
+const SPREADSHEET_ID = "1aApAQ7BRt0iAevBRqjOMh4yDDCi0Gos07yvf1JlxjGI";
 const EXPECTED_TOKEN = "q-RsOPndQUmYSNL83xfLHD6Zze5WgrdxKCjOjF2x5lo";
+
+// Tab branding colors (Hex)
+const TAB_COLORS = {
+  applications: "#2563EB",   // Royal Blue
+  payments: "#059669",       // Emerald Green
+  offer_letters: "#7C3AED",  // Royal Violet
+  submissions: "#D97706",    // Warm Amber
+  final_projects: "#EA580C", // Vibrant Orange
+  certificates: "#0891B2",   // Ocean Cyan
+  contact_queries: "#DB2777",// Rose Pink
+};
 
 // Canonical ordered columns for each sheet to keep sheets clean, readable, and structured
 const ORDERED_COLUMNS = {
@@ -112,7 +112,6 @@ const ORDERED_COLUMNS = {
   ],
 };
 
-// Aliases mapping user requests and variations to canonical sheet names
 const SHEET_ALIASES = {
   application: "applications",
   applications: "applications",
@@ -139,6 +138,225 @@ const SHEET_ALIASES = {
   contact_query: "contact_queries",
   contact_queries: "contact_queries",
 };
+
+/**
+ * MASTER SETUP FUNCTION (Default function)
+ * Run this function in Apps Script to instantly create and format all 7 tabs!
+ */
+function setupAllSheets() {
+  const ss = getTargetSpreadsheet();
+  Logger.log("Connected to Spreadsheet: " + ss.getName() + " (ID: " + ss.getId() + ")");
+
+  const sheetKeys = Object.keys(ORDERED_COLUMNS);
+  for (let i = 0; i < sheetKeys.length; i++) {
+    const sheetName = sheetKeys[i];
+    Logger.log("Creating tab [" + (i + 1) + "/7]: " + sheetName);
+    setupSheet(ss, sheetName, ORDERED_COLUMNS[sheetName]);
+  }
+
+  // Remove default empty "Sheet1" if tabs exist
+  try {
+    const sheets = ss.getSheets();
+    for (let j = 0; j < sheets.length; j++) {
+      const s = sheets[j];
+      const name = s.getName();
+      if ((name === "Sheet1" || name === "Sheet 1") && s.getLastRow() === 0 && ss.getSheets().length > 1) {
+        ss.deleteSheet(s);
+        Logger.log("Deleted default empty Sheet1");
+        break;
+      }
+    }
+  } catch (e) {
+    Logger.log("Default sheet check: " + e.message);
+  }
+
+  Logger.log("🎉 SUCCESS: All 7 InternDock ledger tabs created and styled!");
+  return "All 7 InternDock ledger sheets have been successfully initialized and styled!";
+}
+
+/**
+ * Returns the target Google Spreadsheet instance.
+ */
+function getTargetSpreadsheet() {
+  if (SPREADSHEET_ID && SPREADSHEET_ID.trim().length > 0) {
+    try {
+      return SpreadsheetApp.openById(SPREADSHEET_ID.trim());
+    } catch (err) {
+      Logger.log("Could not open by ID (" + SPREADSHEET_ID + "): " + err.message);
+    }
+  }
+
+  try {
+    const active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) return active;
+  } catch (e) {}
+
+  throw new Error("Could not connect to spreadsheet. Check SPREADSHEET_ID: " + SPREADSHEET_ID);
+}
+
+/**
+ * Column alignment rules
+ */
+function getHeaderAlignment(header) {
+  const centerHeaders = [
+    "Timestamp",
+    "Application ID",
+    "Offer Reference ID",
+    "Certificate ID",
+    "Verification ID",
+    "UTR / Transaction ID",
+    "Order ID",
+    "Task Number",
+    "Graduation Year",
+    "Start Date",
+    "End Date",
+    "Issue Date",
+    "Payment Status",
+    "Application Status",
+    "Submission Status",
+    "Project Status",
+    "Status",
+    "Track Duration",
+  ];
+  const rightHeaders = [
+    "Program Fee (INR)",
+    "Amount (INR)",
+  ];
+
+  if (centerHeaders.includes(header)) return "center";
+  if (rightHeaders.includes(header)) return "right";
+  return "left";
+}
+
+/**
+ * Styles the header row with the Slate Navy theme
+ */
+function styleHeaderRow(sheet, headers) {
+  try {
+    sheet.setRowHeight(1, 38);
+    const headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setFontWeight("bold");
+    headerRange.setFontFamily("Arial");
+    headerRange.setFontSize(10);
+    headerRange.setBackground("#0F172A"); // Rich Slate Navy
+    headerRange.setFontColor("#FFFFFF");  // White text
+    headerRange.setHorizontalAlignment("center");
+    headerRange.setVerticalAlignment("middle");
+    try {
+      headerRange.setBorder(true, true, true, true, true, true, "#334155", SpreadsheetApp.BorderStyle.SOLID);
+    } catch (bErr) {
+      headerRange.setBorder(true, true, true, true, true, true);
+    }
+    sheet.setFrozenRows(1);
+    sheet.setHideGridlines(false);
+  } catch (err) {
+    Logger.log("styleHeaderRow: " + err.message);
+  }
+}
+
+/**
+ * Formats data rows with zebra striping and alignment
+ */
+function styleDataRow(sheet, rowNum, activeHeaders) {
+  const numCols = activeHeaders.length;
+  if (numCols === 0) return;
+
+  try {
+    sheet.setRowHeight(rowNum, 26);
+    const rowRange = sheet.getRange(rowNum, 1, 1, numCols);
+    rowRange.setVerticalAlignment("middle");
+    rowRange.setFontFamily("Arial");
+    rowRange.setFontSize(9.5);
+
+    const bgColor = (rowNum % 2 === 0) ? "#F8FAFC" : "#FFFFFF";
+    rowRange.setBackground(bgColor);
+
+    try {
+      rowRange.setBorder(true, true, true, true, true, true, "#E2E8F0", SpreadsheetApp.BorderStyle.SOLID);
+    } catch (bErr) {
+      rowRange.setBorder(true, true, true, true, true, true);
+    }
+
+    for (let c = 1; c <= numCols; c++) {
+      const header = activeHeaders[c - 1];
+      const align = getHeaderAlignment(header);
+      const cell = sheet.getRange(rowNum, c);
+      cell.setHorizontalAlignment(align);
+
+      if (header.includes("(INR)") || header.includes("Amount") || header.includes("Fee")) {
+        cell.setNumberFormat("₹#,##0");
+      }
+
+      if (header === "Message" || header === "Executive Summary" || header === "Notes / Comments") {
+        cell.setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
+      } else if (header.includes("URL")) {
+        cell.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+      }
+    }
+  } catch (err) {
+    Logger.log("styleDataRow: " + err.message);
+  }
+}
+
+/**
+ * Creates or updates an individual sheet tab
+ */
+function setupSheet(spreadsheet, sheetName, expectedHeaders) {
+  let sheet = spreadsheet.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(sheetName);
+  }
+
+  try {
+    if (TAB_COLORS[sheetName]) {
+      sheet.setTabColor(TAB_COLORS[sheetName]);
+    }
+  } catch (e) {}
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(expectedHeaders);
+  } else {
+    const currentHeaders = sheet
+      .getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1))
+      .getValues()[0];
+    const missing = expectedHeaders.filter((h) => !currentHeaders.includes(h));
+    if (missing.length > 0) {
+      const startCol = currentHeaders.length + 1;
+      sheet.getRange(1, startCol, 1, missing.length).setValues([missing]);
+    }
+  }
+
+  const activeHeaders = sheet
+    .getRange(1, 1, 1, sheet.getLastColumn())
+    .getValues()[0];
+  styleHeaderRow(sheet, activeHeaders);
+
+  const lastRow = sheet.getLastRow();
+  for (let r = 2; r <= lastRow; r++) {
+    styleDataRow(sheet, r, activeHeaders);
+  }
+
+  for (let c = 1; c <= activeHeaders.length; c++) {
+    try {
+      sheet.autoResizeColumn(c);
+      const colWidth = sheet.getColumnWidth(c);
+      if (colWidth < 120) {
+        sheet.setColumnWidth(c, 120);
+      }
+    } catch (e) {}
+  }
+
+  return sheet;
+}
+
+function onOpen() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+    ui.createMenu("InternDock ⚡")
+      .addItem("✨ Initialize / Format All 7 Sheets", "setupAllSheets")
+      .addToUi();
+  } catch (e) {}
+}
 
 function keyVariantsForHeader(header) {
   const raw = String(header || "").trim();
@@ -176,7 +394,7 @@ function keyVariantsForHeader(header) {
       compact,
       titleCase,
       titleCase.replace(/\s+/g, ""),
-    ]),
+    ])
   );
 }
 
@@ -234,7 +452,7 @@ function getPayloadValueForHeader(payload, header) {
 
   const aliasCandidates = aliasMap[header] || [];
   for (const key of [...candidates, ...aliasCandidates]) {
-    if (payload[key] !== undefined) return payload[key];
+    if (payload[key] !== undefined && payload[key] !== null) return payload[key];
   }
 
   return "-";
@@ -242,7 +460,7 @@ function getPayloadValueForHeader(payload, header) {
 
 function doGet(e) {
   return ContentService.createTextOutput(
-    "InternDock Google Sheets Business Ledger Sync is active.",
+    "InternDock Google Sheets Business Ledger Sync is active."
   ).setMimeType(ContentService.MimeType.TEXT);
 }
 
@@ -251,18 +469,16 @@ function doPost(e) {
     const payload = JSON.parse(e.postData.contents || "{}");
     const incomingToken = payload.webhookToken || "";
 
-    // 1. Authenticate webhook request
     if (!incomingToken || incomingToken !== EXPECTED_TOKEN) {
       return ContentService.createTextOutput("Unauthorized").setMimeType(
-        ContentService.MimeType.TEXT,
+        ContentService.MimeType.TEXT
       );
     }
 
-    // 2. Transactional Email Relay (Dispatches emails without touching or storing anything in Google Sheets)
     if (payload.action === "send_email" || payload.action === "sendEmail") {
       const recipient = String(payload.to || "").trim();
       const subject = String(
-        payload.subject || "InternDock Notification",
+        payload.subject || "InternDock Notification"
       ).trim();
       const htmlBody = payload.html || payload.htmlBody || "";
       const replyTo = payload.replyTo || "support.interndock@gmail.com";
@@ -270,7 +486,7 @@ function doPost(e) {
 
       if (!recipient) {
         return ContentService.createTextOutput(
-          "Error: Missing recipient",
+          "Error: Missing recipient"
         ).setMimeType(ContentService.MimeType.TEXT);
       }
 
@@ -294,18 +510,28 @@ function doPost(e) {
         JSON.stringify({
           success: true,
           message: "Email sent to " + recipient,
-        }),
+        })
       ).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // Ignore any email log entries (email logs are never stored in the spreadsheet)
+    if (payload.__diagnostic_check) {
+      const spreadsheet = getTargetSpreadsheet();
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          success: true,
+          message: "Connected successfully to spreadsheet: " + spreadsheet.getName(),
+          sheetId: spreadsheet.getId(),
+          sheets: spreadsheet.getSheets().map((s) => s.getName()),
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (payload.sheetName === "emails") {
       return ContentService.createTextOutput(
-        "OK: Email logs omitted from ledger",
+        "OK: Email logs omitted from ledger"
       ).setMimeType(ContentService.MimeType.TEXT);
     }
 
-    // 3. Resolve canonical sheet name
     const rawSheetName = String(payload.sheetName || "")
       .trim()
       .toLowerCase();
@@ -313,78 +539,47 @@ function doPost(e) {
 
     if (!canonicalName || !ORDERED_COLUMNS[canonicalName]) {
       return ContentService.createTextOutput(
-        "Ignored: Not an authorized business sheet",
+        "Ignored: Not an authorized business sheet"
       ).setMimeType(ContentService.MimeType.TEXT);
     }
 
-    if (!SPREADSHEET_ID || SPREADSHEET_ID === "PASTE_YOUR_GOOGLE_SHEET_ID_HERE") {
-      return ContentService.createTextOutput(
-        "Error: SPREADSHEET_ID is not configured in Code.gs. Please paste your Google Sheet ID.",
-      ).setMimeType(ContentService.MimeType.TEXT);
-    }
-
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let sheet = spreadsheet.getSheetByName(canonicalName);
-
-    // Create and format new sheet if it does not yet exist
-    if (!sheet) {
-      sheet = spreadsheet.insertSheet(canonicalName);
-    }
-
+    const spreadsheet = getTargetSpreadsheet();
     const expectedHeaders = ORDERED_COLUMNS[canonicalName];
 
-    // If sheet is empty, write header row with formatting
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(expectedHeaders);
-      const headerRange = sheet.getRange(1, 1, 1, expectedHeaders.length);
-      headerRange.setFontWeight("bold");
-      headerRange.setBackground("#0f172a");
-      headerRange.setFontColor("#ffffff");
-      headerRange.setHorizontalAlignment("center");
-      sheet.setFrozenRows(1);
-    } else {
-      // Ensure missing headers are added
-      const currentHeaders = sheet
-        .getRange(1, 1, 1, sheet.getLastColumn())
-        .getValues()[0];
-      const missing = expectedHeaders.filter(
-        (h) => !currentHeaders.includes(h),
-      );
-      if (missing.length > 0) {
-        const startColumn = currentHeaders.length + 1;
-        const missingRange = sheet.getRange(1, startColumn, 1, missing.length);
-        missingRange.setValues([missing]);
-        missingRange.setFontWeight("bold");
-        missingRange.setBackground("#0f172a");
-        missingRange.setFontColor("#ffffff");
-      }
+    let sheet = spreadsheet.getSheetByName(canonicalName);
+    if (!sheet || sheet.getLastRow() === 0) {
+      sheet = setupSheet(spreadsheet, canonicalName, expectedHeaders);
     }
 
-    // Map payload into the exact column order of the sheet
     const activeHeaders = sheet
       .getRange(1, 1, 1, sheet.getLastColumn())
       .getValues()[0];
 
     const row = activeHeaders.map((header) =>
-      getPayloadValueForHeader(payload, header),
+      getPayloadValueForHeader(payload, header)
     );
 
     sheet.appendRow(row);
+    const newRowNum = sheet.getLastRow();
 
-    // Auto-fit columns periodically or for fresh sheets
-    if (sheet.getLastRow() <= 20) {
+    styleDataRow(sheet, newRowNum, activeHeaders);
+
+    if (newRowNum <= 50 || newRowNum % 25 === 0) {
       for (let i = 1; i <= activeHeaders.length; i++) {
         sheet.autoResizeColumn(i);
+        if (sheet.getColumnWidth(i) < 120) {
+          sheet.setColumnWidth(i, 120);
+        }
       }
     }
 
     return ContentService.createTextOutput("OK").setMimeType(
-      ContentService.MimeType.TEXT,
+      ContentService.MimeType.TEXT
     );
   } catch (err) {
-    console.error("Spreadsheet sync error:", err);
+    Logger.log("doPost error: " + err.message);
     return ContentService.createTextOutput("Error: " + err.message).setMimeType(
-      ContentService.MimeType.TEXT,
+      ContentService.MimeType.TEXT
     );
   }
 }

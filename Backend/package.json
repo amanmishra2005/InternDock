@@ -13,6 +13,7 @@
     "dev": "nodemon server.js",
     "seed": "node seed/seedData.js",
     "sync:sheets": "node scripts/syncGoogleSheets.js",
+    "sync:mongo": "node scripts/syncMongoToSheets.js",
     "test": "node --test"
   },
   "dependencies": {

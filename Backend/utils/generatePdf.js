@@ -26,7 +26,7 @@ const GOLD = "#c9962f";
 const GRAY = "#64748b";
 
 // Bump this any time the offer letter / certificate design changes
-const TEMPLATE_VERSION = "2026-09-28-v8-watermark";
+const TEMPLATE_VERSION = "2026-10-10-v9-unified";
 
 function getAssetBase64(filename) {
   const p = path.join(ASSETS_DIR, filename);

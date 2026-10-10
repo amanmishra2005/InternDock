@@ -8,4 +8,14 @@ async function pruneRejectedApplications(ApplicationModel = require('../models/A
   });
 }
 
-module.exports = { pruneRejectedApplications };
+async function pruneAbandonedDrafts(ApplicationModel = require('../models/Application')) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+
+  await ApplicationModel.deleteMany({
+    status: 'Draft',
+    updatedAt: { $lt: cutoff },
+  });
+}
+
+module.exports = { pruneRejectedApplications, pruneAbandonedDrafts };

@@ -45,5 +45,13 @@ applicationSchema.index({ student: 1, createdAt: -1 });
 applicationSchema.index({ status: 1, createdAt: -1 });
 applicationSchema.index({ domain: 1, status: 1 });
 
+// Keep status history lean in MongoDB Atlas (max 10 transitions; historical audit is in Google Sheets)
+applicationSchema.pre("save", function (next) {
+  if (Array.isArray(this.statusHistory) && this.statusHistory.length > 10) {
+    this.statusHistory = this.statusHistory.slice(-10);
+  }
+  next();
+});
+
 module.exports = mongoose.model("Application", applicationSchema);
 module.exports.STATUS_VALUES = STATUS_VALUES;

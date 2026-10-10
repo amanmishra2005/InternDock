@@ -5,6 +5,7 @@ const path = require("path");
 const {
   appendToSpreadsheet,
   readSpreadsheet,
+  writeSpreadsheetRecords,
   resolveSheetSchema,
   sanitizeAndFormatRecord,
 } = require("../utils/spreadsheetStorage");
@@ -216,4 +217,10 @@ test("appendToSpreadsheet appends and readSpreadsheet provides camelCase aliases
   assert.equal(found.studentEmail, "tester@example.com");
   assert.equal(found["Internship Domain"], "DevOps Track");
   assert.equal(found.domain, "DevOps Track");
+
+  // Cleanup test row so it doesn't pollute production ledger files
+  const cleanedRows = readSpreadsheet("applications").filter(
+    (r) => r.applicationId !== testId && r["Application ID"] !== testId,
+  );
+  writeSpreadsheetRecords("applications", cleanedRows);
 });

@@ -40,8 +40,11 @@ async function downloadDocument(req, res, Model, label) {
   const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, "..", "uploads", "documents");
   let filePath = path.join(uploadDir, filename);
 
-  // Self-heal: If the PDF file was purged or missing from disk, regenerate it on the fly
-  if (!filename || !fs.existsSync(filePath)) {
+  const fileExists = Boolean(filename && fs.existsSync(filePath));
+  const isStale = !fileExists || document.templateVersion !== TEMPLATE_VERSION;
+
+  // Self-heal & Version Parity: If the PDF file was purged, missing from disk, or from an older template version, regenerate it on the fly
+  if (isStale) {
     const application = await Application.findById(appId)
       .populate("domain")
       .populate("duration")

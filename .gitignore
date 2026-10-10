@@ -43,6 +43,7 @@ coverage/
 dist/
 build/
 .vite/
+.vercel/
 .tmp/
 .cache/
 

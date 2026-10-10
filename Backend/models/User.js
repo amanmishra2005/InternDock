@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Automatically expire unverified signups after 48 hours to conserve MongoDB Atlas storage (verified users stay permanently)
+userSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 48 * 3600, partialFilterExpression: { isVerified: false } }
+);
+
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   if (typeof this.password === "string" && this.password.startsWith("$2")) return next();

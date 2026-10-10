@@ -8,7 +8,7 @@ const compression = require("compression");
 const connectDB = require("./config/db");
 const mongoose = require("mongoose");
 const { createRateLimiter } = require("./utils/rateLimit");
-const { pruneRejectedApplications } = require("./utils/applicationCleanup");
+const { pruneRejectedApplications, pruneAbandonedDrafts } = require("./utils/applicationCleanup");
 
 const authRoutes = require("./routes/authRoutes");
 const domainRoutes = require("./routes/domainRoutes");
@@ -182,8 +182,10 @@ const PORT = process.env.PORT || 5001;
 connectDB()
   .then(async () => {
     await pruneRejectedApplications();
+    await pruneAbandonedDrafts();
     setInterval(() => {
       pruneRejectedApplications().catch((err) => console.error("Rejected application cleanup failed:", err.message));
+      pruneAbandonedDrafts().catch((err) => console.error("Abandoned draft application cleanup failed:", err.message));
     }, 24 * 60 * 60 * 1000);
 
     app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

@@ -36,6 +36,8 @@ const applicationSchema = new mongoose.Schema(
     paymentStatus: { type: String, enum: ["Pending", "Successful", "Failed", "Refunded", "Cancelled"], default: "Pending" },
 
     finalReportSubmitted: { type: Boolean, default: false },
+    offerLetterIssued: { type: Boolean, default: false },
+    offerLetterRef: { type: String, trim: true },
     certificateIssued: { type: Boolean, default: false },
   },
   { timestamps: true }

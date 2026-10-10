@@ -11,8 +11,15 @@ const Assignment = require("../models/Assignment");
 const User = require("../models/User");
 const Payment = require("../models/Payment");
 const Certificate = require("../models/Certificate");
-const { generateCertificateId, generateVerificationId, getNextCertificateSequence } = require("../utils/generateIds");
-const { generateCertificatePdf, TEMPLATE_VERSION } = require("../utils/generatePdf");
+const OfferLetter = require("../models/OfferLetter");
+const {
+  generateOfferReferenceId,
+  generateCertificateId,
+  generateVerificationId,
+  getNextOfferReferenceSequence,
+  getNextCertificateSequence,
+} = require("../utils/generateIds");
+const { generateOfferLetterPdf, generateCertificatePdf, TEMPLATE_VERSION } = require("../utils/generatePdf");
 const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
 const { getSpreadsheetPath, appendToSpreadsheet, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
 const { canIssueCertificate, getRequiredTaskCount, checkApplicationTaskStatus } = require("../utils/certificateEligibility");
@@ -224,8 +231,13 @@ router.put("/applications/:id/status", async (req, res) => {
   await application.save();
 
   if (status === "Selected" || status === "Active") {
-    const t = templates.selected(application.student.fullName, application.domain.name);
-    await sendEmail({ to: application.student.email, ...t }).catch(() => {});
+    try {
+      await issueOfferLetterForApplication(application._id);
+    } catch (offerErr) {
+      console.error("Auto offer letter error on Selected status:", offerErr);
+      const t = templates.selected(application.student?.fullName || application.studentName || "Student", application.domain?.name || "Internship Track");
+      await sendEmail({ to: application.student?.email || application.studentEmail, ...t }).catch(() => {});
+    }
   } else if (status === "Rejected") {
     const t = templates.rejected(application.student.fullName, application.domain.name);
     await sendEmail({ to: application.student.email, ...t }).catch(() => {});
@@ -404,6 +416,142 @@ router.put("/final-reports/:id/status", async (req, res) => {
   const report = await FinalReport.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!report) return res.status(404).json({ message: "Final report not found." });
   return res.json({ success: true, report });
+});
+
+// Issue and persist offer letter across MongoDB, Google Sheets, and local ledger
+async function issueOfferLetterForApplication(applicationId) {
+  const application = await Application.findById(applicationId)
+    .populate("domain")
+    .populate("duration")
+    .populate("student");
+  if (!application) throw new Error("Application record not found.");
+
+  // Resolve student User profile if needed to guarantee studentName and collegeName
+  let studentUser = application.student;
+  if (!studentUser || !studentUser.fullName || !studentUser.college) {
+    const studentId = studentUser?._id || studentUser;
+    if (studentId) {
+      const foundUser = await User.findById(studentId).lean();
+      if (foundUser) {
+        studentUser = { ...foundUser, ...(typeof studentUser === "object" ? studentUser : {}) };
+      }
+    }
+  }
+
+  const details = resolveApplicationDetails(application, studentUser);
+
+  // Guarantee dates and student info
+  application.startDate = details.startDate;
+  application.endDate = details.endDate;
+  if (!application.studentName) application.studentName = details.studentName;
+  if (!application.collegeName && details.collegeName) application.collegeName = details.collegeName;
+  application.offerLetterIssued = true;
+
+  // Retrieve existing OfferLetter document or generate fresh identifiers
+  let offer = await OfferLetter.findOne({ application: application._id });
+  const referenceId = offer?.referenceId || generateOfferReferenceId(await getNextOfferReferenceSequence(OfferLetter));
+  const verificationId = offer?.verificationId || generateVerificationId();
+  const issueDate = offer?.issueDate || new Date();
+
+  application.offerLetterRef = referenceId;
+  await application.save();
+
+  // Generate offer letter PDF
+  const pdfUrl = await generateOfferLetterPdf({
+    studentName: details.studentName,
+    collegeName: details.collegeName,
+    domainName: details.domainName,
+    durationLabel: details.durationLabel,
+    startDate: details.startDate,
+    endDate: details.endDate,
+    issueDate,
+    applicationId: application.applicationId || application._id,
+    referenceId,
+    verificationId,
+    orgName: process.env.ORG_NAME || "InternDock",
+  });
+
+  // Save / Update MongoDB record (awaited)
+  const studentId = studentUser?._id || application.student?._id || application.student;
+  if (offer) {
+    offer.pdfUrl = pdfUrl;
+    offer.templateVersion = TEMPLATE_VERSION;
+    await offer.save();
+  } else {
+    offer = await OfferLetter.create({
+      application: application._id,
+      student: studentId,
+      referenceId,
+      verificationId,
+      issueDate,
+      pdfUrl,
+      templateVersion: TEMPLATE_VERSION,
+    });
+  }
+
+  // Persist to spreadsheet (awaited)
+  let spreadsheetOk = false;
+  try {
+    spreadsheetOk = await appendToSpreadsheet("offer_letters", {
+      referenceId: offer.referenceId,
+      applicationId: application.applicationId || application._id,
+      studentName: details.studentName,
+      studentEmail: details.studentEmail,
+      collegeName: details.collegeName || "-",
+      domainName: details.domainName,
+      durationLabel: details.durationLabel || "4 Weeks Track",
+      startDate: details.startDate,
+      endDate: details.endDate,
+      issueDate,
+      verificationId,
+    });
+  } catch (sheetErr) {
+    console.error(`[SPREADSHEET ERROR] Failed writing offer letter ${referenceId} to spreadsheet:`, sheetErr);
+  }
+
+  // Send email notification to student
+  const studentEmail = details.studentEmail || studentUser?.email || application.student?.email;
+  if (studentEmail) {
+    const t = templates.selected(details.studentName, details.domainName);
+    sendEmail({ to: studentEmail, replyTo: "support.interndock@gmail.com", ...t }).catch((err) => {
+      console.warn("[OFFER EMAIL WARNING] Could not send student selection email:", err.message);
+    });
+  }
+
+  return { application, offerLetter: offer, spreadsheetOk };
+}
+
+// Admin Direct Offer Letter Issuance
+router.post("/applications/:id/issue-offer-letter", async (req, res) => {
+  try {
+    const result = await issueOfferLetterForApplication(req.params.id);
+    return res.json({
+      success: true,
+      message: "Offer letter issued and persisted successfully!",
+      application: result.application,
+      offerLetter: result.offerLetter,
+      spreadsheetSaved: result.spreadsheetOk,
+    });
+  } catch (err) {
+    console.error("Issue offer letter error:", err);
+    return res.status(500).json({ message: err.message || "Failed to issue offer letter." });
+  }
+});
+
+router.post("/applications/:id/issue-offer", async (req, res) => {
+  try {
+    const result = await issueOfferLetterForApplication(req.params.id);
+    return res.json({
+      success: true,
+      message: "Offer letter issued and persisted successfully!",
+      application: result.application,
+      offerLetter: result.offerLetter,
+      spreadsheetSaved: result.spreadsheetOk,
+    });
+  } catch (err) {
+    console.error("Issue offer letter error:", err);
+    return res.status(500).json({ message: err.message || "Failed to issue offer letter." });
+  }
 });
 
 // Admin Direct Certificate Issuance (Instant Issue & Complete)

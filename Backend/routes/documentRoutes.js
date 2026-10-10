@@ -191,7 +191,7 @@ router.get("/offer-letter/:applicationId", protect, async (req, res) => {
         });
       }
 
-      appendToSpreadsheet("offer_letters", {
+      await appendToSpreadsheet("offer_letters", {
         referenceId,
         applicationId: application.applicationId || application._id,
         studentName: details.studentName,
@@ -203,6 +203,11 @@ router.get("/offer-letter/:applicationId", protect, async (req, res) => {
         endDate: details.endDate,
         issueDate,
         verificationId,
+      });
+
+      await Application.findByIdAndUpdate(application._id, {
+        offerLetterIssued: true,
+        offerLetterRef: referenceId,
       });
     }
 

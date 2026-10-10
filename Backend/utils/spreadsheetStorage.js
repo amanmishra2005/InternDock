@@ -520,6 +520,14 @@ function appendToSpreadsheet(sheetName, recordData) {
         await fs.promises.writeFile(filePath, headers, "utf8");
       } else {
         ensureFileHeaderMatchesSchema(filePath, canonicalHeaders);
+        const existingContent = await fs.promises.readFile(filePath, "utf8");
+        const uniqueKey =
+          cleanRecord["Offer Reference ID"] ||
+          cleanRecord["Certificate ID"] ||
+          (canonicalSheetName === "applications" ? cleanRecord["Application ID"] : null);
+        if (uniqueKey && uniqueKey !== "-" && existingContent.includes(`"${uniqueKey}"`)) {
+          return true; // Already recorded, avoid duplicate row
+        }
       }
 
       await fs.promises.appendFile(

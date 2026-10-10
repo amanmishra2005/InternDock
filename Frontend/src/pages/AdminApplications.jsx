@@ -25,6 +25,8 @@ export default function AdminApplications() {
 
   // Tracks which application is actively in-flight for certificate issuance
   const [issuingId, setIssuingId] = useState(null);
+  // Tracks which application is actively in-flight for offer letter issuance
+  const [issuingOfferId, setIssuingOfferId] = useState(null);
 
   // Incomplete Task Warning Confirmation Modal State
   const [warningModal, setWarningModal] = useState({
@@ -60,6 +62,22 @@ export default function AdminApplications() {
       load();
     } catch (err) {
       alert(err.response?.data?.message || "Could not approve payment");
+    }
+  };
+
+  // Direct Admin Offer Letter Issuance Handler
+  const issueOfferLetter = async (app) => {
+    if (issuingOfferId) return;
+    setIssuingOfferId(app._id);
+
+    try {
+      await api.post(`/admin/applications/${app._id}/issue-offer-letter`);
+      alert("Offer letter issued and persisted successfully!");
+      load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not issue offer letter");
+    } finally {
+      setIssuingOfferId(null);
     }
   };
 
@@ -186,6 +204,7 @@ export default function AdminApplications() {
                   <th>Status</th>
                   <th>Payment</th>
                   <th>Review Action</th>
+                  <th>Offer Letter</th>
                   <th>Certificate</th>
                 </tr>
               </thead>
@@ -247,6 +266,22 @@ export default function AdminApplications() {
                       </select>
                     </td>
                     <td>
+                      {app.offerLetterIssued ? (
+                        <span className="offer-issued-pill" style={{ color: "#0284c7", fontWeight: 800, fontSize: "0.85rem" }}>
+                          ✓ Issued
+                        </span>
+                      ) : (
+                        <button
+                          className="btn btn-primary btn-sm"
+                          style={{ padding: "0.35rem 0.65rem", fontSize: "0.78rem" }}
+                          onClick={() => issueOfferLetter(app)}
+                          disabled={issuingOfferId === app._id}
+                        >
+                          {issuingOfferId === app._id ? "Issuing..." : "Issue Offer"}
+                        </button>
+                      )}
+                    </td>
+                    <td>
                       {app.certificateIssued ? (
                         <span className="cert-issued-pill">✓ Issued</span>
                       ) : (
@@ -262,7 +297,7 @@ export default function AdminApplications() {
                   </tr>
                   {expandedId === app._id && (
                     <tr className="payment-details-row">
-                      <td colSpan={7}>
+                      <td colSpan={8}>
                         {app.paymentDetails ? (
                           <div className="payment-details-panel">
                             <div><span>Payer Name</span><strong>{app.paymentDetails.payerName || "-"}</strong></div>

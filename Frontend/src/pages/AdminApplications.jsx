@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2, ShieldCheck, Check, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ShieldCheck,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  X,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import api from "../api/axios";
 
 const STATUS_OPTIONS = ["Submitted", "Under Review", "Selected", "Active", "Completed", "Rejected"];
@@ -11,6 +22,16 @@ export default function AdminApplications() {
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+
+  // Tracks which application is actively in-flight for certificate issuance
+  const [issuingId, setIssuingId] = useState(null);
+
+  // Incomplete Task Warning Confirmation Modal State
+  const [warningModal, setWarningModal] = useState({
+    open: false,
+    application: null,
+    taskSummary: null,
+  });
 
   const load = () => {
     const q = statusFilter ? `?status=${statusFilter}` : "";
@@ -42,14 +63,69 @@ export default function AdminApplications() {
     }
   };
 
-  const issueCertificate = async (id) => {
+  // Primary Certificate Issuance Handler with Task Completion Verification
+  const issueCertificate = async (app) => {
+    if (issuingId) return; // Prevent duplicate rapid clicks
+    setIssuingId(app._id);
+
     try {
-      await api.post(`/admin/applications/${id}/issue-certificate`);
-      alert("Certificate issued successfully!");
+      // 1. Verify student's task and submission status
+      const { data } = await api.get(`/admin/applications/${app._id}/task-status`);
+
+      if (data.allCompleted) {
+        // All tasks are completed and approved! Proceed normally without modal
+        await api.post(`/admin/applications/${app._id}/issue-certificate`);
+        alert("Certificate issued successfully!");
+        setIssuingId(null);
+        load();
+      } else {
+        // Incomplete / pending / rejected tasks exist -> display warning confirmation modal
+        setWarningModal({
+          open: true,
+          application: app,
+          taskSummary: data,
+        });
+        setIssuingId(null);
+      }
+    } catch (err) {
+      const resData = err.response?.data;
+      if (resData?.requiresConfirmation && resData?.taskSummary) {
+        setWarningModal({
+          open: true,
+          application: app,
+          taskSummary: resData.taskSummary,
+        });
+      } else {
+        alert(resData?.message || "Could not verify task completion status");
+      }
+      setIssuingId(null);
+    }
+  };
+
+  // Explicit confirmation to issue certificate despite incomplete tasks
+  const confirmIssueAnyway = async () => {
+    if (!warningModal.application || issuingId) return;
+    const app = warningModal.application;
+    setIssuingId(app._id);
+
+    try {
+      await api.post(`/admin/applications/${app._id}/issue-certificate`, {
+        confirmIncomplete: true,
+      });
+      alert("Certificate issued successfully despite incomplete tasks!");
+      setWarningModal({ open: false, application: null, taskSummary: null });
       load();
     } catch (err) {
       alert(err.response?.data?.message || "Could not issue certificate");
+    } finally {
+      setIssuingId(null);
     }
+  };
+
+  // Cancel action closes the modal without issuing certificate, preserving state
+  const closeWarningModal = () => {
+    setWarningModal({ open: false, application: null, taskSummary: null });
+    setIssuingId(null);
   };
 
   return (
@@ -109,7 +185,7 @@ export default function AdminApplications() {
                   <th>Domain &amp; Track</th>
                   <th>Status</th>
                   <th>Payment</th>
-                  <th>Action / Change Status</th>
+                  <th>Review Action</th>
                   <th>Certificate</th>
                 </tr>
               </thead>
@@ -118,12 +194,12 @@ export default function AdminApplications() {
                   <React.Fragment key={app._id}>
                   <tr>
                     <td>
-                      <span className="app-id-tag">{app.applicationId || app._id.slice(-6)}</span>
+                      <span className="app-id-tag">{app.applicationId || "N/A"}</span>
                     </td>
                     <td>
                       <div className="student-info-cell">
-                        <strong>{app.student?.fullName || "Student Candidate"}</strong>
-                        <span className="email-text">{app.student?.email}</span>
+                        <strong>{app.studentName || app.student?.fullName || "-"}</strong>
+                        <span className="email-text">{app.studentEmail || app.student?.email || "-"}</span>
                       </div>
                     </td>
                     <td>
@@ -174,8 +250,12 @@ export default function AdminApplications() {
                       {app.certificateIssued ? (
                         <span className="cert-issued-pill">✓ Issued</span>
                       ) : (
-                        <button className="btn btn-secondary btn-sm" onClick={() => issueCertificate(app._id)}>
-                          Issue Cert
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => issueCertificate(app)}
+                          disabled={issuingId === app._id}
+                        >
+                          {issuingId === app._id ? "Processing..." : "Issue Cert"}
                         </button>
                       )}
                     </td>
@@ -206,6 +286,111 @@ export default function AdminApplications() {
             </table>
           </div>
         </motion.div>
+      )}
+
+      {/* Confirmation Modal for Incomplete Internship Tasks */}
+      {warningModal.open && warningModal.application && (
+        <div className="modal-backdrop" onClick={closeWarningModal}>
+          <div
+            className="modal-card confirmation-warning-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="modal-header-warning">
+              <div className="warning-icon-badge">
+                <AlertTriangle size={24} color="#d97706" />
+              </div>
+              <div className="warning-modal-titles">
+                <h2 className="warning-modal-title">Incomplete Tasks Warning</h2>
+                <span className="warning-modal-sub">
+                  Candidate: <strong>{warningModal.application.studentName || warningModal.application.student?.fullName || "Student"}</strong> ({warningModal.application.applicationId || "N/A"})
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={closeWarningModal}
+                disabled={Boolean(issuingId)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="warning-modal-body">
+              <div className="warning-notice-banner">
+                <AlertCircle size={18} className="notice-icon" />
+                <p>
+                  This student has not completed all required internship tasks and submissions. Please review the pending or incomplete items below before making a decision.
+                </p>
+              </div>
+
+              {/* Task Stat Counters */}
+              <div className="task-stats-row">
+                <div className="task-stat-box stat-completed">
+                  <span className="stat-label">Completed &amp; Approved</span>
+                  <span className="stat-value">
+                    {warningModal.taskSummary?.completed ?? 0} / {warningModal.taskSummary?.totalRequired ?? 0}
+                  </span>
+                </div>
+                <div className="task-stat-box stat-incomplete">
+                  <span className="stat-label">Incomplete / Pending</span>
+                  <span className="stat-value">
+                    {warningModal.taskSummary?.incomplete ?? 0} / {warningModal.taskSummary?.totalRequired ?? 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Incomplete Tasks Breakdown */}
+              <div className="incomplete-tasks-section">
+                <h3 className="incomplete-tasks-heading">Remaining / Pending Tasks:</h3>
+                {warningModal.taskSummary?.incompleteTasks && warningModal.taskSummary.incompleteTasks.length > 0 ? (
+                  <div className="incomplete-tasks-list">
+                    {warningModal.taskSummary.incompleteTasks.map((t, idx) => (
+                      <div key={idx} className="incomplete-task-item">
+                        <div className="incomplete-task-info">
+                          <span className="task-name">{t.title}</span>
+                          <span className="task-reason-text">{t.reason}</span>
+                        </div>
+                        <span className={`task-status-tag status-${t.status?.toLowerCase().replace(/\s+/g, '-')}`}>
+                          {t.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="no-tasks-text">No specific pending tasks listed.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="warning-modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={closeWarningModal}
+                disabled={Boolean(issuingId)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-warning-confirm"
+                onClick={confirmIssueAnyway}
+                disabled={Boolean(issuingId)}
+              >
+                {issuingId === warningModal.application._id ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 size={16} className="spinner-icon-sm" />
+                    <span>Issuing Certificate...</span>
+                  </span>
+                ) : (
+                  <span>Issue Certificate Anyway</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <style>{`
@@ -248,6 +433,244 @@ export default function AdminApplications() {
         .payment-details-panel span { font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #94a3b8; letter-spacing: 0.03em; }
         .payment-details-panel strong { font-size: 0.9rem; color: #0f172a; font-weight: 700; }
         .payment-details-panel.empty { display: block; padding: 1rem 1.5rem; color: #b45309; background: #fffbeb; font-size: 0.85rem; font-weight: 600; }
+
+        /* Incomplete Task Warning Modal Styles */
+        .modal-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(15, 23, 42, 0.65);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 1rem;
+        }
+        .confirmation-warning-modal {
+          background: #ffffff;
+          width: 100%;
+          max-width: 580px;
+          border-radius: 12px;
+          box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+          border: 1px solid #e2e8f0;
+          overflow: hidden;
+          animation: modalAppear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalAppear {
+          from { opacity: 0; transform: scale(0.96) translateY(8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-header-warning {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1.25rem 1.5rem;
+          border-bottom: 1px solid #f1f5f9;
+        }
+        .warning-icon-badge {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: #fef3c7;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .warning-modal-titles {
+          flex: 1;
+        }
+        .warning-modal-title {
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0;
+        }
+        .warning-modal-sub {
+          font-size: 0.82rem;
+          color: #64748b;
+          display: block;
+          margin-top: 0.15rem;
+        }
+        .warning-modal-sub strong {
+          color: #1e293b;
+        }
+        .btn-modal-close {
+          background: none;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          padding: 0.35rem;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .btn-modal-close:hover {
+          background: #f1f5f9;
+          color: #0f172a;
+        }
+        .warning-modal-body {
+          padding: 1.25rem 1.5rem;
+        }
+        .warning-notice-banner {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.65rem;
+          background: #fffbeb;
+          border: 1px solid #fde68a;
+          border-radius: 8px;
+          padding: 0.85rem 1rem;
+          color: #92400e;
+          font-size: 0.85rem;
+          line-height: 1.5;
+          margin-bottom: 1.25rem;
+        }
+        .notice-icon {
+          flex-shrink: 0;
+          margin-top: 0.1rem;
+          color: #d97706;
+        }
+        .task-stats-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-bottom: 1.25rem;
+        }
+        .task-stat-box {
+          padding: 0.85rem 1rem;
+          border-radius: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        .stat-completed {
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          color: #166534;
+        }
+        .stat-incomplete {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #991b1b;
+        }
+        .stat-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .stat-value {
+          font-size: 1.4rem;
+          font-weight: 900;
+        }
+        .incomplete-tasks-section {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 1rem;
+        }
+        .incomplete-tasks-heading {
+          font-size: 0.8rem;
+          font-weight: 800;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin: 0 0 0.75rem 0;
+        }
+        .incomplete-tasks-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          max-height: 180px;
+          overflow-y: auto;
+        }
+        .incomplete-task-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.65rem 0.85rem;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 6px;
+          gap: 0.75rem;
+        }
+        .incomplete-task-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+        }
+        .task-name {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #0f172a;
+        }
+        .task-reason-text {
+          font-size: 0.75rem;
+          color: #64748b;
+        }
+        .task-status-tag {
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 0.2rem 0.55rem;
+          border-radius: 4px;
+          white-space: nowrap;
+        }
+        .task-status-tag.status-missing,
+        .task-status-tag.status-rejected {
+          background: #fee2e2;
+          color: #b91c1c;
+        }
+        .task-status-tag.status-pending-review,
+        .task-status-tag.status-needs-revision,
+        .task-status-tag.status-under-review {
+          background: #fef3c7;
+          color: #b45309;
+        }
+        .no-tasks-text {
+          font-size: 0.85rem;
+          color: #64748b;
+          font-style: italic;
+        }
+        .warning-modal-footer {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 0.75rem;
+          padding: 1.1rem 1.5rem;
+          background: #f8fafc;
+          border-top: 1px solid #f1f5f9;
+        }
+        .btn-warning-confirm {
+          background: linear-gradient(135deg, #d97706, #b45309);
+          color: #ffffff;
+          border: none;
+          padding: 0.6rem 1.25rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.85rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn-warning-confirm:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+        }
+        .btn-warning-confirm:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .spinner-icon-sm {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
           .admin-container { padding: 2rem 0.85rem; }
           .admin-header { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.35rem 1rem; }
@@ -255,6 +678,7 @@ export default function AdminApplications() {
           .filter-select-wrapper { width: 100%; }
           .table-card { padding: 0.75rem; }
           .payment-details-panel { grid-template-columns: 1fr; gap: 0.65rem; padding: 0.85rem 1rem; }
+          .task-stats-row { grid-template-columns: 1fr; }
         }
       `}</style>
     </div>

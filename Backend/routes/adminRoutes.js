@@ -15,10 +15,11 @@ const { generateCertificateId, generateVerificationId, getNextCertificateSequenc
 const { generateCertificatePdf, TEMPLATE_VERSION } = require("../utils/generatePdf");
 const { sendEmail, templates, getEmailLog } = require("../utils/sendEmail");
 const { getSpreadsheetPath, appendToSpreadsheet, ALLOWED_SHEETS } = require("../utils/spreadsheetStorage");
-const { canIssueCertificate, getRequiredTaskCount } = require("../utils/certificateEligibility");
+const { canIssueCertificate, getRequiredTaskCount, checkApplicationTaskStatus } = require("../utils/certificateEligibility");
 const { resolveApplicationDetails } = require("../utils/documentVerification");
 const { supportTargetEmail } = require("../utils/emailTargets");
 const Submission = require("../models/Submission");
+const FinalReport = require("../models/FinalReport");
 const { clearCache } = require("../utils/cache");
 
 router.use(protect, adminOnly);
@@ -366,10 +367,80 @@ router.put("/applications/:id/mark-payment", async (req, res) => {
   res.json({ success: true, application, payment });
 });
 
+// Query student internship task & submission status for certificate issuance
+router.get("/applications/:id/task-status", async (req, res) => {
+  const application = await Application.findById(req.params.id)
+    .populate("domain")
+    .populate("duration")
+    .populate("student");
+  if (!application) return res.status(404).json({ message: "Application record not found." });
+
+  const taskStatus = await checkApplicationTaskStatus(application);
+  return res.json({
+    success: true,
+    applicationId: application.applicationId || application._id,
+    studentName: application.studentName || application.student?.fullName || "Student",
+    domainName: application.domain?.name || "Internship Track",
+    ...taskStatus,
+  });
+});
+
+// Update submission status (Approve, Reject, Needs Revision, Under Review)
+router.put("/submissions/:id/status", async (req, res) => {
+  const { status, feedback } = req.body;
+  const update = {};
+  if (status) update.status = status;
+  if (feedback !== undefined) update.feedback = feedback;
+  const submission = await Submission.findByIdAndUpdate(req.params.id, update, { new: true });
+  if (!submission) return res.status(404).json({ message: "Submission not found." });
+  return res.json({ success: true, submission });
+});
+
+// Update final report status
+router.put("/final-reports/:id/status", async (req, res) => {
+  const { status } = req.body;
+  const update = {};
+  if (status) update.status = status;
+  const report = await FinalReport.findByIdAndUpdate(req.params.id, update, { new: true });
+  if (!report) return res.status(404).json({ message: "Final report not found." });
+  return res.json({ success: true, report });
+});
+
 // Admin Direct Certificate Issuance (Instant Issue & Complete)
 router.post("/applications/:id/issue-certificate", async (req, res) => {
   const application = await Application.findById(req.params.id).populate("domain").populate("duration").populate("student");
   if (!application) return res.status(404).json({ message: "Application record not found." });
+
+  // 1. Prevent duplicate certificate issuance if already issued
+  const existingCert = await Certificate.findOne({ application: application._id });
+  if (application.certificateIssued && existingCert && !req.body?.force && !req.body?.reissue) {
+    return res.json({
+      success: true,
+      message: "Certificate has already been issued for this application.",
+      application,
+      certificate: existingCert,
+      alreadyIssued: true,
+    });
+  }
+
+  // 2. Check task completion and approvals
+  const taskStatus = await checkApplicationTaskStatus(application);
+  const allowAnyway = Boolean(req.body?.confirmIncomplete || req.body?.force);
+
+  if (!taskStatus.allCompleted && !allowAnyway) {
+    return res.status(400).json({
+      success: false,
+      requiresConfirmation: true,
+      message: "Student has not completed all required tasks.",
+      taskSummary: {
+        allCompleted: false,
+        totalRequired: taskStatus.totalRequired,
+        completed: taskStatus.completed,
+        incomplete: taskStatus.incomplete,
+        incompleteTasks: taskStatus.incompleteTasks,
+      },
+    });
+  }
 
   // Resolve student User profile if needed to guarantee studentName and collegeName
   let studentUser = application.student;

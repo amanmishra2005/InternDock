@@ -22,6 +22,7 @@ const { sendEmail, templates } = require("../utils/sendEmail");
 const { supportTargetEmail } = require("../utils/emailTargets");
 const { isSampleVerificationLookup, resolveApplicationDetails } = require("../utils/documentVerification");
 const { getCache, setCache } = require("../utils/cache");
+const { isValidGithubUrl, GITHUB_URL_ERROR_MESSAGE } = require("../../shared/submissionValidation");
 
 async function downloadDocument(req, res, Model, label) {
   const isObjectId = mongoose.Types.ObjectId.isValid(req.params.applicationId);
@@ -328,6 +329,10 @@ router.post("/final-report", protect, async (req, res) => {
 
     const studentId = application.student?._id ? application.student._id : application.student;
     if (String(studentId) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+
+    if (rest.githubUrl && !isValidGithubUrl(rest.githubUrl)) {
+      return res.status(400).json({ message: GITHUB_URL_ERROR_MESSAGE });
+    }
 
     const existingReport = await FinalReport.findOne({ application: application._id });
     const report = existingReport

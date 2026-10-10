@@ -7,6 +7,7 @@ const Application = require("../models/Application");
 const Duration = require("../models/Duration");
 const { protect } = require("../middleware/auth");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
+const { isValidGithubUrl, GITHUB_URL_ERROR_MESSAGE } = require("../../shared/submissionValidation");
 
 
 async function findApplicationByIdentifier(identifier) {
@@ -190,6 +191,14 @@ router.post("/:assignmentId/submit", protect, async (req, res) => {
 
     const assignment = await Assignment.findById(req.params.assignmentId);
     if (!assignment) return res.status(404).json({ message: "Assignment not found" });
+
+    // Validate GitHub URL for assignments that require it
+    const requiresGithub = !assignment.submissionType || assignment.submissionType === "github";
+    if (requiresGithub) {
+      if (!isValidGithubUrl(githubUrl)) {
+        return res.status(400).json({ message: GITHUB_URL_ERROR_MESSAGE });
+      }
+    }
 
     const existing = await Submission.findOne({
       application: application._id,

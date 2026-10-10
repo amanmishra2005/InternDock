@@ -18,10 +18,12 @@ import {
   Sparkles,
   Clock,
   ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 import api from "../api/axios";
 import OfferLetterPreview from "../components/OfferLetterPreview";
 import CertificatePreview from "../components/CertificatePreview";
+import { isValidGithubUrl, GITHUB_URL_ERROR_MESSAGE } from "../../../shared/submissionValidation.js";
 
 const PROGRESS_STEPS = [
   "Submitted",
@@ -55,10 +57,20 @@ function WhatsAppIcon({ size = 18, color = "currentColor" }) {
 function AssignmentCardItem({ assignment, submission, onSubmit }) {
   const [githubUrl, setGithubUrl] = useState(submission?.githubUrl || "");
   const [showInstructions, setShowInstructions] = useState(false);
+  const [validationError, setValidationError] = useState("");
+
+  const requiresGithub = !assignment.submissionType || assignment.submissionType === "github";
 
   const handleSub = (e) => {
     e.preventDefault();
-    if (!githubUrl) return;
+    if (requiresGithub) {
+      if (!isValidGithubUrl(githubUrl)) {
+        setValidationError(GITHUB_URL_ERROR_MESSAGE);
+        alert(GITHUB_URL_ERROR_MESSAGE);
+        return;
+      }
+    }
+    setValidationError("");
     onSubmit({ githubUrl });
   };
 
@@ -155,12 +167,32 @@ function AssignmentCardItem({ assignment, submission, onSubmit }) {
             )}
           </label>
           <input
-            className="input-field submission-input"
+            className={`input-field submission-input ${validationError ? "input-invalid" : ""}`}
             placeholder="e.g. https://github.com/username/my-project"
             value={githubUrl}
-            onChange={(e) => setGithubUrl(e.target.value)}
-            required
+            onChange={(e) => {
+              setGithubUrl(e.target.value);
+              if (validationError) setValidationError("");
+            }}
+            required={requiresGithub}
           />
+          {validationError && (
+            <div
+              className="inline-github-error"
+              style={{
+                color: "#dc2626",
+                fontSize: "0.8rem",
+                marginTop: "0.4rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                fontWeight: 600,
+              }}
+            >
+              <AlertCircle size={14} />
+              <span>{validationError}</span>
+            </div>
+          )}
         </div>
 
         <motion.button
@@ -203,6 +235,7 @@ export default function ApplicationWorkspace() {
     workCompleted: "",
     githubUrl: "",
   });
+  const [reportGithubError, setReportGithubError] = useState("");
 
   // Payment QR Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -334,6 +367,13 @@ export default function ApplicationWorkspace() {
 
   const submitFinalReport = async (e) => {
     e.preventDefault();
+    if (reportForm.githubUrl && !isValidGithubUrl(reportForm.githubUrl)) {
+      setReportGithubError(GITHUB_URL_ERROR_MESSAGE);
+      alert(GITHUB_URL_ERROR_MESSAGE);
+      return;
+    }
+    setReportGithubError("");
+
     try {
       await api.post("/documents/final-report", {
         applicationId: id,
@@ -342,7 +382,7 @@ export default function ApplicationWorkspace() {
       setMessage("✓ Final capstone report submitted successfully!");
       load();
     } catch (err) {
-      setMessage("✕ Error submitting final report.");
+      setMessage(`✕ ${err.response?.data?.message || "Error submitting final report."}`);
     }
   };
 
@@ -730,17 +770,35 @@ export default function ApplicationWorkspace() {
                     GitHub Repository / Live Demo URL
                   </label>
                   <input
-                    className="input-field"
+                    className={`input-field ${reportGithubError ? "input-invalid" : ""}`}
                     placeholder="https://github.com/username/repository"
                     value={reportForm.githubUrl}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setReportForm({
                         ...reportForm,
                         githubUrl: e.target.value,
-                      })
-                    }
+                      });
+                      if (reportGithubError) setReportGithubError("");
+                    }}
                     required
                   />
+                  {reportGithubError && (
+                    <div
+                      className="inline-github-error"
+                      style={{
+                        color: "#dc2626",
+                        fontSize: "0.8rem",
+                        marginTop: "0.4rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <AlertCircle size={14} />
+                      <span>{reportGithubError}</span>
+                    </div>
+                  )}
                 </div>
 
                 <motion.button

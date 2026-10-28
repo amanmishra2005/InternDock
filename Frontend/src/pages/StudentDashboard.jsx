@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 import DomainCard from "../components/DomainCard";
 
 const WHATSAPP_COMMUNITY_URL =
@@ -40,13 +41,38 @@ function WhatsAppIcon({ size = 18, color = "currentColor" }) {
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("my-applications");
-  const [applications, setApplications] = useState([]);
-  const [domains, setDomains] = useState([]);
-  const [filteredDomains, setFilteredDomains] = useState([]);
+  const [applications, setApplications] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("cached_student_applications");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [domains, setDomains] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("cached_domains_catalog");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [loadingApp, setLoadingApp] = useState(true);
-  const [loadingDom, setLoadingDom] = useState(true);
+  const [loadingApp, setLoadingApp] = useState(() => {
+    try {
+      return !sessionStorage.getItem("cached_student_applications");
+    } catch {
+      return true;
+    }
+  });
+  const [loadingDom, setLoadingDom] = useState(() => {
+    try {
+      return !sessionStorage.getItem("cached_domains_catalog");
+    } catch {
+      return true;
+    }
+  });
 
   // Custom Domain Request Form State
   const [showCustomModal, setShowCustomModal] = useState(false);
@@ -58,29 +84,34 @@ export default function StudentDashboard() {
   });
   const [customSubmitting, setCustomSubmitting] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    setLoadingApp(true);
     api
       .get("/applications/mine")
-      .then((res) => setApplications(res.data))
+      .then((res) => {
+        setApplications(res.data);
+        try {
+          sessionStorage.setItem("cached_student_applications", JSON.stringify(res.data));
+        } catch (_) {}
+      })
       .catch((err) => console.error("Error loading applications:", err))
       .finally(() => setLoadingApp(false));
 
-    setLoadingDom(true);
     api
       .get("/domains")
       .then((res) => {
         setDomains(res.data);
-        setFilteredDomains(res.data);
+        try {
+          sessionStorage.setItem("cached_domains_catalog", JSON.stringify(res.data));
+        } catch (_) {}
       })
       .catch((err) => console.error("Error loading domains:", err))
       .finally(() => setLoadingDom(false));
   }, []);
 
-  useEffect(() => {
+  const filteredDomains = useMemo(() => {
     let result = domains;
     if (selectedCategory !== "All") {
       result = result.filter((d) => d.category === selectedCategory);
@@ -94,7 +125,7 @@ export default function StudentDashboard() {
           (d.skills && d.skills.some((s) => s.toLowerCase().includes(q))),
       );
     }
-    setFilteredDomains(result);
+    return result;
   }, [search, selectedCategory, domains]);
 
   const categories = [

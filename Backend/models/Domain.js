@@ -18,4 +18,7 @@ const domainSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+domainSchema.index({ isActive: 1, isPersonalized: 1, isPublic: 1 });
+domainSchema.index({ createdBy: 1, isPersonalized: 1 });
+
 module.exports = mongoose.model("Domain", domainSchema);

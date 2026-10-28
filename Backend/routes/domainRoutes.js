@@ -26,46 +26,53 @@ router.get("/", async (req, res) => {
       } catch (e) {}
     }
 
-    // Cache is used for public requests (unauthenticated / other students without custom domains)
-    const publicCacheKey = `domains_public_${search || ""}_${category || ""}`;
-    if (!requestingUserId) {
-      const cached = getCache(publicCacheKey);
-      if (cached) return res.json(cached);
-    }
-
-    let filter;
-    if (requestingUserId) {
-      // Show official 26 domains PLUS this specific student's personalized domains
-      filter = {
-        $or: [
-          { isActive: true, isPersonalized: { $ne: true }, isPublic: { $ne: false } },
-          { isActive: true, isPersonalized: true, createdBy: requestingUserId },
-        ],
-      };
-    } else {
-      // Public / guest view: strictly the 26 fixed official platform domains
-      filter = {
+    // High performance in-memory caching of the official 26 fixed domains
+    const OFFICIAL_DOMAINS_KEY = "domains_official_catalog";
+    let officialDomains = getCache(OFFICIAL_DOMAINS_KEY);
+    if (!officialDomains) {
+      officialDomains = await Domain.find({
         isActive: true,
         isPersonalized: { $ne: true },
         isPublic: { $ne: false },
-      };
+      })
+        .populate("availableDurations")
+        .lean();
+      setCache(OFFICIAL_DOMAINS_KEY, officialDomains, 600);
     }
 
-    if (category && category !== "All") filter.category = category;
-    if (search) filter.name = { $regex: search, $options: "i" };
+    let personalizedDomains = [];
+    if (requestingUserId) {
+      personalizedDomains = await Domain.find({
+        isActive: true,
+        isPersonalized: true,
+        createdBy: requestingUserId,
+      })
+        .populate("availableDurations")
+        .lean();
+    }
 
-    const domains = await Domain.find(filter).populate("availableDurations").lean();
+    let domains = [...personalizedDomains, ...officialDomains];
+
+    if (category && category !== "All") {
+      domains = domains.filter((d) => d.category === category);
+    }
+
+    if (search) {
+      const q = search.toLowerCase();
+      domains = domains.filter(
+        (d) =>
+          d.name?.toLowerCase().includes(q) ||
+          d.description?.toLowerCase().includes(q) ||
+          (Array.isArray(d.skills) && d.skills.some((s) => s.toLowerCase().includes(q)))
+      );
+    }
 
     // Sort: Personalized domains for this student appear at the top, followed by alphabetical order
     domains.sort((a, b) => {
       if (a.isPersonalized && !b.isPersonalized) return -1;
       if (!a.isPersonalized && b.isPersonalized) return 1;
-      return a.name.localeCompare(b.name);
+      return (a.name || "").localeCompare(b.name || "");
     });
-
-    if (!requestingUserId) {
-      setCache(publicCacheKey, domains, 600); // 10 minutes cache
-    }
 
     return res.json(domains);
   } catch (err) {

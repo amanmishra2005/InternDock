@@ -21,7 +21,12 @@ function readCachedUser() {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readCachedUser);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return false;
+    const cached = readCachedUser();
+    return !cached;
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -38,10 +43,15 @@ export function AuthProvider({ children }) {
         setUser(nextUser);
         localStorage.setItem("user", JSON.stringify(nextUser));
       })
-      .catch(() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setUser(null);
+      .catch((err) => {
+        const status = err.response?.status;
+        // Only clear session if backend explicitly rejected the token (401 or 403).
+        // Network glitches, 429 rate limit spikes, or temporary 503s must not log the user out.
+        if (status === 401 || status === 403) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setUser(null);
+        }
       })
       .finally(() => setLoading(false));
   }, []);

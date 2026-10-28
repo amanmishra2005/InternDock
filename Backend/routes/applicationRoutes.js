@@ -10,19 +10,22 @@ const { sendEmail, templates } = require("../utils/sendEmail");
 const { appendToSpreadsheet, readSpreadsheet } = require("../utils/spreadsheetStorage");
 const { supportTargetEmail } = require("../utils/emailTargets");
 
-function serializeApplication(application) {
+function serializeApplication(application, fallbackUser = null) {
   if (!application) return null;
 
-  const studentObj = typeof application.student === "object" && application.student !== null ? application.student : {};
-  const studentName = application.studentName || studentObj.fullName || "";
-  const studentEmail = application.studentEmail || studentObj.email || "";
-  const collegeName = application.collegeName || studentObj.college || "";
+  const studentObj =
+    typeof application.student === "object" && application.student !== null
+      ? application.student
+      : (fallbackUser || {});
+  const studentName = application.studentName || studentObj.fullName || fallbackUser?.fullName || "";
+  const studentEmail = application.studentEmail || studentObj.email || fallbackUser?.email || "";
+  const collegeName = application.collegeName || studentObj.college || fallbackUser?.college || "";
 
   return {
     _id: application._id,
     applicationId: application.applicationId,
     student: {
-      _id: studentObj._id || application.student,
+      _id: studentObj._id || application.student || fallbackUser?._id,
       fullName: studentName,
       email: studentEmail,
       college: collegeName,
@@ -234,11 +237,10 @@ router.get("/mine", protect, async (req, res) => {
   const applications = await Application.find({ student: req.user._id })
     .populate("domain", "name")
     .populate("duration", "label weeks fee")
-    .populate("student", "fullName email college")
     .sort({ createdAt: -1 })
     .lean();
 
-  return res.json(applications.map((app) => serializeApplication(app)));
+  return res.json(applications.map((app) => serializeApplication(app, req.user)));
 });
 
 router.get("/:id", protect, async (req, res) => {

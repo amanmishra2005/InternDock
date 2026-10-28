@@ -29,6 +29,21 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
+    // Warm chunk cache for dashboards in idle time for zero-delay navigation
+    const warmDashboards = () => {
+      import("./pages/StudentDashboard");
+      import("./pages/AdminDashboard");
+    };
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(warmDashboards);
+      } else {
+        setTimeout(warmDashboards, 300);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
     if (!location.hash) return undefined;

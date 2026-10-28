@@ -107,7 +107,6 @@ const corsOptions = {
 
 const app = express();
 const apiLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 500 });
-const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
 const contactLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
 
 app.disable("x-powered-by");
@@ -157,7 +156,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.use("/api", apiLimiter);
-app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/domains", domainRoutes);
 app.use("/api/durations", durationRoutes);
 app.use("/api/applications", applicationRoutes);

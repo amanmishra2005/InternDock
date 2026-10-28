@@ -5,13 +5,31 @@ import { Users, FileText, Star, Zap, GraduationCap, Award, DollarSign, ArrowRigh
 import api from "../api/axios";
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("cached_admin_stats");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem("cached_admin_stats");
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => {
     api
       .get("/admin/stats")
-      .then((res) => setStats(res.data))
+      .then((res) => {
+        setStats(res.data);
+        try {
+          sessionStorage.setItem("cached_admin_stats", JSON.stringify(res.data));
+        } catch (_) {}
+      })
       .catch((err) => console.error("Admin stats error:", err))
       .finally(() => setLoading(false));
   }, []);

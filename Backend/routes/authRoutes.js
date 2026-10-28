@@ -17,6 +17,7 @@ const {
 const { createRateLimiter } = require("../utils/rateLimit");
 
 // Specific rate limiters for anti-spam & abuse defense
+const loginLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 25 });
 const registerLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 8 });
 const verifyEmailLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 15 });
 const resendOtpLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 5 });
@@ -329,7 +330,7 @@ router.post("/resend-verification", resendOtpLimiter, async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const cleanEmail = String(email || "").trim().toLowerCase();

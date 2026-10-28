@@ -6,7 +6,7 @@ const apiBaseUrl =
     ? `${rawApiUrl}/api`
     : rawApiUrl;
 
-const api = axios.create({ baseURL: apiBaseUrl });
+const api = axios.create({ baseURL: apiBaseUrl, timeout: 15000 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");

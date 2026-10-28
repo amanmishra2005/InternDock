@@ -27,7 +27,7 @@ const { resolveApplicationDetails } = require("../utils/documentVerification");
 const { supportTargetEmail } = require("../utils/emailTargets");
 const Submission = require("../models/Submission");
 const FinalReport = require("../models/FinalReport");
-const { clearCache } = require("../utils/cache");
+const { getCache, setCache, clearCache } = require("../utils/cache");
 
 router.use(protect, adminOnly);
 
@@ -46,6 +46,9 @@ router.get("/ledgers/:sheetName", (req, res) => {
 
 // ---- Dashboard overview ----
 router.get("/stats", async (req, res) => {
+  const cached = getCache("admin_overview_stats");
+  if (cached) return res.json(cached);
+
   const [totalStudents, totalApplications, selected, active, completed, revenueAgg, certificatesIssued] = await Promise.all([
     User.countDocuments({ role: "student" }),
     Application.countDocuments(),
@@ -56,7 +59,7 @@ router.get("/stats", async (req, res) => {
     Application.countDocuments({ certificateIssued: true }),
   ]);
 
-  res.json({
+  const stats = {
     totalStudents,
     totalApplications,
     selected,
@@ -64,7 +67,10 @@ router.get("/stats", async (req, res) => {
     completed,
     revenue: revenueAgg[0]?.total || 0,
     certificatesIssued,
-  });
+  };
+
+  setCache("admin_overview_stats", stats, 30);
+  res.json(stats);
 });
 
 // ---- Domain CRUD ----

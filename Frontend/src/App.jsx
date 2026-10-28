@@ -80,6 +80,7 @@ export default function App() {
                 <Route path="/domains" element={<Domains />} />
                 <Route path="/domains/:slug" element={<DomainDetails />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/forgot-password" element={<Login initialMode="forgot" />} />
                 <Route path="/register" element={<Register />} />
 
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />

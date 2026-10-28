@@ -82,6 +82,9 @@ function shouldSkipForResendFreeTier(subject = "") {
   const criticalTokens = [
     "verification code",
     "verify your email",
+    "password reset",
+    "reset your password",
+    "password was changed",
     "new student application",
     "payment confirmation",
     "payment received",
@@ -1382,6 +1385,49 @@ const templates = {
         <p style="color: #000000; font-size: 13.5px; margin-top: 14px;">
           Best regards,<br />
           <strong>InternDock Admissions &amp; Security Team</strong><br />
+          <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">www.interndock.in</a>
+        </p>
+      </div>
+    `,
+  }),
+  passwordReset: (name, code, expiryMinutes = 15) => ({
+    subject: `Password Reset Code: ${escapeHtml(code)} - InternDock`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 28px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; color: #000000;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h2 style="color: #000000; margin-bottom: 6px; font-size: 22px; font-weight: 800;">Reset Your Password</h2>
+          <p style="color: #1e293b; font-size: 14px; margin: 0; font-weight: 600;">InternDock Internship Platform</p>
+        </div>
+        <p style="color: #000000; font-size: 16px; margin-bottom: 12px;">Hi ${escapeHtml(name)},</p>
+        <p style="color: #000000; font-size: 15px; line-height: 1.6;">We received a request to reset your InternDock account password. Please enter the 6-digit security code below to set a new password:</p>
+        
+        <div style="text-align: center; margin: 28px 0;">
+          <div style="display: inline-block; background: #f8fafc; border: 2.5px solid #000000; padding: 16px 36px; border-radius: 10px; letter-spacing: 8px; font-size: 34px; font-weight: 900; color: #000000 !important; font-family: 'Courier New', monospace; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+            ${escapeHtml(code)}
+          </div>
+          <p style="color: #000000; font-size: 13.5px; font-weight: 600; margin-top: 12px;">Valid for <strong>${expiryMinutes} minutes</strong>. Do not share this code with anyone.</p>
+        </div>
+
+        <p style="color: #000000; font-size: 14.5px; line-height: 1.6;">If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+        <p style="color: #000000; font-size: 13.5px; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+          Best regards,<br />
+          <strong>InternDock Admissions &amp; Security Team</strong><br />
+          <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">www.interndock.in</a>
+        </p>
+      </div>
+    `,
+  }),
+  passwordChanged: (name) => ({
+    subject: `Your InternDock Password Was Changed Successfully`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 28px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; color: #000000;">
+        <h2 style="color: #000000; margin-bottom: 6px; font-size: 20px; font-weight: 800;">Password Updated Successfully</h2>
+        <p style="color: #000000; font-size: 15px; margin-top: 16px;">Hi ${escapeHtml(name)},</p>
+        <p style="color: #000000; font-size: 14.5px; line-height: 1.6;">This is a confirmation that your InternDock account password was updated just now. If you made this change, no further action is needed.</p>
+        <p style="color: #ef4444; font-size: 14px; font-weight: 600;">If you did NOT change your password, please contact our support team immediately at <a href="mailto:support.interndock@gmail.com" style="color: #0284c7;">support.interndock@gmail.com</a>.</p>
+        <p style="color: #000000; font-size: 13.5px; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+          Best regards,<br />
+          <strong>InternDock Security Team</strong><br />
           <a href="https://www.interndock.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">www.interndock.in</a>
         </p>
       </div>

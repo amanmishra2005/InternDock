@@ -30,6 +30,12 @@ const userSchema = new mongoose.Schema(
     verificationCodeExpires: { type: Date, select: false },
     verificationAttempts: { type: Number, default: 0, select: false },
     lastVerificationSentAt: { type: Date, select: false },
+
+    // Password reset fields
+    resetPasswordOtp: { type: String, select: false },
+    resetPasswordExpires: { type: Date, select: false },
+    resetPasswordAttempts: { type: Number, default: 0, select: false },
+    lastResetPasswordSentAt: { type: Date, select: false },
   },
   { timestamps: true }
 );

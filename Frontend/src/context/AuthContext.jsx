@@ -85,6 +85,20 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
+  const forgotPassword = async (email) => {
+    const res = await api.post("/auth/forgot-password", { email });
+    return res.data;
+  };
+
+  const resetPassword = async (payload) => {
+    const res = await api.post("/auth/reset-password", payload);
+    if (res.data.token && res.data.user) {
+      localStorage.setItem("token", res.data.token);
+      persistUser(res.data.user);
+    }
+    return res.data;
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -101,6 +115,8 @@ export function AuthProvider({ children }) {
         register,
         verifyEmail,
         resendVerification,
+        forgotPassword,
+        resetPassword,
         logout,
       }}
     >

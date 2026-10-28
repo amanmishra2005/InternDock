@@ -20,6 +20,8 @@ const { createRateLimiter } = require("../utils/rateLimit");
 const registerLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 8 });
 const verifyEmailLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 15 });
 const resendOtpLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 5 });
+const forgotPasswordLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 6 });
+const resetPasswordLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
 
 function signToken(user) {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
@@ -34,6 +36,10 @@ function sanitize(user) {
   delete obj.verificationCodeExpires;
   delete obj.verificationAttempts;
   delete obj.lastVerificationSentAt;
+  delete obj.resetPasswordOtp;
+  delete obj.resetPasswordExpires;
+  delete obj.resetPasswordAttempts;
+  delete obj.lastResetPasswordSentAt;
   return obj;
 }
 
@@ -352,6 +358,155 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ message: "Unable to sign in." });
+  }
+});
+
+// POST /api/auth/forgot-password
+// Generates 6-digit password reset OTP and dispatches to candidate email
+router.post("/forgot-password", forgotPasswordLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = String(email || "").trim().toLowerCase();
+
+    if (!cleanEmail) {
+      return res.status(400).json({ message: "Email address is required." });
+    }
+
+    const user = await User.findOne({ email: cleanEmail })
+      .select("+resetPasswordOtp +resetPasswordExpires +resetPasswordAttempts +lastResetPasswordSentAt");
+
+    if (!user) {
+      return res.status(404).json({ message: "No account found with this email address. Please verify your email or sign up." });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: "Your account has been deactivated. Please contact support." });
+    }
+
+    const cooldown = canResendOtp(user.lastResetPasswordSentAt);
+    if (!cooldown.allowed) {
+      return res.status(429).json({ message: cooldown.message });
+    }
+
+    const otp = generateOtp();
+    user.resetPasswordOtp = hashOtp(otp);
+    user.resetPasswordExpires = getOtpExpirationDate();
+    user.resetPasswordAttempts = 0;
+    user.lastResetPasswordSentAt = new Date();
+    await user.save();
+
+    const template = templates.passwordReset(user.fullName, otp, OTP_EXPIRY_MINUTES);
+    console.log(`\n============================================================`);
+    console.log(`[PASSWORD RESET OTP CODE GENERATED]`);
+    console.log(`User: ${user.fullName} <${user.email}>`);
+    console.log(`6-Digit Reset Code: ${otp}`);
+    console.log(`Valid for: ${OTP_EXPIRY_MINUTES} minutes`);
+    console.log(`============================================================\n`);
+
+    const mailRes = await sendEmail({ to: user.email, replyTo: "support.interndock@gmail.com", ...template });
+    if (mailRes?.success) {
+      console.log(`[PASSWORD RESET EMAIL SENT] Delivered to ${user.email} (ID: ${mailRes.messageId})`);
+    } else {
+      console.warn(`[PASSWORD RESET EMAIL NOTICE] Delivery pending for ${user.email}: ${mailRes?.error}`);
+    }
+
+    return res.json({
+      success: true,
+      message: mailRes?.success
+        ? `A 6-digit password reset code has been sent to ${cleanEmail}.`
+        : `A 6-digit password reset code was generated! Please check your inbox or Spam/Promotions folder.`,
+      email: cleanEmail,
+      emailDelivered: Boolean(mailRes?.success),
+    });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({ message: "Unable to process password reset request. Please try again." });
+  }
+});
+
+// POST /api/auth/reset-password
+// Validates 6-digit OTP code and updates account password
+router.post("/reset-password", resetPasswordLimiter, async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const cleanCode = String(code || "").trim();
+    const cleanPassword = String(newPassword || "").trim();
+
+    if (!cleanEmail || !cleanCode || !cleanPassword) {
+      return res.status(400).json({ message: "Email, reset code, and new password are required." });
+    }
+
+    if (!/^\d{6}$/.test(cleanCode)) {
+      return res.status(400).json({ message: "Please enter a valid 6-digit numerical code." });
+    }
+
+    if (cleanPassword.length < 8) {
+      return res.status(400).json({ message: "New password must be at least 8 characters long." });
+    }
+
+    const user = await User.findOne({ email: cleanEmail })
+      .select("+password +resetPasswordOtp +resetPasswordExpires +resetPasswordAttempts");
+
+    if (!user) {
+      return res.status(404).json({ message: "No account found with this email address." });
+    }
+
+    if (!user.resetPasswordOtp) {
+      return res.status(400).json({ message: "No active password reset request found. Please request a new code." });
+    }
+
+    // Lockout check
+    if ((user.resetPasswordAttempts || 0) >= MAX_VERIFICATION_ATTEMPTS) {
+      return res.status(400).json({
+        message: "Too many incorrect attempts. Please request a new password reset code.",
+      });
+    }
+
+    // Expiration check
+    if (!user.resetPasswordExpires || new Date() > new Date(user.resetPasswordExpires)) {
+      return res.status(400).json({
+        message: "Password reset code has expired. Please request a new one.",
+      });
+    }
+
+    // Verify OTP hash
+    const inputHash = hashOtp(cleanCode);
+    if (inputHash !== user.resetPasswordOtp) {
+      user.resetPasswordAttempts = (user.resetPasswordAttempts || 0) + 1;
+      await user.save();
+      const remaining = Math.max(0, MAX_VERIFICATION_ATTEMPTS - user.resetPasswordAttempts);
+      return res.status(400).json({
+        message: remaining > 0
+          ? `Invalid reset code. ${remaining} attempt(s) remaining.`
+          : "Too many incorrect attempts. Please request a new password reset code.",
+      });
+    }
+
+    // Success: Update Password
+    user.password = cleanPassword; // Pre-save hook hashes it
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordExpires = undefined;
+    user.resetPasswordAttempts = 0;
+    user.lastResetPasswordSentAt = undefined;
+    user.isVerified = true; // Email possession confirmed
+    await user.save();
+
+    console.log(`[PASSWORD RESET SUCCESS] User ${user.email} successfully updated their password.`);
+
+    // Dispatch confirmation email in background
+    const changedTemplate = templates.passwordChanged(user.fullName);
+    sendEmail({ to: user.email, replyTo: "support.interndock@gmail.com", ...changedTemplate }).catch(() => {});
+
+    return res.json({
+      success: true,
+      message: "Your password has been reset successfully! You can now log in.",
+      user: sanitize(user),
+      token: signToken(user),
+    });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    return res.status(500).json({ message: "Error resetting password. Please try again." });
   }
 });
 

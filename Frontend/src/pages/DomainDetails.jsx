@@ -138,15 +138,15 @@ export default function DomainDetails() {
 
           <div className="duration-perks-box">
             <div className="perk-row">
-              <FileText className="perk-icon" size={16} color="#2a7da0" />
+              <FileText className="perk-icon" size={15} color="#2a7da0" />
               <span>Official Selection / Offer Letter issued immediately</span>
             </div>
             <div className="perk-row">
-              <Award className="perk-icon" size={16} color="#a855f7" />
+              <Award className="perk-icon" size={15} color="#6b5fa0" />
               <span>Cryptographically verified Completion Certificate</span>
             </div>
             <div className="perk-row">
-              <Briefcase className="perk-icon" size={16} color="#34d399" />
+              <Briefcase className="perk-icon" size={15} color="#2d7a5f" />
               <span>Downloadable, shareable PDF certificate</span>
             </div>
           </div>
@@ -209,46 +209,181 @@ export default function DomainDetails() {
       </div>
 
       <style>{`
-        .domain-detail-container { padding: 3.5rem 1.5rem; }
-        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: #5a6480 !important; margin-bottom: 1.5rem; font-weight: 700; transition: color 0.2s ease; text-decoration: none; }
-        .back-link:hover, .back-link:focus, .back-link:active, .back-link:visited { color: #3b3870 !important; text-decoration: none; }
-        .domain-detail-hero { padding: 3rem; background: #ffffff !important; border: 1px solid #c8cedf !important; border-radius: var(--radius-lg); }
-        .hero-top-info { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .domain-title { font-size: 2.8rem; font-weight: 900; margin-bottom: 1rem; color: #1a1f35 !important; }
-        .domain-desc { font-size: 1.15rem; color: #5a6480 !important; max-width: 820px; margin-bottom: 2rem; line-height: 1.6; }
-        .skills-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.75rem; }
-        .skill-tag-pill { display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(96, 101, 168, 0.1); border: 1px solid rgba(96, 101, 168, 0.25); color: #4a4580 !important; padding: 0.4rem 0.85rem; border-radius: var(--radius-full); font-weight: 700; font-size: 0.875rem; }
-        .pricing-panel, .curriculum-panel { padding: 2.5rem; background: #ffffff !important; border: 1px solid #c8cedf !important; border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04); }
-        .pricing-panel h2, .curriculum-panel h2 { color: #1a1f35 !important; font-weight: 800; }
-        .pricing-subtitle { color: #5a6480 !important; font-size: 0.95rem; margin-bottom: 1.5rem; }
-        .durations-table { display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem; }
-        .duration-row { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 1.35rem; background: #f6f7fb; border: 2px solid #dde1ee; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s ease; }
-        .duration-row:hover { border-color: #6065a8; background: rgba(96, 101, 168, 0.03); }
-        .duration-row.active-duration-row { border-color: #4a4580 !important; background: rgba(74, 69, 128, 0.08) !important; box-shadow: 0 0 0 1px #4a4580; }
-        .radio-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #94a3b8; background: #ffffff; flex-shrink: 0; transition: all 0.2s; }
-        .radio-dot.checked { border-color: #4a4580; background: #4a4580; box-shadow: inset 0 0 0 3px #ffffff; }
-        .dur-weeks { display: block; font-weight: 800; font-size: 1.05rem; color: #1a1f35 !important; }
-        .dur-note { font-size: 0.825rem; color: #5a6480 !important; }
-        .dur-price { font-size: 1.4rem; font-weight: 900; color: #2a7da0 !important; }
-        .duration-perks-box { display: flex; flex-direction: column; gap: 0.65rem; background: #eef0f6; padding: 1.1rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid #dde1ee; }
-        .perk-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #3a4255 !important; font-weight: 600; }
-        .roadmap-timeline { display: flex; flex-direction: column; gap: 1.75rem; margin-top: 1.5rem; position: relative; }
-        .timeline-item { display: flex; gap: 1.25rem; }
-        .step-num { font-weight: 800; font-size: 0.875rem; color: #4a4580 !important; background: rgba(74, 69, 128, 0.1); padding: 0.35rem 0.75rem; border-radius: var(--radius-full); height: fit-content; flex-shrink: 0; }
-        .timeline-item h4 { font-size: 1.05rem; font-weight: 700; color: #1a1f35 !important; margin-bottom: 0.25rem; }
-        .timeline-item p { font-size: 0.875rem; color: #5a6480 !important; line-height: 1.5; }
-        @media (max-width: 640px) {
-          .domain-detail-container { padding: 2rem 0.85rem; }
-          .domain-detail-hero { padding: 1.35rem 1rem; border-radius: var(--radius-md); }
-          .domain-title { font-size: clamp(1.75rem, 6.5vw, 2.3rem); margin-bottom: 0.75rem; }
-          .domain-desc { font-size: 0.95rem; margin-bottom: 1.5rem; }
-          .pricing-panel, .curriculum-panel { padding: 1.35rem 1rem; border-radius: var(--radius-md); }
+        /* ── Page shell ── */
+        .domain-detail-container {
+          padding: 3rem 0 5rem;
+        }
+        .back-link {
+          display: inline-flex; align-items: center; gap: 0.4rem;
+          color: #5a6480 !important; margin-bottom: 1.75rem;
+          font-size: 0.9rem; font-weight: 600;
+          transition: color 0.2s ease; text-decoration: none;
+        }
+        .back-link:hover { color: #4a4580 !important; }
+
+        /* ── Hero panel ── */
+        .domain-detail-hero {
+          padding: 2.75rem 3rem;
+          background: #ffffff !important;
+          border: 1px solid #dde1ee !important;
+          border-radius: var(--radius-lg);
+          box-shadow: 0 2px 16px rgba(20,25,50,0.05);
+          margin-bottom: 2rem;
+        }
+        .hero-top-info { display: flex; gap: 0.65rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
+        .domain-title {
+          font-size: 2.6rem; font-weight: 900;
+          color: #1a1f35 !important;
+          letter-spacing: -0.03em; line-height: 1.15;
+          margin-bottom: 0.85rem;
+        }
+        .domain-desc {
+          font-size: 1.08rem; color: #5a6480 !important;
+          max-width: 820px; line-height: 1.65;
+          margin-bottom: 1.75rem;
+        }
+        .skills-section h3 {
+          font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+          letter-spacing: 0.06em; color: #8e97b0; margin-bottom: 0.65rem;
+        }
+        .skills-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .skill-tag-pill {
+          display: inline-flex; align-items: center; gap: 0.35rem;
+          background: #f0f1f8; border: 1px solid #c8cedf;
+          color: #4a4580 !important; padding: 0.35rem 0.8rem;
+          border-radius: var(--radius-full); font-weight: 600; font-size: 0.82rem;
+          transition: background 0.15s;
+        }
+        .skill-tag-pill:hover { background: #e4e6f4; }
+
+        /* ── Two-column grid ── */
+        .detail-content-grid { gap: 1.75rem; }
+
+        /* ── Pricing / Duration panel ── */
+        .pricing-panel {
+          padding: 2rem 2.25rem;
+          background: #ffffff !important;
+          border: 1px solid #dde1ee !important;
+          border-radius: var(--radius-md);
+          box-shadow: 0 2px 12px rgba(20,25,50,0.04);
+        }
+        .pricing-panel h2 {
+          color: #1a1f35 !important; font-weight: 800;
+          font-size: 1.5rem; margin: 0.65rem 0 0.35rem;
+        }
+        .pricing-subtitle { color: #8e97b0 !important; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5; }
+
+        /* Duration rows */
+        .durations-table { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem; }
+        .duration-row {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 1rem 1.25rem;
+          background: #f8f9fc;
+          border: 1.5px solid #dde1ee;
+          border-radius: var(--radius-sm);
+          cursor: pointer; transition: all 0.18s ease;
+        }
+        .duration-row:hover {
+          border-color: #9095c4;
+          background: #ffffff;
+          box-shadow: 0 2px 8px rgba(74,69,128,0.07);
+        }
+        .duration-row.active-duration-row {
+          border-color: #4a4580 !important;
+          background: #ffffff !important;
+          box-shadow: 0 0 0 2.5px rgba(74,69,128,0.15), 0 4px 14px rgba(74,69,128,0.08) !important;
+        }
+        .radio-dot {
+          width: 17px; height: 17px; border-radius: 50%;
+          border: 2px solid #b8bed8; background: #ffffff;
+          flex-shrink: 0; transition: all 0.18s;
+        }
+        .radio-dot.checked {
+          border-color: #4a4580; background: #4a4580;
+          box-shadow: inset 0 0 0 3px #ffffff;
+        }
+        .dur-weeks { display: block; font-weight: 700; font-size: 1rem; color: #1a1f35 !important; }
+        .dur-note { font-size: 0.78rem; color: #8e97b0 !important; margin-top: 0.1rem; }
+        .dur-price { font-size: 1.3rem; font-weight: 800; color: #4a4580 !important; letter-spacing: -0.02em; }
+
+        /* Perks box */
+        .duration-perks-box {
+          display: flex; flex-direction: column; gap: 0.6rem;
+          background: #f4f5fb; padding: 1rem 1.15rem;
+          border-radius: var(--radius-sm); border: 1px solid #dde1ee;
+          margin-bottom: 0.25rem;
+        }
+        .perk-row { display: flex; align-items: center; gap: 0.55rem; font-size: 0.84rem; color: #3a4255 !important; font-weight: 500; }
+
+        /* Apply CTA */
+        .pricing-panel .btn-lg {
+          margin-top: 1.5rem !important;
+          padding: 1rem 1.5rem !important;
+          font-size: 1rem !important; font-weight: 700 !important;
+          letter-spacing: 0.01em;
+          border-radius: var(--radius-sm) !important;
+          box-shadow: 0 6px 20px rgba(74,69,128,0.22) !important;
+        }
+
+        /* ── Curriculum panel ── */
+        .curriculum-panel {
+          padding: 2rem 2.25rem;
+          background: #ffffff !important;
+          border: 1px solid #dde1ee !important;
+          border-radius: var(--radius-md);
+          box-shadow: 0 2px 12px rgba(20,25,50,0.04);
+        }
+        .curriculum-panel h2 {
+          color: #1a1f35 !important; font-weight: 800;
+          font-size: 1.4rem; margin-bottom: 0.25rem;
+        }
+        .roadmap-timeline {
+          display: flex; flex-direction: column; gap: 0;
+          margin-top: 1.5rem; position: relative;
+        }
+        .roadmap-timeline::before {
+          content: ''; position: absolute;
+          left: 2.1rem; top: 0.5rem; bottom: 0.5rem; width: 2px;
+          background: linear-gradient(180deg, #dde1ee 0%, transparent 100%);
+          border-radius: 2px;
+        }
+        .timeline-item {
+          display: flex; gap: 1.25rem;
+          padding: 1.1rem 0;
+          border-bottom: 1px solid #f0f1f8;
+          position: relative;
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .step-num {
+          font-weight: 700; font-size: 0.72rem;
+          color: #4a4580 !important;
+          background: #edeef8; border: 1px solid #c8cedf;
+          padding: 0.3rem 0.6rem; border-radius: var(--radius-full);
+          height: fit-content; flex-shrink: 0; min-width: 3.5rem;
+          text-align: center; letter-spacing: 0.03em;
+          position: relative; z-index: 1;
+        }
+        .timeline-item h4 {
+          font-size: 0.98rem; font-weight: 700;
+          color: #1a1f35 !important; margin-bottom: 0.3rem;
+        }
+        .timeline-item p { font-size: 0.84rem; color: #5a6480 !important; line-height: 1.55; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+          .domain-detail-hero { padding: 1.5rem 1.25rem; border-radius: var(--radius-md); }
+          .domain-title { font-size: clamp(1.75rem, 6vw, 2.2rem); }
+          .domain-desc { font-size: 0.95rem; }
+          .pricing-panel, .curriculum-panel { padding: 1.5rem 1.25rem; }
           .detail-content-grid { gap: 1.25rem; }
-          .duration-row { padding: 0.95rem 1rem; }
-          .pricing-panel .btn-lg { white-space: normal; text-align: center; line-height: 1.35; padding: 0.85rem 1rem; font-size: 0.92rem; }
+        }
+        @media (max-width: 480px) {
+          .domain-detail-container { padding: 2rem 0; }
+          .duration-row { padding: 0.85rem 1rem; }
+          .pricing-panel .btn-lg { white-space: normal; text-align: center; line-height: 1.4; }
         }
         @media (max-width: 380px) {
-          .duration-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+          .duration-row { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
         }
       `}</style>
     </div>

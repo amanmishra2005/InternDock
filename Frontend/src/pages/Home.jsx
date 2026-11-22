@@ -51,7 +51,7 @@ export default function Home() {
         setDomains(JSON.parse(cached));
         setLoading(false);
       }
-    } catch (_) {}
+    } catch (_) { }
 
     api
       .get("/domains")
@@ -59,7 +59,7 @@ export default function Home() {
         setDomains(res.data);
         try {
           sessionStorage.setItem("cached_domains_catalog", JSON.stringify(res.data));
-        } catch (_) {}
+        } catch (_) { }
       })
       .catch((err) => console.error("Error fetching domains:", err))
       .finally(() => setLoading(false));
@@ -107,7 +107,7 @@ export default function Home() {
             >
               <span className="pulse-dot"></span>
               <Sparkles size={14} />
-              <span>2026 Cohort Open • All Streams Welcome</span>
+              <span>2027 Cohort Open • All Streams Welcome</span>
             </motion.div>
 
             <h1 className="hero-heading">

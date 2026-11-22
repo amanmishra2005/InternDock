@@ -23,7 +23,6 @@ export default defineConfig(({ mode }) => ({
           "vendor-react": ["react", "react-dom", "react-router-dom"],
           "vendor-motion": ["framer-motion"],
           "vendor-icons": ["lucide-react"],
-          "vendor-pdf": ["html2pdf.js"],
         },
       },
     },

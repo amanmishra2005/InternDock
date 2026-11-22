@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import {
   Sparkles,
   Plus,
@@ -13,6 +14,11 @@ import {
   Clock,
   CheckCircle2,
   ExternalLink,
+  Zap,
+  ShieldCheck,
+  Code2,
+  GraduationCap,
+  Compass,
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -86,6 +92,40 @@ export default function StudentDashboard() {
 
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [showWelcomeModal, setShowWelcomeModal] = useState(() => {
+    try {
+      const isWelcomeParam = searchParams.get("welcome") === "winter";
+      const isJustRegistered = sessionStorage.getItem("just_registered") === "true";
+      return Boolean(isWelcomeParam || isJustRegistered);
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (showWelcomeModal) {
+      try {
+        confetti({
+          particleCount: 90,
+          spread: 75,
+          origin: { y: 0.55 },
+        });
+      } catch (_) {}
+    }
+  }, [showWelcomeModal]);
+
+  const handleCloseWelcome = () => {
+    setShowWelcomeModal(false);
+    try {
+      sessionStorage.removeItem("just_registered");
+      if (searchParams.get("welcome")) {
+        searchParams.delete("welcome");
+        setSearchParams(searchParams, { replace: true });
+      }
+    } catch (_) {}
+  };
 
   useEffect(() => {
     api
@@ -110,6 +150,44 @@ export default function StudentDashboard() {
       .catch((err) => console.error("Error loading domains:", err))
       .finally(() => setLoadingDom(false));
   }, []);
+
+  // Top featured winter internship tracks for 1-click application
+  const featuredWinterTracks = useMemo(() => {
+    if (!domains || domains.length === 0) return [];
+    const priorityKeywords = [
+      "full-stack",
+      "web",
+      "machine-learning",
+      "ai",
+      "python",
+      "cybersecurity",
+      "cloud",
+      "data-science",
+      "ui-ux",
+    ];
+    const picked = [];
+
+    // Find priority tracks
+    priorityKeywords.forEach((kw) => {
+      const match = domains.find(
+        (d) =>
+          !d.isPersonalized &&
+          (d.slug?.toLowerCase().includes(kw) || d.name?.toLowerCase().includes(kw)),
+      );
+      if (match && !picked.some((p) => p._id === match._id)) {
+        picked.push(match);
+      }
+    });
+
+    // Fill remaining up to 6
+    domains.forEach((d) => {
+      if (picked.length < 6 && !d.isPersonalized && !picked.some((p) => p._id === d._id)) {
+        picked.push(d);
+      }
+    });
+
+    return picked.slice(0, 6);
+  }, [domains]);
 
   const filteredDomains = useMemo(() => {
     let result = domains;
@@ -218,12 +296,13 @@ export default function StudentDashboard() {
           >
             <span className="pulse-dot"></span>
             <Sparkles size={14} />
-            <span>Student Workspace Dashboard</span>
+            <span>❄️ Official Winter Internship Cohort 2024–2025</span>
           </motion.div>
           <h1>Welcome back, {user?.fullName || "Intern"}!</h1>
           <p>
-            Manage your internship applications, complete weekly capstone
-            milestones, and explore new tech domains.
+            {applications.length === 0
+              ? "Complete your Winter Internship application to receive your guaranteed Selection Offer Letter and unlock project milestones."
+              : "Manage your active internship applications, complete weekly capstone milestones, and track your verified credentials."}
           </p>
         </div>
 
@@ -233,7 +312,7 @@ export default function StudentDashboard() {
           onClick={() => setActiveTab("explore-domains")}
           className="btn btn-primary btn-glow"
         >
-          <span>Browse Internship Domains</span>
+          <span>{applications.length === 0 ? "Apply for Winter Tracks" : "Browse Internship Domains"}</span>
           <ArrowRight size={16} />
         </motion.button>
       </motion.div>
@@ -266,33 +345,132 @@ export default function StudentDashboard() {
               <p>Loading active internship applications...</p>
             </div>
           ) : applications.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="glass-panel empty-dashboard-card text-center"
-              style={{ padding: "4rem 2rem" }}
-            >
-              <Folder
-                size={48}
-                color="#818cf8"
-                style={{ marginBottom: "1rem" }}
-              />
-              <h3>No Active Internships Yet</h3>
-              <p style={{ color: "var(--text-muted)", marginTop: "0.5rem" }}>
-                You haven't applied for any internship tracks yet. Explore our
-                domain catalog to get started.
-              </p>
-              <button
-                onClick={() => setShowCustomModal(true)}
-                className="btn btn-primary btn-glow"
-                style={{ marginTop: "1.5rem" }}
+            <div className="winter-empty-state-wrapper">
+              {/* Winter Cohort Hero Banner */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-panel winter-cohort-cta-card"
               >
-                <Plus size={16} />
-                <span>Add Specified Domain</span>
-              </button>
-            </motion.div>
+                <div className="winter-cta-header">
+                  <div className="badge-pill badge-pill-cyan" style={{ alignSelf: "flex-start", marginBottom: "0.5rem" }}>
+                    <span className="pulse-dot"></span>
+                    <Sparkles size={14} />
+                    <span>❄️ Winter Internship Cohort 2024–2025 Applications Live</span>
+                  </div>
+                  <h2>Lock In Your Winter Internship Track in 60 Seconds</h2>
+                  <p>
+                    Your account is verified and ready! Choose a high-growth tech track below, pick your schedule, and receive your guaranteed Selection Offer Letter instantly with recruiter ledger verification.
+                  </p>
+
+                  <div className="winter-perks-row">
+                    <div className="winter-perk-item">
+                      <Zap size={16} color="#d97706" />
+                      <span>Instant Selection Offer Letter</span>
+                    </div>
+                    <div className="winter-perk-item">
+                      <Award size={16} color="#4f46e5" />
+                      <span>Verifiable Certificate</span>
+                    </div>
+                    <div className="winter-perk-item">
+                      <Code2 size={16} color="#059669" />
+                      <span>Weekly Practical Capstones</span>
+                    </div>
+                    <div className="winter-perk-item">
+                      <Clock size={16} color="#0284c7" />
+                      <span>Self-Paced 4–24 Weeks</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Featured Winter Tracks Grid */}
+              <div className="winter-tracks-section">
+                <div className="winter-tracks-header">
+                  <div>
+                    <h3>Recommended Winter Internship Tracks</h3>
+                    <p>Select your preferred track to start your application immediately.</p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("explore-domains")}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    <span>View All 25+ Tracks</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+
+                <div className="grid-3 featured-winter-grid">
+                  {featuredWinterTracks.map((dom) => (
+                    <motion.div
+                      key={dom._id}
+                      whileHover={{ y: -5 }}
+                      className="glass-card winter-track-card"
+                    >
+                      <div className="winter-track-top">
+                        <span className="category-pill">{dom.category || "Development"}</span>
+                        <span className="winter-badge-mini">❄️ Winter 2024–25</span>
+                      </div>
+                      <h4 className="winter-track-name">{dom.name}</h4>
+                      <p className="winter-track-desc">
+                        {dom.description ? `${dom.description.slice(0, 110)}...` : "Build real-world projects and earn verified credentials."}
+                      </p>
+                      <div className="winter-skills-chips">
+                        {dom.skills?.slice(0, 3).map((s) => (
+                          <span key={s} className="skill-chip">{s}</span>
+                        ))}
+                      </div>
+                      <div className="winter-card-footer">
+                        <div className="fee-info">
+                          <span className="fee-label">From</span>
+                          <span className="fee-val">₹{dom.availableDurations?.[0]?.fee || 199}</span>
+                        </div>
+                        <Link to={`/apply/${dom.slug}`}>
+                          <motion.button
+                            whileHover={{ scale: 1.04 }}
+                            whileTap={{ scale: 0.96 }}
+                            className="btn btn-primary btn-sm btn-glow"
+                          >
+                            <span>Apply Now</span>
+                            <ArrowRight size={14} />
+                          </motion.button>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Custom domain small prompt */}
+                <div className="custom-domain-hint-box text-center">
+                  <span>Looking for an unlisted specialization or thesis track?</span>{" "}
+                  <button
+                    onClick={() => setShowCustomModal(true)}
+                    className="link-btn-text"
+                  >
+                    Propose a custom track
+                  </button>
+                </div>
+              </div>
+            </div>
           ) : (
             <>
+              <div className="glass-panel winter-active-banner">
+                <div className="active-banner-left">
+                  <span className="badge-pill badge-pill-cyan" style={{ padding: "0.2rem 0.65rem" }}>
+                    ❄️ Winter Cohort 2024–25 Active
+                  </span>
+                  <span className="active-banner-msg">
+                    Workspace active! Complete weekly milestones to unlock verified certificates.
+                  </span>
+                </div>
+                <button
+                  onClick={() => setActiveTab("explore-domains")}
+                  className="btn btn-secondary btn-sm"
+                >
+                  <Plus size={14} />
+                  <span>Enroll in Another Track</span>
+                </button>
+              </div>
               {applications.some((app) =>
                 ["Selected", "Active", "Completed"].includes(app.status),
               ) && (
@@ -653,6 +831,107 @@ export default function StudentDashboard() {
         )}
       </AnimatePresence>
 
+      {/* Winter Cohort Welcome & Fast-Track Application Modal */}
+      <AnimatePresence>
+        {showWelcomeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="modal-overlay"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 25 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 25 }}
+              className="glass-panel modal-card winter-welcome-modal"
+            >
+              <div className="winter-welcome-header">
+                <div className="badge-pill badge-pill-cyan" style={{ alignSelf: "flex-start" }}>
+                  <Sparkles size={14} />
+                  <span>❄️ Winter Cohort 2024–2025 Enrolling Now</span>
+                </div>
+                <button
+                  onClick={handleCloseWelcome}
+                  className="close-modal-btn"
+                  aria-label="Close modal"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="winter-welcome-body">
+                <h2>🎉 Welcome to InternDock, {user?.fullName || "Candidate"}!</h2>
+                <p className="welcome-intro-text">
+                  Your candidate profile is activated. You are now eligible to enroll in the official <strong>Winter Internship Cohort</strong>. Complete your application in 60 seconds to lock your slot and receive your verified Selection Offer Letter!
+                </p>
+
+                <div className="modal-perks-row">
+                  <div className="modal-perk">
+                    <Zap size={15} color="#d97706" />
+                    <span>Instant Offer Letter</span>
+                  </div>
+                  <div className="modal-perk">
+                    <Award size={15} color="#4f46e5" />
+                    <span>Verifiable Certificate</span>
+                  </div>
+                  <div className="modal-perk">
+                    <Code2 size={15} color="#059669" />
+                    <span>Weekly Capstones</span>
+                  </div>
+                  <div className="modal-perk">
+                    <Clock size={15} color="#0284c7" />
+                    <span>Self-Paced Flexible</span>
+                  </div>
+                </div>
+
+                <div className="modal-top-tracks">
+                  <span className="tracks-label">Select a track to apply now:</span>
+                  <div className="modal-tracks-grid">
+                    {featuredWinterTracks.slice(0, 4).map((track) => (
+                      <Link
+                        key={track._id}
+                        to={`/apply/${track.slug}`}
+                        onClick={handleCloseWelcome}
+                        className="modal-track-card"
+                      >
+                        <div className="modal-track-info">
+                          <strong>{track.name}</strong>
+                          <span>{track.category} • From ₹{track.availableDurations?.[0]?.fee || 199}</span>
+                        </div>
+                        <span className="apply-chip">
+                          Apply <ArrowRight size={13} />
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="modal-actions-dual">
+                  <button
+                    onClick={() => {
+                      handleCloseWelcome();
+                      setActiveTab("explore-domains");
+                    }}
+                    className="btn btn-secondary full-width"
+                  >
+                    <Compass size={15} />
+                    <span>Explore All 25+ Tracks</span>
+                  </button>
+                  <button
+                    onClick={handleCloseWelcome}
+                    className="btn btn-primary btn-glow full-width"
+                  >
+                    <span>View Dashboard</span>
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <style>{`
         .dashboard-container { padding: 3.5rem 1.5rem; }
         .dashboard-welcome-card { display: flex; align-items: center; justify-content: space-between; padding: 2.75rem 3rem; margin-bottom: 2.5rem; }
@@ -806,6 +1085,293 @@ export default function StudentDashboard() {
             width: 100%;
             justify-content: center;
           }
+          .featured-winter-grid {
+            grid-template-columns: 1fr;
+          }
+          .winter-perks-row {
+            flex-direction: column;
+          }
+          .modal-perks-row {
+            grid-template-columns: 1fr;
+          }
+          .modal-actions-dual {
+            flex-direction: column;
+          }
+        }
+
+        /* Winter Cohort Empty State & Application Drive Styles */
+        .winter-empty-state-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
+        }
+        .winter-cohort-cta-card {
+          padding: 2.5rem;
+          background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(2, 132, 199, 0.08) 50%, rgba(124, 58, 237, 0.06) 100%);
+          border: 1.5px solid rgba(79, 70, 229, 0.25);
+          border-radius: var(--radius-md);
+        }
+        .winter-cta-header h2 {
+          font-size: 1.85rem;
+          font-weight: 800;
+          color: #0f172a !important;
+          margin: 0.5rem 0;
+        }
+        .winter-cta-header p {
+          color: #475569 !important;
+          font-size: 1rem;
+          max-width: 720px;
+          line-height: 1.6;
+        }
+        .winter-perks-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.85rem 1.5rem;
+          margin-top: 1.5rem;
+        }
+        .winter-perk-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #1e293b !important;
+          background: #ffffff;
+          padding: 0.4rem 0.9rem;
+          border-radius: var(--radius-full);
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+        .winter-tracks-section {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        .winter-tracks-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-top: 0.5rem;
+        }
+        .winter-tracks-header h3 {
+          font-size: 1.45rem;
+          font-weight: 800;
+          color: #0f172a !important;
+          margin: 0 0 0.25rem 0;
+        }
+        .winter-tracks-header p {
+          color: #64748b !important;
+          font-size: 0.9rem;
+          margin: 0;
+        }
+        .featured-winter-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 1.5rem;
+        }
+        .winter-track-card {
+          padding: 1.75rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          border-radius: var(--radius-md);
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          transition: all 0.25s ease;
+        }
+        .winter-track-card:hover {
+          border-color: #6366f1;
+          box-shadow: 0 10px 25px rgba(99, 102, 241, 0.12);
+        }
+        .winter-track-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.75rem;
+        }
+        .winter-badge-mini {
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #0284c7;
+          background: rgba(2, 132, 199, 0.08);
+          border: 1px solid rgba(2, 132, 199, 0.2);
+          padding: 0.2rem 0.55rem;
+          border-radius: var(--radius-full);
+        }
+        .winter-track-name {
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: #0f172a !important;
+          margin: 0 0 0.5rem 0;
+        }
+        .winter-track-desc {
+          font-size: 0.85rem;
+          color: #64748b !important;
+          line-height: 1.5;
+          margin-bottom: 1rem;
+        }
+        .winter-skills-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.4rem;
+          margin-bottom: 1.25rem;
+        }
+        .winter-card-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-top: 1rem;
+          border-top: 1px solid #f1f5f9;
+        }
+        .fee-info {
+          display: flex;
+          flex-direction: column;
+        }
+        .fee-label {
+          font-size: 0.7rem;
+          color: #64748b;
+          text-transform: uppercase;
+          font-weight: 600;
+        }
+        .fee-val {
+          font-size: 1.15rem;
+          font-weight: 800;
+          color: #0f172a;
+        }
+        .custom-domain-hint-box {
+          padding: 1.25rem;
+          color: #64748b;
+          font-size: 0.9rem;
+        }
+        .link-btn-text {
+          background: none;
+          border: none;
+          color: #4f46e5;
+          font-weight: 700;
+          cursor: pointer;
+          text-decoration: underline;
+          padding: 0;
+        }
+        .winter-active-banner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1rem 1.5rem;
+          margin-bottom: 1.75rem;
+          background: rgba(2, 132, 199, 0.05);
+          border: 1px solid rgba(2, 132, 199, 0.25);
+          border-radius: var(--radius-sm);
+        }
+        .active-banner-left {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        .active-banner-msg {
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+        .winter-welcome-modal {
+          max-width: 620px !important;
+          padding: 2.25rem !important;
+        }
+        .winter-welcome-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+        .winter-welcome-body h2 {
+          font-size: 1.65rem;
+          font-weight: 800;
+          color: #0f172a !important;
+          margin: 0.5rem 0;
+        }
+        .welcome-intro-text {
+          font-size: 0.925rem;
+          color: #475569 !important;
+          line-height: 1.55;
+          margin-bottom: 1.25rem;
+        }
+        .modal-perks-row {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.6rem;
+          margin-bottom: 1.5rem;
+        }
+        .modal-perk {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          padding: 0.5rem 0.75rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: #1e293b;
+        }
+        .modal-top-tracks {
+          margin-bottom: 1.5rem;
+        }
+        .tracks-label {
+          display: block;
+          font-size: 0.825rem;
+          font-weight: 700;
+          color: #475569;
+          margin-bottom: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+        .modal-tracks-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+        .modal-track-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.75rem 1rem;
+          background: #ffffff;
+          border: 1.5px solid #e2e8f0;
+          border-radius: var(--radius-sm);
+          text-decoration: none;
+          transition: all 0.2s ease;
+        }
+        .modal-track-card:hover {
+          border-color: #4f46e5;
+          background: rgba(79, 70, 229, 0.02);
+          transform: translateX(3px);
+        }
+        .modal-track-info {
+          display: flex;
+          flex-direction: column;
+        }
+        .modal-track-info strong {
+          color: #0f172a;
+          font-size: 0.925rem;
+        }
+        .modal-track-info span {
+          color: #64748b;
+          font-size: 0.78rem;
+        }
+        .apply-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          background: #4f46e5;
+          color: #ffffff;
+          font-size: 0.75rem;
+          font-weight: 700;
+          padding: 0.3rem 0.7rem;
+          border-radius: var(--radius-full);
+        }
+        .modal-actions-dual {
+          display: flex;
+          gap: 0.75rem;
+          margin-top: 1rem;
         }
       `}</style>
     </div>

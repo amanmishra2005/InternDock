@@ -130,7 +130,10 @@ export default function Register() {
         setSuccessMsg(res.message || "Verification code sent to your email!");
         setCooldown(60);
       } else {
-        navigate("/dashboard");
+        try {
+          sessionStorage.setItem("just_registered", "true");
+        } catch (_) {}
+        navigate("/dashboard?welcome=winter");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please check your inputs.");
@@ -209,9 +212,12 @@ export default function Register() {
     try {
       const res = await verifyEmail(form.email, cleanCode);
       setSuccessMsg("✓ Email verified successfully! Redirecting to your dashboard...");
+      try {
+        sessionStorage.setItem("just_registered", "true");
+      } catch (_) {}
       setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+        navigate("/dashboard?welcome=winter");
+      }, 900);
     } catch (err) {
       setError(err.response?.data?.message || "Verification failed. Please check your code.");
     } finally {
@@ -253,22 +259,25 @@ export default function Register() {
             className="badge-pill badge-pill-emerald"
           >
             <span className="pulse-dot"></span>
-            <ShieldCheck size={14} />
-            <span>Candidate Verification &amp; Security</span>
+            <Sparkles size={14} />
+            <span>❄️ Winter Internship Cohort 2024–2025 • Fast-Track Applications</span>
           </motion.div>
 
           <h1 className="auth-visual-title">
-            Join <span className="gradient-text">InternDock</span> Internship Platform
+            Join <span className="gradient-text">InternDock</span> Winter Cohort
           </h1>
           <p className="auth-visual-sub">
-            Enroll in hands-on tech internships across 25+ domains, work on real-world capstone projects, and build a cryptographically verified portfolio.
+            Enroll in hands-on tech internships across 25+ domains, receive your official Selection Offer Letter, and complete real-world capstone projects with 1-on-1 mentor feedback.
           </p>
 
           <div className="auth-illustration-box">
             <img
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1000&q=80"
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=650&q=75"
               alt="InternDock Student Tech Cohort"
               className="auth-art-img"
+              loading="lazy"
+              width="500"
+              height="300"
             />
             <motion.div
               animate={{ y: [0, -8, 0] }}

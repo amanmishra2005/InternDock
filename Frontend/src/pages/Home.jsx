@@ -45,10 +45,21 @@ export default function Home() {
   const [previewTab, setPreviewTab] = useState("certificate");
 
   useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem("cached_domains_catalog");
+      if (cached) {
+        setDomains(JSON.parse(cached));
+        setLoading(false);
+      }
+    } catch (_) {}
+
     api
       .get("/domains")
       .then((res) => {
         setDomains(res.data);
+        try {
+          sessionStorage.setItem("cached_domains_catalog", JSON.stringify(res.data));
+        } catch (_) {}
       })
       .catch((err) => console.error("Error fetching domains:", err))
       .finally(() => setLoading(false));
@@ -96,7 +107,7 @@ export default function Home() {
             >
               <span className="pulse-dot"></span>
               <Sparkles size={14} />
-              <span>2026 Cohort Open • All Streams Welcome</span>
+              <span>❄️ Winter Internship Cohort 2024–2025 • Applications Now Live</span>
             </motion.div>
 
             <h1 className="hero-heading">
@@ -107,9 +118,7 @@ export default function Home() {
             </h1>
 
             <p className="hero-subheading">
-              InternDock helps students and graduates from every stream turn
-              focused project work into credible experience, mentor feedback,
-              and verifiable credentials.
+              InternDock's Winter Internship Cohort empowers students and graduates to master high-growth tech tracks, build production capstones, and secure cryptographically verified offer letters and credentials.
             </p>
 
             <div className="hero-cta-group">
@@ -162,9 +171,13 @@ export default function Home() {
           >
             <div className="hero-image-wrapper">
               <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80"
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=75"
                 alt="InternDock Tech Talent Workspace"
                 className="hero-main-img"
+                loading="eager"
+                fetchPriority="high"
+                width="600"
+                height="400"
               />
               <motion.div
                 animate={{ y: [0, -7, 0] }}

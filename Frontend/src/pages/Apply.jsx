@@ -143,14 +143,12 @@ export default function Apply() {
         className="glass-panel apply-card"
       >
         <span className="badge-pill badge-pill-cyan">
-          <ShieldCheck size={14} />
-          <span>Official Selection Record</span>
+          <Sparkles size={14} />
+          <span>❄️ Winter Internship Cohort 2024–2025</span>
         </span>
         <h1 className="apply-title">Apply for {domain.name}</h1>
         <p className="apply-subtitle">
-          Your selected program track duration from domain details is locked
-          below. Submit to generate your official InternDock selection offer
-          letter &amp; workspace access.
+          Submit your application to secure your Winter Cohort placement. Your official Selection Offer Letter and milestone repository access will be generated instantly.
         </p>
 
         <form onSubmit={submit} className="apply-form">

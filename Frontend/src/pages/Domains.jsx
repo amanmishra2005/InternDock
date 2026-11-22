@@ -6,9 +6,29 @@ import DomainCard from "../components/DomainCard";
 import api from "../api/axios";
 
 export default function Domains() {
-  const [domains, setDomains] = useState([]);
-  const [filteredDomains, setFilteredDomains] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [domains, setDomains] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("cached_domains_catalog");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [filteredDomains, setFilteredDomains] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("cached_domains_catalog");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem("cached_domains_catalog");
+    } catch {
+      return true;
+    }
+  });
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   
@@ -20,12 +40,14 @@ export default function Domains() {
   const navigate = useNavigate();
 
   const loadDomains = () => {
-    setLoading(true);
     api
       .get("/domains")
       .then((res) => {
         setDomains(res.data);
         setFilteredDomains(res.data);
+        try {
+          sessionStorage.setItem("cached_domains_catalog", JSON.stringify(res.data));
+        } catch (_) {}
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
@@ -114,11 +136,11 @@ export default function Domains() {
           >
             <span className="pulse-dot"></span>
             <Sparkles size={14} />
-            <span>Live Internship Tracks Catalog</span>
+            <span>❄️ Winter Internship Cohort 2024–2025 • 25+ Industry Tracks</span>
           </motion.div>
-          <h1 className="domains-hero-title">Explore Internship Domains</h1>
+          <h1 className="domains-hero-title">Winter Internship Tracks Catalog</h1>
           <p className="domains-hero-subtitle">
-            Browse through 25+ industry-aligned tech tracks. Click any track to inspect the curriculum roadmap and select your preferred program duration.
+            Explore 25+ verified technology, data, design, and business tracks for the Winter Cohort. Choose your track to receive your guaranteed Offer Letter and unlock project milestone repositories.
           </p>
 
           {/* Search & Filter Bar */}

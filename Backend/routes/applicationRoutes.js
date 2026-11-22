@@ -174,12 +174,6 @@ router.post("/", protect, async (req, res) => {
       status: "Submitted",
     };
 
-    try {
-      await appendToSpreadsheet("applications", ledgerRow);
-    } catch (err) {
-      console.warn("Application ledger append failed after application was created:", err.message);
-    }
-
     const application = {
       _id: applicationDoc._id,
       applicationId,
@@ -193,39 +187,54 @@ router.post("/", protect, async (req, res) => {
       statusHistory: [{ status: "Submitted", note: "Application submitted by student" }],
     };
 
-    // Prepare and dispatch emails (student confirmation + configured support inbox)
-    const adminNotificationEmail = supportTargetEmail();
-    const studentT = templates.applicationSubmitted(req.user.fullName, applicationId, domain.name);
-    const adminT = templates.newApplicationAdminNotification(
-      req.user.fullName,
-      req.user.email,
-      domain.name,
-      duration.weeks,
-      applicationId,
-      parsedStartDate.toISOString().slice(0, 10),
-      parsedEndDate.toISOString().slice(0, 10)
-    );
+    // Return immediate response to the client for lightning-fast UX (< 100ms)
+    res.status(201).json(application);
 
-    const [studentRes, adminRes] = await Promise.allSettled([
-      sendEmail({ to: req.user.email, replyTo: "support.interndock@gmail.com", ...studentT }),
-      sendEmail({ to: adminNotificationEmail, replyTo: req.user.email, ...adminT })
-    ]);
+    // Asynchronously dispatch Google Sheet ledger and email notifications in background
+    setImmediate(async () => {
+      try {
+        await appendToSpreadsheet("applications", ledgerRow);
+      } catch (err) {
+        console.warn("Application ledger append failed in background:", err.message);
+      }
 
-    if (studentRes.status === "fulfilled" && studentRes.value?.success) {
-      console.log(`[APPLICATION EMAIL SUCCESS] Student confirmation delivered to ${req.user.email} (ID: ${studentRes.value.messageId})`);
-    } else {
-      const err = studentRes.status === "fulfilled" ? studentRes.value?.error : studentRes.reason?.message;
-      console.error(`[APPLICATION EMAIL FAILURE] Student confirmation failed for ${req.user.email}: ${err}`);
-    }
+      try {
+        const adminNotificationEmail = supportTargetEmail();
+        const studentT = templates.applicationSubmitted(req.user.fullName, applicationId, domain.name);
+        const adminT = templates.newApplicationAdminNotification(
+          req.user.fullName,
+          req.user.email,
+          domain.name,
+          duration.weeks,
+          applicationId,
+          parsedStartDate.toISOString().slice(0, 10),
+          parsedEndDate.toISOString().slice(0, 10)
+        );
 
-    if (adminRes.status === "fulfilled" && adminRes.value?.success) {
-      console.log(`[APPLICATION EMAIL SUCCESS] Admin notification delivered to ${adminNotificationEmail} (ID: ${adminRes.value.messageId})`);
-    } else {
-      const err = adminRes.status === "fulfilled" ? adminRes.value?.error : adminRes.reason?.message;
-      console.error(`[APPLICATION EMAIL FAILURE] Admin notification failed for ${adminNotificationEmail}: ${err}`);
-    }
+        const [studentRes, adminRes] = await Promise.allSettled([
+          sendEmail({ to: req.user.email, replyTo: "support.interndock@gmail.com", ...studentT }),
+          sendEmail({ to: adminNotificationEmail, replyTo: req.user.email, ...adminT })
+        ]);
 
-    return res.status(201).json(application);
+        if (studentRes.status === "fulfilled" && studentRes.value?.success) {
+          console.log(`[APPLICATION EMAIL SUCCESS] Student confirmation delivered to ${req.user.email} (ID: ${studentRes.value.messageId})`);
+        } else {
+          const err = studentRes.status === "fulfilled" ? studentRes.value?.error : studentRes.reason?.message;
+          console.error(`[APPLICATION EMAIL FAILURE] Student confirmation failed for ${req.user.email}: ${err}`);
+        }
+
+        if (adminRes.status === "fulfilled" && adminRes.value?.success) {
+          console.log(`[APPLICATION EMAIL SUCCESS] Admin notification delivered to ${adminNotificationEmail} (ID: ${adminRes.value.messageId})`);
+        } else {
+          const err = adminRes.status === "fulfilled" ? adminRes.value?.error : adminRes.reason?.message;
+          console.error(`[APPLICATION EMAIL FAILURE] Admin notification failed for ${adminNotificationEmail}: ${err}`);
+        }
+      } catch (bgErr) {
+        console.error("Background notification processing error:", bgErr.message);
+      }
+    });
+
+    return;
 
   } catch (err) {
     console.error("Application creation error:", err);

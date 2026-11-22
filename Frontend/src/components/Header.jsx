@@ -33,6 +33,22 @@ export default function Header() {
 
   return (
     <header className="sticky-header">
+      {/* Winter Internship Announcement Bar */}
+      <div className="winter-announcement-bar">
+        <div className="container announcement-inner">
+          <div className="announcement-left">
+            <span className="announcement-badge">❄️ Winter Cohort 2024–25</span>
+            <span className="announcement-text">
+              Winter Internship Applications are live! Guaranteed Offer Letter &amp; Verified Capstones.
+            </span>
+          </div>
+          <Link to="/domains" className="announcement-cta">
+            <span>Explore 25+ Tracks</span>
+            <ArrowRight size={12} />
+          </Link>
+        </div>
+      </div>
+
       <div className="container header-container">
         {/* Brand Logo & Name */}
         <Link to="/" className="brand-logo-group">
@@ -45,7 +61,7 @@ export default function Header() {
           </motion.div>
           <div className="brand-text-container">
             <span className="brand-name">InternDock</span>
-            <span className="brand-tagline">Tech Talent Platform</span>
+            <span className="brand-tagline">Winter Internship Cohort 2024–25</span>
           </div>
         </Link>
 
@@ -260,6 +276,60 @@ export default function Header() {
       </AnimatePresence>
 
       <style>{`
+        .winter-announcement-bar {
+          background: linear-gradient(90deg, #1e1b4b 0%, #312e81 50%, #1e3a8a 100%);
+          color: #ffffff;
+          font-size: 0.775rem;
+          padding: 0.4rem 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .announcement-inner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+        .announcement-left {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          min-width: 0;
+        }
+        .announcement-badge {
+          background: rgba(255, 255, 255, 0.18);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          padding: 0.15rem 0.55rem;
+          border-radius: var(--radius-full);
+          font-weight: 700;
+          font-size: 0.72rem;
+          white-space: nowrap;
+          letter-spacing: 0.02em;
+        }
+        .announcement-text {
+          font-weight: 500;
+          color: #e0e7ff;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .announcement-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          color: #38bdf8;
+          font-weight: 700;
+          font-size: 0.75rem;
+          white-space: nowrap;
+          transition: var(--transition-fast);
+        }
+        .announcement-cta:hover {
+          color: #7dd3fc;
+          transform: translateX(2px);
+        }
+        @media (max-width: 768px) {
+          .announcement-text { display: none; }
+          .announcement-inner { justify-content: space-between; }
+        }
         .sticky-header {
           position: sticky;
           top: 0;

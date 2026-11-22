@@ -15,7 +15,7 @@
  * - Parses URLs using JavaScript's built-in URL API.
  */
 
-const GITHUB_URL_ERROR_MESSAGE = "Invalid GitHub link. Please provide a valid GitHub repository URL.";
+const GITHUB_URL_ERROR_MESSAGE = "Invalid GitHub URL. Use the format: https://github.com/username/repository-name";
 
 function isValidGithubUrl(urlString) {
   if (!urlString || typeof urlString !== "string") return false;

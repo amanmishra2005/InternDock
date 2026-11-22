@@ -49,6 +49,6 @@ test("isValidGithubUrl rejects URLs without a repository path", () => {
 test("GITHUB_URL_ERROR_MESSAGE matches exact required text", () => {
   assert.equal(
     GITHUB_URL_ERROR_MESSAGE,
-    "Invalid GitHub link. Please provide a valid GitHub repository URL."
+    "Invalid GitHub URL. Use the format: https://github.com/username/repository-name"
   );
 });

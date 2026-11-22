@@ -64,11 +64,19 @@ function AssignmentCardItem({ assignment, submission, onSubmit }) {
   const handleSub = (e) => {
     e.preventDefault();
     if (requiresGithub) {
-      if (!isValidGithubUrl(githubUrl)) {
+      // Auto-prepend https:// if the user forgot the protocol
+      let normalizedUrl = githubUrl.trim();
+      if (normalizedUrl && !normalizedUrl.match(/^https?:\/\//i)) {
+        normalizedUrl = "https://" + normalizedUrl;
+        setGithubUrl(normalizedUrl);
+      }
+      if (!isValidGithubUrl(normalizedUrl)) {
         setValidationError(GITHUB_URL_ERROR_MESSAGE);
-        alert(GITHUB_URL_ERROR_MESSAGE);
         return;
       }
+      setValidationError("");
+      onSubmit({ githubUrl: normalizedUrl });
+      return;
     }
     setValidationError("");
     onSubmit({ githubUrl });
@@ -396,10 +404,17 @@ export default function ApplicationWorkspace() {
 
   const submitFinalReport = async (e) => {
     e.preventDefault();
-    if (reportForm.githubUrl && !isValidGithubUrl(reportForm.githubUrl)) {
-      setReportGithubError(GITHUB_URL_ERROR_MESSAGE);
-      alert(GITHUB_URL_ERROR_MESSAGE);
-      return;
+    if (reportForm.githubUrl) {
+      // Auto-prepend https:// if the user forgot the protocol
+      let normalizedUrl = reportForm.githubUrl.trim();
+      if (normalizedUrl && !normalizedUrl.match(/^https?:\/\//i)) {
+        normalizedUrl = "https://" + normalizedUrl;
+        setReportForm((prev) => ({ ...prev, githubUrl: normalizedUrl }));
+      }
+      if (!isValidGithubUrl(normalizedUrl)) {
+        setReportGithubError(GITHUB_URL_ERROR_MESSAGE);
+        return;
+      }
     }
     setReportGithubError("");
 

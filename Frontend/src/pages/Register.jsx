@@ -260,11 +260,11 @@ export default function Register() {
           >
             <span className="pulse-dot"></span>
             <Sparkles size={14} />
-            <span>❄️ Winter Internship Cohort 2024–2025 • Fast-Track Applications</span>
+            <span>❄️ Winter Internship Cohort 2026–2027 • Fast-Track Applications</span>
           </motion.div>
 
           <h1 className="auth-visual-title">
-            Join <span className="gradient-text">InternDock</span> Winter Cohort
+            Join <span className="gradient-text">InternDock</span> Winter Cohort 2026–27
           </h1>
           <p className="auth-visual-sub">
             Enroll in hands-on tech internships across 25+ domains, receive your official Selection Offer Letter, and complete real-world capstone projects with 1-on-1 mentor feedback.

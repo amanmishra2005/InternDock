@@ -296,7 +296,7 @@ export default function StudentDashboard() {
           >
             <span className="pulse-dot"></span>
             <Sparkles size={14} />
-            <span>❄️ Official Winter Internship Cohort 2024–2025</span>
+            <span>❄️ Official Winter Internship Cohort 2026–2027</span>
           </motion.div>
           <h1>Welcome back, {user?.fullName || "Intern"}!</h1>
           <p>
@@ -356,7 +356,7 @@ export default function StudentDashboard() {
                   <div className="badge-pill badge-pill-cyan" style={{ alignSelf: "flex-start", marginBottom: "0.5rem" }}>
                     <span className="pulse-dot"></span>
                     <Sparkles size={14} />
-                    <span>❄️ Winter Internship Cohort 2024–2025 Applications Live</span>
+                    <span>❄️ Winter Internship Cohort 2026–2027 Applications Live</span>
                   </div>
                   <h2>Lock In Your Winter Internship Track in 60 Seconds</h2>
                   <p>
@@ -409,7 +409,7 @@ export default function StudentDashboard() {
                     >
                       <div className="winter-track-top">
                         <span className="category-pill">{dom.category || "Development"}</span>
-                        <span className="winter-badge-mini">❄️ Winter 2024–25</span>
+                        <span className="winter-badge-mini">❄️ Winter 2026–27</span>
                       </div>
                       <h4 className="winter-track-name">{dom.name}</h4>
                       <p className="winter-track-desc">
@@ -457,7 +457,7 @@ export default function StudentDashboard() {
               <div className="glass-panel winter-active-banner">
                 <div className="active-banner-left">
                   <span className="badge-pill badge-pill-cyan" style={{ padding: "0.2rem 0.65rem" }}>
-                    ❄️ Winter Cohort 2024–25 Active
+                    ❄️ Winter Cohort 2026–27 Active
                   </span>
                   <span className="active-banner-msg">
                     Workspace active! Complete weekly milestones to unlock verified certificates.
@@ -849,7 +849,7 @@ export default function StudentDashboard() {
               <div className="winter-welcome-header">
                 <div className="badge-pill badge-pill-cyan" style={{ alignSelf: "flex-start" }}>
                   <Sparkles size={14} />
-                  <span>❄️ Winter Cohort 2024–2025 Enrolling Now</span>
+                  <span>❄️ Winter Cohort 2026–2027 Enrolling Now</span>
                 </div>
                 <button
                   onClick={handleCloseWelcome}
@@ -863,7 +863,7 @@ export default function StudentDashboard() {
               <div className="winter-welcome-body">
                 <h2>🎉 Welcome to InternDock, {user?.fullName || "Candidate"}!</h2>
                 <p className="welcome-intro-text">
-                  Your candidate profile is activated. You are now eligible to enroll in the official <strong>Winter Internship Cohort</strong>. Complete your application in 60 seconds to lock your slot and receive your verified Selection Offer Letter!
+                  Your candidate profile is activated. You are now eligible to enroll in the official <strong>Winter Internship Cohort 2026–2027</strong>. Complete your application in 60 seconds to lock your slot and receive your verified Selection Offer Letter!
                 </p>
 
                 <div className="modal-perks-row">

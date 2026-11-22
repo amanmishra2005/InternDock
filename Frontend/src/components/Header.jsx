@@ -37,7 +37,7 @@ export default function Header() {
       <div className="winter-announcement-bar">
         <div className="container announcement-inner">
           <div className="announcement-left">
-            <span className="announcement-badge">❄️ Winter Cohort 2024–25</span>
+            <span className="announcement-badge">❄️ Winter Cohort 2026–27</span>
             <span className="announcement-text">
               Winter Internship Applications are live! Guaranteed Offer Letter &amp; Verified Capstones.
             </span>
@@ -61,7 +61,7 @@ export default function Header() {
           </motion.div>
           <div className="brand-text-container">
             <span className="brand-name">InternDock</span>
-            <span className="brand-tagline">Winter Internship Cohort 2024–25</span>
+            <span className="brand-tagline">Tech Talent Platform</span>
           </div>
         </Link>
 

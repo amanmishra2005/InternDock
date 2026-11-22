@@ -107,7 +107,7 @@ export default function Home() {
             >
               <span className="pulse-dot"></span>
               <Sparkles size={14} />
-              <span>❄️ Winter Internship Cohort 2024–2025 • Applications Now Live</span>
+              <span>❄️ Winter Internship Cohort 2026–2027 • Applications Now Live</span>
             </motion.div>
 
             <h1 className="hero-heading">
@@ -193,7 +193,7 @@ export default function Home() {
                 </span>
                 <div>
                   <strong>Guaranteed Selection Letter</strong>
-                  <span>Direct HR Ledger Verification</span>
+                  <span>Winter Cohort 2026–27 Verification</span>
                 </div>
               </motion.div>
 

@@ -144,7 +144,7 @@ export default function Apply() {
       >
         <span className="badge-pill badge-pill-cyan">
           <Sparkles size={14} />
-          <span>❄️ Winter Internship Cohort 2024–2025</span>
+          <span>❄️ Winter Internship Cohort 2026–2027</span>
         </span>
         <h1 className="apply-title">Apply for {domain.name}</h1>
         <p className="apply-subtitle">

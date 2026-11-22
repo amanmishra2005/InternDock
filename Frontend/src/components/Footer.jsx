@@ -335,7 +335,7 @@ export default function Footer() {
           gap: 0.5rem;
           background: rgba(5, 150, 105, 0.1);
           border: 1px solid rgba(5, 150, 105, 0.25);
-          color: #2d7a5f;
+          color: #059669;
           padding: 0.75rem 1.4rem;
           border-radius: var(--radius-sm);
           font-weight: 600;
@@ -381,7 +381,7 @@ export default function Footer() {
         }
         .health-text {
           font-size: 0.775rem;
-          color: #2d7a5f;
+          color: #059669;
           font-weight: 600;
         }
         .footer-col-title {

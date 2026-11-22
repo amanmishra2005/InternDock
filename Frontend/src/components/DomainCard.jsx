@@ -18,12 +18,12 @@ export default function DomainCard({ domain }) {
           </span>
           {domain.isPersonalized ? (
             <span className="personalized-track-badge">
-              <Sparkles size={13} color="#6b5fa0" />
+              <Sparkles size={13} color="#7c3aed" />
               <span>Personalized (Private to You)</span>
             </span>
           ) : (
             <span className="track-badge">
-              <CheckCircle2 size={13} color="#2d7a5f" />
+              <CheckCircle2 size={13} color="#059669" />
               <span>Verified Track</span>
             </span>
           )}
@@ -76,7 +76,7 @@ export default function DomainCard({ domain }) {
           gap: 0.35rem;
           font-size: 0.775rem;
           font-weight: 700;
-          color: #2a7da0;
+          color: #0284c7;
           background: rgba(2, 132, 199, 0.08);
           border: 1px solid rgba(2, 132, 199, 0.25);
           padding: 0.25rem 0.7rem;
@@ -87,7 +87,7 @@ export default function DomainCard({ domain }) {
           align-items: center;
           gap: 0.3rem;
           font-size: 0.75rem;
-          color: #2d7a5f;
+          color: #059669;
           font-weight: 700;
         }
         .personalized-track-badge {
@@ -95,7 +95,7 @@ export default function DomainCard({ domain }) {
           align-items: center;
           gap: 0.35rem;
           font-size: 0.75rem;
-          color: #6b5fa0;
+          color: #7c3aed;
           background: rgba(124, 58, 237, 0.08);
           border: 1px solid rgba(124, 58, 237, 0.25);
           padding: 0.2rem 0.65rem;
@@ -108,7 +108,7 @@ export default function DomainCard({ domain }) {
           box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.12) !important;
         }
         .btn-personalized {
-          background: linear-gradient(135deg, #6b5fa0 0%, #6065a8 100%) !important;
+          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%) !important;
           color: #ffffff !important;
           font-weight: 700;
           box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);

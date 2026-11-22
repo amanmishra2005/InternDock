@@ -592,21 +592,21 @@ export default function Register() {
         .pwd-toggle-btn { position: absolute; right: 0.85rem; background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .field-subtext { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block; }
         .error-alert-box { display: flex; align-items: center; gap: 0.5rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; font-size: 0.875rem; }
-        .success-alert-box { display: flex; align-items: center; gap: 0.5rem; background: rgba(45, 122, 95, 0.15); border: 1px solid rgba(45, 122, 95, 0.3); color: #2d7a5f; padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; font-size: 0.875rem; }
+        .success-alert-box { display: flex; align-items: center; gap: 0.5rem; background: rgba(5, 150, 105, 0.15); border: 1px solid rgba(5, 150, 105, 0.3); color: #059669; padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; font-size: 0.875rem; }
         .auth-card-footer { margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.9rem; color: var(--text-muted); }
         .footer-link { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem; }
         .full-width { width: 100%; }
         .turnstile-container { margin: 1rem 0; min-height: 65px; display: flex; justify-content: center; }
         
         .email-chip-box { display: flex; align-items: center; gap: 0.75rem; background: #f0f9ff; border: 1.5px solid #bae6fd; padding: 0.85rem 1.15rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; }
-        .email-chip-icon { color: #2a7da0; display: flex; }
+        .email-chip-icon { color: #0284c7; display: flex; }
         .email-chip-content { flex: 1; display: flex; flex-direction: column; font-size: 0.85rem; }
         .email-chip-label { color: #475569; font-size: 0.78rem; font-weight: 500; }
         .email-chip-address { color: #000000 !important; font-size: 0.95rem; font-weight: 700; word-break: break-all; }
-        .email-chip-change-btn { background: none; border: none; color: #2a7da0; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-decoration: underline; }
+        .email-chip-change-btn { background: none; border: none; color: #0284c7; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-decoration: underline; }
         .otp-box-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; width: 100%; }
         .otp-boxes-label-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #000000; font-size: 0.92rem; font-weight: 700; }
-        .otp-label-icon { color: #4a4580; }
+        .otp-label-icon { color: #4f46e5; }
         .mb-0 { margin-bottom: 0 !important; }
         .otp-boxes-container { display: flex; gap: 0.65rem; justify-content: center; margin-bottom: 0.65rem; width: 100%; }
         .otp-box-digit {
@@ -625,14 +625,14 @@ export default function Register() {
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
         .otp-box-digit:focus {
-          border-color: #4a4580;
+          border-color: #4f46e5;
           background: #ffffff;
           box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2), 0 4px 12px rgba(79, 70, 229, 0.15);
           transform: translateY(-2px);
           color: #000000 !important;
         }
         .otp-box-digit.filled {
-          border-color: #4a4580;
+          border-color: #4f46e5;
           background: #f8fafc;
           color: #000000 !important;
         }
@@ -643,7 +643,7 @@ export default function Register() {
         .resend-box { margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-muted); }
 
         .resend-box p { margin-bottom: 0.35rem; }
-        .resend-action-btn { background: none; border: none; color: #2a7da0; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
+        .resend-action-btn { background: none; border: none; color: #0284c7; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
         .resend-action-btn:disabled { color: var(--text-muted); cursor: not-allowed; opacity: 0.6; }
         .spinner-inline { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

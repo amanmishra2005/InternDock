@@ -225,11 +225,11 @@ export default function Apply() {
                       </div>
                       <div className="duration-card-features">
                         <span className="dur-feat-item">
-                          <Check size={12} color="#2d7a5f" />
+                          <Check size={12} color="#059669" />
                           <span>Weekly Capstone Tasks</span>
                         </span>
                         <span className="dur-feat-item">
-                          <Check size={12} color="#2d7a5f" />
+                          <Check size={12} color="#059669" />
                           <span>Verified Selection Offer</span>
                         </span>
                       </div>
@@ -259,7 +259,7 @@ export default function Apply() {
               <div className="date-fields-wrapper">
                 <div className="date-input-box">
                   <label htmlFor="start-date" className="date-box-label">
-                    <CalendarDays size={15} color="#4a4580" />
+                    <CalendarDays size={15} color="#4f46e5" />
                     <span>Starting Date</span>
                   </label>
                   <input
@@ -279,7 +279,7 @@ export default function Apply() {
 
                 <div className="date-input-box">
                   <label htmlFor="end-date" className="date-box-label">
-                    <CalendarDays size={15} color="#2a7da0" />
+                    <CalendarDays size={15} color="#0284c7" />
                     <span>Estimated Completion Date</span>
                   </label>
                   <input
@@ -299,7 +299,7 @@ export default function Apply() {
               </div>
 
               <div className="schedule-flexibility-notice">
-                <Zap size={15} color="#9a7030" />
+                <Zap size={15} color="#d97706" />
                 <span>
                   <strong>Flexible &amp; Self-Paced:</strong> You can submit your milestone capstones ahead of schedule or at your own pace within the designated window.
                 </span>
@@ -373,7 +373,7 @@ export default function Apply() {
             >
               <div className="summary-card-header">
                 <div className="seal-badge">
-                  <Award size={18} color="#4a4580" />
+                  <Award size={18} color="#4f46e5" />
                   <span>Official Selection Record</span>
                 </div>
                 <span className="live-status-pill">
@@ -418,23 +418,23 @@ export default function Apply() {
                 <span className="deliverables-heading">Official Inclusions:</span>
                 <ul className="deliverables-checklist">
                   <li>
-                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
+                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
                     <span>Instant Verified Offer Letter (PDF + Verification URL)</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
+                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
                     <span>Cryptographically Verified Certificate with QR validation</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
+                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
                     <span>Weekly Practical Capstone Project Milestones</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
+                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
                     <span>Mentor Code Reviews &amp; Feedback</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
+                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
                     <span>Official Selected Interns WhatsApp Community Hub</span>
                   </li>
                 </ul>
@@ -467,7 +467,7 @@ export default function Apply() {
                   <span>256-Bit SSL Encrypted</span>
                 </div>
                 <div className="trust-item">
-                  <ShieldCheck size={12} color="#2d7a5f" />
+                  <ShieldCheck size={12} color="#059669" />
                   <span>Recruiter Verifiable</span>
                 </div>
               </div>
@@ -479,7 +479,7 @@ export default function Apply() {
       <style>{`
         .apply-page-wrapper {
           padding: 3rem 0 5rem 0;
-          background: linear-gradient(180deg, #f6f7fb 0%, #eef0f6 100%);
+          background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
           min-height: calc(100vh - 120px);
         }
         .apply-top-nav {
@@ -489,14 +489,14 @@ export default function Apply() {
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          color: #5a6480 !important;
+          color: #64748b !important;
           font-size: 0.925rem;
           font-weight: 600;
           text-decoration: none;
           transition: all 0.2s ease;
         }
         .back-link:hover {
-          color: #4a4580 !important;
+          color: #4f46e5 !important;
           transform: translateX(-3px);
         }
         .apply-header-banner {
@@ -505,13 +505,13 @@ export default function Apply() {
         .apply-page-title {
           font-size: 2.4rem;
           font-weight: 800;
-          color: #1a1f35 !important;
+          color: #0f172a !important;
           letter-spacing: -0.03em;
           margin: 0.65rem 0 0.4rem 0;
         }
         .apply-page-desc {
           font-size: 1rem;
-          color: #5a6480 !important;
+          color: #64748b !important;
           max-width: 720px;
           line-height: 1.6;
         }
@@ -529,23 +529,23 @@ export default function Apply() {
         .apply-section-card {
           padding: 2rem;
           background: #ffffff !important;
-          border: 1px solid #dde1ee !important;
+          border: 1px solid #e2e8f0 !important;
           border-radius: var(--radius-md);
-          box-shadow: 0 2px 12px rgba(20, 25, 50, 0.04);
+          box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
         }
         .section-card-header {
           display: flex;
           align-items: flex-start;
           gap: 1rem;
           margin-bottom: 1.5rem;
-          border-bottom: 1px solid #eef0f6;
+          border-bottom: 1px solid #f1f5f9;
           padding-bottom: 1.1rem;
         }
         .step-badge {
           width: 32px;
           height: 32px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #4a4580, #6b5fa0);
+          background: linear-gradient(135deg, #4f46e5, #7c3aed);
           color: #ffffff;
           display: flex;
           align-items: center;
@@ -553,17 +553,17 @@ export default function Apply() {
           font-weight: 700;
           font-size: 0.9rem;
           flex-shrink: 0;
-          box-shadow: 0 3px 10px rgba(74, 69, 128, 0.20);
+          box-shadow: 0 3px 10px rgba(79, 70, 229, 0.20);
         }
         .section-card-title {
           font-size: 1.2rem;
           font-weight: 700;
-          color: #1a1f35 !important;
+          color: #0f172a !important;
           margin: 0 0 0.2rem 0;
         }
         .section-card-subtitle {
           font-size: 0.875rem;
-          color: #5a6480 !important;
+          color: #64748b !important;
           margin: 0;
         }
         .durations-interactive-grid {
@@ -573,8 +573,8 @@ export default function Apply() {
         }
         .duration-interactive-card {
           padding: 1.1rem 1.15rem;
-          border: 1.5px solid #dde1ee;
-          background: #f6f7fb;
+          border: 1.5px solid #e2e8f0;
+          background: #f8fafc;
           border-radius: var(--radius-sm);
           cursor: pointer;
           transition: all 0.2s ease;
@@ -583,15 +583,15 @@ export default function Apply() {
           justify-content: space-between;
         }
         .duration-interactive-card:hover {
-          border-color: #9095c4;
+          border-color: #818cf8;
           background: #ffffff;
           transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(74, 69, 128, 0.07);
+          box-shadow: 0 6px 16px rgba(79, 70, 229, 0.07);
         }
         .duration-interactive-card.selected {
-          border-color: #4a4580;
+          border-color: #4f46e5;
           background: #ffffff;
-          box-shadow: 0 0 0 2.5px rgba(74, 69, 128, 0.14), 0 6px 18px rgba(74, 69, 128, 0.08);
+          box-shadow: 0 0 0 2.5px rgba(79, 70, 229, 0.14), 0 6px 18px rgba(79, 70, 229, 0.08);
         }
         .duration-card-top {
           display: flex;
@@ -608,37 +608,37 @@ export default function Apply() {
           width: 17px;
           height: 17px;
           border-radius: 50%;
-          border: 2px solid #b8bed8;
+          border: 2px solid #cbd5e1;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: all 0.2s;
         }
         .radio-dot-indicator.active {
-          border-color: #4a4580;
+          border-color: #4f46e5;
         }
         .inner-dot {
           width: 7px;
           height: 7px;
           border-radius: 50%;
-          background: #4a4580;
+          background: #4f46e5;
         }
         .duration-title-text {
           font-size: 0.95rem;
           font-weight: 700;
-          color: #1a1f35;
+          color: #0f172a;
           display: block;
         }
         .duration-weeks-sub {
           font-size: 0.74rem;
-          color: #5a6480;
+          color: #64748b;
           display: block;
         }
         .duration-fee-pill {
           font-size: 1.1rem;
           font-weight: 800;
-          color: #4a4580;
-          background: rgba(74, 69, 128, 0.08);
+          color: #4f46e5;
+          background: rgba(79, 70, 229, 0.08);
           padding: 0.2rem 0.6rem;
           border-radius: var(--radius-full);
         }
@@ -647,14 +647,14 @@ export default function Apply() {
           flex-direction: column;
           gap: 0.3rem;
           padding-top: 0.65rem;
-          border-top: 1px dashed #dde1ee;
+          border-top: 1px dashed #e2e8f0;
         }
         .dur-feat-item {
           display: flex;
           align-items: center;
           gap: 0.4rem;
           font-size: 0.75rem;
-          color: #5a6480;
+          color: #64748b;
           font-weight: 500;
         }
         .date-fields-wrapper {
@@ -673,39 +673,39 @@ export default function Apply() {
           gap: 0.45rem;
           font-size: 0.84rem;
           font-weight: 600;
-          color: #1a1f35;
+          color: #0f172a;
         }
         .custom-date-field {
           width: 100%;
           padding: 0.8rem 1rem;
-          border: 1.5px solid #c8cedf;
+          border: 1.5px solid #cbd5e1;
           border-radius: var(--radius-sm);
           font-size: 0.93rem;
           font-weight: 500;
-          color: #1a1f35;
+          color: #0f172a;
           background: #ffffff;
           transition: all 0.2s;
         }
         .custom-date-field:focus {
-          border-color: #6065a8;
-          box-shadow: 0 0 0 3px rgba(74, 69, 128, 0.10);
+          border-color: #6366f1;
+          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.10);
           outline: none;
         }
         .date-helper {
           font-size: 0.75rem;
-          color: #5a6480;
+          color: #64748b;
         }
         .schedule-flexibility-notice {
           display: flex;
           align-items: center;
           gap: 0.65rem;
-          background: rgba(154, 112, 48, 0.07);
-          border: 1px solid rgba(154, 112, 48, 0.20);
+          background: rgba(217, 119, 6, 0.07);
+          border: 1px solid rgba(217, 119, 6, 0.20);
           padding: 0.8rem 1.1rem;
           border-radius: var(--radius-sm);
           margin-top: 1.1rem;
           font-size: 0.83rem;
-          color: #7a5520;
+          color: #92400e;
           line-height: 1.5;
         }
         .candidate-details-grid {
@@ -718,15 +718,15 @@ export default function Apply() {
           align-items: center;
           gap: 0.7rem;
           padding: 0.8rem 1rem;
-          background: #f6f7fb;
-          border: 1px solid #dde1ee;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
           border-radius: var(--radius-sm);
           position: relative;
         }
         .info-chip-label {
           display: block;
           font-size: 0.7rem;
-          color: #5a6480;
+          color: #64748b;
           text-transform: uppercase;
           font-weight: 600;
           letter-spacing: 0.03em;
@@ -734,7 +734,7 @@ export default function Apply() {
         .info-chip-val {
           display: block;
           font-size: 0.88rem;
-          color: #1a1f35;
+          color: #0f172a;
           font-weight: 600;
           word-break: break-all;
         }
@@ -742,31 +742,31 @@ export default function Apply() {
           margin-left: auto;
           font-size: 0.68rem;
           font-weight: 700;
-          color: #2d7a5f;
-          background: rgba(45, 122, 95, 0.08);
+          color: #059669;
+          background: rgba(5, 150, 105, 0.08);
           padding: 0.15rem 0.5rem;
           border-radius: var(--radius-full);
           white-space: nowrap;
-          border: 1px solid rgba(45, 122, 95, 0.18);
+          border: 1px solid rgba(5, 150, 105, 0.18);
         }
         .inline-icon {
           vertical-align: middle;
           margin-right: 0.35rem;
-          color: #4a4580;
+          color: #4f46e5;
         }
         .styled-text-field {
           width: 100%;
           padding: 0.8rem 1rem;
           font-size: 0.93rem;
-          border: 1.5px solid #c8cedf;
+          border: 1.5px solid #cbd5e1;
           border-radius: var(--radius-sm);
-          color: #1a1f35;
+          color: #0f172a;
           background: #ffffff;
           transition: all 0.2s;
         }
         .styled-text-field:focus {
-          border-color: #6065a8;
-          box-shadow: 0 0 0 3px rgba(74, 69, 128, 0.10);
+          border-color: #6366f1;
+          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.10);
           outline: none;
         }
         .apply-sidebar-col {
@@ -776,9 +776,9 @@ export default function Apply() {
         .sticky-summary-card {
           padding: 1.85rem;
           background: #ffffff !important;
-          border: 1.5px solid #c8cedf !important;
+          border: 1.5px solid #cbd5e1 !important;
           border-radius: var(--radius-md);
-          box-shadow: 0 8px 28px rgba(20, 25, 50, 0.07);
+          box-shadow: 0 8px 28px rgba(15, 23, 42, 0.07);
           display: flex;
           flex-direction: column;
           gap: 1.15rem;
@@ -787,7 +787,7 @@ export default function Apply() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid #eef0f6;
+          border-bottom: 1px solid #f1f5f9;
           padding-bottom: 0.8rem;
         }
         .seal-badge {
@@ -796,7 +796,7 @@ export default function Apply() {
           gap: 0.4rem;
           font-size: 0.75rem;
           font-weight: 700;
-          color: #4a4580;
+          color: #4f46e5;
           text-transform: uppercase;
           letter-spacing: 0.04em;
         }
@@ -806,8 +806,8 @@ export default function Apply() {
           gap: 0.4rem;
           font-size: 0.7rem;
           font-weight: 700;
-          color: #2d7a5f;
-          background: rgba(45, 122, 95, 0.08);
+          color: #059669;
+          background: rgba(5, 150, 105, 0.08);
           padding: 0.2rem 0.55rem;
           border-radius: var(--radius-full);
         }
@@ -819,14 +819,14 @@ export default function Apply() {
         .summary-category-tag {
           font-size: 0.72rem;
           font-weight: 700;
-          color: #2a7da0;
+          color: #0284c7;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
         .summary-domain-name {
           font-size: 1.35rem;
           font-weight: 800;
-          color: #1a1f35 !important;
+          color: #0f172a !important;
           margin: 0;
           line-height: 1.25;
         }
@@ -836,16 +836,16 @@ export default function Apply() {
           gap: 0.4rem;
           font-size: 0.8rem;
           font-weight: 600;
-          color: #5a6480;
-          background: #eef0f6;
+          color: #64748b;
+          background: #f1f5f9;
           padding: 0.22rem 0.6rem;
           border-radius: var(--radius-full);
           align-self: flex-start;
           margin-top: 0.2rem;
         }
         .summary-breakdown-box {
-          background: #f6f7fb;
-          border: 1px solid #dde1ee;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
           border-radius: var(--radius-sm);
           padding: 1.1rem;
           display: flex;
@@ -857,14 +857,14 @@ export default function Apply() {
           align-items: center;
           justify-content: space-between;
           font-size: 0.875rem;
-          color: #5a6480;
+          color: #64748b;
         }
         .breakdown-row strong {
-          color: #1a1f35;
+          color: #0f172a;
         }
         .breakdown-divider {
           height: 1px;
-          background: #dde1ee;
+          background: #e2e8f0;
           margin: 0.3rem 0;
         }
         .fee-highlight-row {
@@ -874,17 +874,17 @@ export default function Apply() {
           display: block;
           font-size: 0.93rem;
           font-weight: 700;
-          color: #1a1f35;
+          color: #0f172a;
         }
         .fee-tax-sub {
           display: block;
           font-size: 0.7rem;
-          color: #5a6480;
+          color: #64748b;
         }
         .summary-total-fee {
           font-size: 1.75rem;
           font-weight: 900;
-          color: #4a4580;
+          color: #4f46e5;
         }
         .summary-deliverables-section {
           display: flex;
@@ -894,7 +894,7 @@ export default function Apply() {
         .deliverables-heading {
           font-size: 0.72rem;
           font-weight: 700;
-          color: #5a6480;
+          color: #64748b;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
@@ -911,7 +911,7 @@ export default function Apply() {
           align-items: flex-start;
           gap: 0.5rem;
           font-size: 0.815rem;
-          color: #3a4255;
+          color: #334155;
           line-height: 1.4;
         }
         .check-icon {
@@ -923,7 +923,7 @@ export default function Apply() {
           font-size: 1rem;
           font-weight: 700;
           border-radius: var(--radius-sm);
-          box-shadow: 0 6px 20px rgba(74, 69, 128, 0.22);
+          box-shadow: 0 6px 20px rgba(79, 70, 229, 0.22);
         }
         .security-trust-footer {
           display: flex;
@@ -937,7 +937,7 @@ export default function Apply() {
           align-items: center;
           gap: 0.35rem;
           font-size: 0.72rem;
-          color: #5a6480;
+          color: #64748b;
           font-weight: 500;
         }
         .error-message-box {

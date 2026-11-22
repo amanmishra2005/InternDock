@@ -138,15 +138,15 @@ export default function DomainDetails() {
 
           <div className="duration-perks-box">
             <div className="perk-row">
-              <FileText className="perk-icon" size={15} color="#2a7da0" />
+              <FileText className="perk-icon" size={15} color="#0284c7" />
               <span>Official Selection / Offer Letter issued immediately</span>
             </div>
             <div className="perk-row">
-              <Award className="perk-icon" size={15} color="#6b5fa0" />
+              <Award className="perk-icon" size={15} color="#7c3aed" />
               <span>Cryptographically verified Completion Certificate</span>
             </div>
             <div className="perk-row">
-              <Briefcase className="perk-icon" size={15} color="#2d7a5f" />
+              <Briefcase className="perk-icon" size={15} color="#059669" />
               <span>Downloadable, shareable PDF certificate</span>
             </div>
           </div>
@@ -215,17 +215,17 @@ export default function DomainDetails() {
         }
         .back-link {
           display: inline-flex; align-items: center; gap: 0.4rem;
-          color: #5a6480 !important; margin-bottom: 1.75rem;
+          color: #64748b !important; margin-bottom: 1.75rem;
           font-size: 0.9rem; font-weight: 600;
           transition: color 0.2s ease; text-decoration: none;
         }
-        .back-link:hover { color: #4a4580 !important; }
+        .back-link:hover { color: #4f46e5 !important; }
 
         /* ── Hero panel ── */
         .domain-detail-hero {
           padding: 2.75rem 3rem;
           background: #ffffff !important;
-          border: 1px solid #dde1ee !important;
+          border: 1px solid #e2e8f0 !important;
           border-radius: var(--radius-lg);
           box-shadow: 0 2px 16px rgba(20,25,50,0.05);
           margin-bottom: 2rem;
@@ -233,28 +233,28 @@ export default function DomainDetails() {
         .hero-top-info { display: flex; gap: 0.65rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
         .domain-title {
           font-size: 2.6rem; font-weight: 900;
-          color: #1a1f35 !important;
+          color: #0f172a !important;
           letter-spacing: -0.03em; line-height: 1.15;
           margin-bottom: 0.85rem;
         }
         .domain-desc {
-          font-size: 1.08rem; color: #5a6480 !important;
+          font-size: 1.08rem; color: #64748b !important;
           max-width: 820px; line-height: 1.65;
           margin-bottom: 1.75rem;
         }
         .skills-section h3 {
           font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-          letter-spacing: 0.06em; color: #8e97b0; margin-bottom: 0.65rem;
+          letter-spacing: 0.06em; color: #94a3b8; margin-bottom: 0.65rem;
         }
         .skills-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
         .skill-tag-pill {
           display: inline-flex; align-items: center; gap: 0.35rem;
-          background: #f0f1f8; border: 1px solid #c8cedf;
-          color: #4a4580 !important; padding: 0.35rem 0.8rem;
+          background: #f1f5f9; border: 1px solid #cbd5e1;
+          color: #4f46e5 !important; padding: 0.35rem 0.8rem;
           border-radius: var(--radius-full); font-weight: 600; font-size: 0.82rem;
           transition: background 0.15s;
         }
-        .skill-tag-pill:hover { background: #e4e6f4; }
+        .skill-tag-pill:hover { background: #e0e7ff; }
 
         /* ── Two-column grid ── */
         .detail-content-grid { gap: 1.75rem; }
@@ -263,15 +263,15 @@ export default function DomainDetails() {
         .pricing-panel {
           padding: 2rem 2.25rem;
           background: #ffffff !important;
-          border: 1px solid #dde1ee !important;
+          border: 1px solid #e2e8f0 !important;
           border-radius: var(--radius-md);
           box-shadow: 0 2px 12px rgba(20,25,50,0.04);
         }
         .pricing-panel h2 {
-          color: #1a1f35 !important; font-weight: 800;
+          color: #0f172a !important; font-weight: 800;
           font-size: 1.5rem; margin: 0.65rem 0 0.35rem;
         }
-        .pricing-subtitle { color: #8e97b0 !important; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5; }
+        .pricing-subtitle { color: #94a3b8 !important; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5; }
 
         /* Duration rows */
         .durations-table { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem; }
@@ -279,41 +279,41 @@ export default function DomainDetails() {
           display: flex; align-items: center; justify-content: space-between;
           padding: 1rem 1.25rem;
           background: #f8f9fc;
-          border: 1.5px solid #dde1ee;
+          border: 1.5px solid #e2e8f0;
           border-radius: var(--radius-sm);
           cursor: pointer; transition: all 0.18s ease;
         }
         .duration-row:hover {
-          border-color: #9095c4;
+          border-color: #818cf8;
           background: #ffffff;
           box-shadow: 0 2px 8px rgba(74,69,128,0.07);
         }
         .duration-row.active-duration-row {
-          border-color: #4a4580 !important;
+          border-color: #4f46e5 !important;
           background: #ffffff !important;
           box-shadow: 0 0 0 2.5px rgba(74,69,128,0.15), 0 4px 14px rgba(74,69,128,0.08) !important;
         }
         .radio-dot {
           width: 17px; height: 17px; border-radius: 50%;
-          border: 2px solid #b8bed8; background: #ffffff;
+          border: 2px solid #cbd5e1; background: #ffffff;
           flex-shrink: 0; transition: all 0.18s;
         }
         .radio-dot.checked {
-          border-color: #4a4580; background: #4a4580;
+          border-color: #4f46e5; background: #4f46e5;
           box-shadow: inset 0 0 0 3px #ffffff;
         }
-        .dur-weeks { display: block; font-weight: 700; font-size: 1rem; color: #1a1f35 !important; }
-        .dur-note { font-size: 0.78rem; color: #8e97b0 !important; margin-top: 0.1rem; }
-        .dur-price { font-size: 1.3rem; font-weight: 800; color: #4a4580 !important; letter-spacing: -0.02em; }
+        .dur-weeks { display: block; font-weight: 700; font-size: 1rem; color: #0f172a !important; }
+        .dur-note { font-size: 0.78rem; color: #94a3b8 !important; margin-top: 0.1rem; }
+        .dur-price { font-size: 1.3rem; font-weight: 800; color: #4f46e5 !important; letter-spacing: -0.02em; }
 
         /* Perks box */
         .duration-perks-box {
           display: flex; flex-direction: column; gap: 0.6rem;
-          background: #f4f5fb; padding: 1rem 1.15rem;
-          border-radius: var(--radius-sm); border: 1px solid #dde1ee;
+          background: #f8fafc; padding: 1rem 1.15rem;
+          border-radius: var(--radius-sm); border: 1px solid #e2e8f0;
           margin-bottom: 0.25rem;
         }
-        .perk-row { display: flex; align-items: center; gap: 0.55rem; font-size: 0.84rem; color: #3a4255 !important; font-weight: 500; }
+        .perk-row { display: flex; align-items: center; gap: 0.55rem; font-size: 0.84rem; color: #334155 !important; font-weight: 500; }
 
         /* Apply CTA */
         .pricing-panel .btn-lg {
@@ -329,12 +329,12 @@ export default function DomainDetails() {
         .curriculum-panel {
           padding: 2rem 2.25rem;
           background: #ffffff !important;
-          border: 1px solid #dde1ee !important;
+          border: 1px solid #e2e8f0 !important;
           border-radius: var(--radius-md);
           box-shadow: 0 2px 12px rgba(20,25,50,0.04);
         }
         .curriculum-panel h2 {
-          color: #1a1f35 !important; font-weight: 800;
+          color: #0f172a !important; font-weight: 800;
           font-size: 1.4rem; margin-bottom: 0.25rem;
         }
         .roadmap-timeline {
@@ -344,20 +344,20 @@ export default function DomainDetails() {
         .roadmap-timeline::before {
           content: ''; position: absolute;
           left: 2.1rem; top: 0.5rem; bottom: 0.5rem; width: 2px;
-          background: linear-gradient(180deg, #dde1ee 0%, transparent 100%);
+          background: linear-gradient(180deg, #e2e8f0 0%, transparent 100%);
           border-radius: 2px;
         }
         .timeline-item {
           display: flex; gap: 1.25rem;
           padding: 1.1rem 0;
-          border-bottom: 1px solid #f0f1f8;
+          border-bottom: 1px solid #f1f5f9;
           position: relative;
         }
         .timeline-item:last-child { border-bottom: none; }
         .step-num {
           font-weight: 700; font-size: 0.72rem;
-          color: #4a4580 !important;
-          background: #edeef8; border: 1px solid #c8cedf;
+          color: #4f46e5 !important;
+          background: #f1f5f9; border: 1px solid #cbd5e1;
           padding: 0.3rem 0.6rem; border-radius: var(--radius-full);
           height: fit-content; flex-shrink: 0; min-width: 3.5rem;
           text-align: center; letter-spacing: 0.03em;
@@ -365,9 +365,9 @@ export default function DomainDetails() {
         }
         .timeline-item h4 {
           font-size: 0.98rem; font-weight: 700;
-          color: #1a1f35 !important; margin-bottom: 0.3rem;
+          color: #0f172a !important; margin-bottom: 0.3rem;
         }
-        .timeline-item p { font-size: 0.84rem; color: #5a6480 !important; line-height: 1.55; }
+        .timeline-item p { font-size: 0.84rem; color: #64748b !important; line-height: 1.55; }
 
         /* ── Responsive ── */
         @media (max-width: 768px) {

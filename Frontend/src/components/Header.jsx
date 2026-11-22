@@ -373,7 +373,7 @@ export default function Header() {
           font-size: 1.4rem;
           font-weight: 800;
           letter-spacing: -0.03em;
-          background: linear-gradient(135deg, #0f172a 0%, #4f46e5 100%);
+          background: linear-gradient(135deg, #1a1f35 0%, #4a4580 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -442,7 +442,7 @@ export default function Header() {
         .status-text {
           font-size: 0.75rem;
           font-weight: 700;
-          color: #059669;
+          color: #2d7a5f;
         }
         .user-profile-menu {
           display: flex;

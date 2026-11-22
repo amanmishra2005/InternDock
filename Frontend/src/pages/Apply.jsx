@@ -225,11 +225,11 @@ export default function Apply() {
                       </div>
                       <div className="duration-card-features">
                         <span className="dur-feat-item">
-                          <Check size={12} color="#059669" />
+                          <Check size={12} color="#2d7a5f" />
                           <span>Weekly Capstone Tasks</span>
                         </span>
                         <span className="dur-feat-item">
-                          <Check size={12} color="#059669" />
+                          <Check size={12} color="#2d7a5f" />
                           <span>Verified Selection Offer</span>
                         </span>
                       </div>
@@ -259,7 +259,7 @@ export default function Apply() {
               <div className="date-fields-wrapper">
                 <div className="date-input-box">
                   <label htmlFor="start-date" className="date-box-label">
-                    <CalendarDays size={15} color="#4f46e5" />
+                    <CalendarDays size={15} color="#4a4580" />
                     <span>Starting Date</span>
                   </label>
                   <input
@@ -279,7 +279,7 @@ export default function Apply() {
 
                 <div className="date-input-box">
                   <label htmlFor="end-date" className="date-box-label">
-                    <CalendarDays size={15} color="#0284c7" />
+                    <CalendarDays size={15} color="#2a7da0" />
                     <span>Estimated Completion Date</span>
                   </label>
                   <input
@@ -299,7 +299,7 @@ export default function Apply() {
               </div>
 
               <div className="schedule-flexibility-notice">
-                <Zap size={15} color="#d97706" />
+                <Zap size={15} color="#9a7030" />
                 <span>
                   <strong>Flexible &amp; Self-Paced:</strong> You can submit your milestone capstones ahead of schedule or at your own pace within the designated window.
                 </span>
@@ -373,7 +373,7 @@ export default function Apply() {
             >
               <div className="summary-card-header">
                 <div className="seal-badge">
-                  <Award size={18} color="#4f46e5" />
+                  <Award size={18} color="#4a4580" />
                   <span>Official Selection Record</span>
                 </div>
                 <span className="live-status-pill">
@@ -418,23 +418,23 @@ export default function Apply() {
                 <span className="deliverables-heading">Official Inclusions:</span>
                 <ul className="deliverables-checklist">
                   <li>
-                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
+                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
                     <span>Instant Verified Offer Letter (PDF + Verification URL)</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
+                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
                     <span>Cryptographically Verified Certificate with QR validation</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
+                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
                     <span>Weekly Practical Capstone Project Milestones</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
+                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
                     <span>Mentor Code Reviews &amp; Feedback</span>
                   </li>
                   <li>
-                    <CheckCircle2 size={15} color="#059669" className="check-icon" />
+                    <CheckCircle2 size={15} color="#2d7a5f" className="check-icon" />
                     <span>Official Selected Interns WhatsApp Community Hub</span>
                   </li>
                 </ul>
@@ -467,7 +467,7 @@ export default function Apply() {
                   <span>256-Bit SSL Encrypted</span>
                 </div>
                 <div className="trust-item">
-                  <ShieldCheck size={12} color="#059669" />
+                  <ShieldCheck size={12} color="#2d7a5f" />
                   <span>Recruiter Verifiable</span>
                 </div>
               </div>
@@ -479,7 +479,7 @@ export default function Apply() {
       <style>{`
         .apply-page-wrapper {
           padding: 3rem 0 5rem 0;
-          background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+          background: linear-gradient(180deg, #f6f7fb 0%, #eef0f6 100%);
           min-height: calc(100vh - 120px);
         }
         .apply-top-nav {
@@ -489,14 +489,14 @@ export default function Apply() {
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          color: #475569 !important;
+          color: #5a6480 !important;
           font-size: 0.925rem;
-          font-weight: 700;
+          font-weight: 600;
           text-decoration: none;
           transition: all 0.2s ease;
         }
         .back-link:hover {
-          color: #4f46e5 !important;
+          color: #4a4580 !important;
           transform: translateX(-3px);
         }
         .apply-header-banner {
@@ -504,77 +504,77 @@ export default function Apply() {
         }
         .apply-page-title {
           font-size: 2.4rem;
-          font-weight: 900;
-          color: #0f172a !important;
+          font-weight: 800;
+          color: #1a1f35 !important;
           letter-spacing: -0.03em;
           margin: 0.65rem 0 0.4rem 0;
         }
         .apply-page-desc {
-          font-size: 1.05rem;
-          color: #475569 !important;
+          font-size: 1rem;
+          color: #5a6480 !important;
           max-width: 720px;
-          line-height: 1.55;
+          line-height: 1.6;
         }
         .apply-split-layout {
           display: grid;
-          grid-template-columns: 1fr 430px;
-          gap: 2.5rem;
+          grid-template-columns: 1fr 420px;
+          gap: 2.25rem;
           align-items: flex-start;
         }
         .apply-form-main-col {
           display: flex;
           flex-direction: column;
-          gap: 1.75rem;
+          gap: 1.5rem;
         }
         .apply-section-card {
-          padding: 2.25rem;
+          padding: 2rem;
           background: #ffffff !important;
-          border: 1px solid #e2e8f0 !important;
+          border: 1px solid #dde1ee !important;
           border-radius: var(--radius-md);
-          box-shadow: 0 4px 15px rgba(15, 23, 42, 0.03);
+          box-shadow: 0 2px 12px rgba(20, 25, 50, 0.04);
         }
         .section-card-header {
           display: flex;
           align-items: flex-start;
           gap: 1rem;
           margin-bottom: 1.5rem;
-          border-bottom: 1px solid #f1f5f9;
-          padding-bottom: 1.25rem;
+          border-bottom: 1px solid #eef0f6;
+          padding-bottom: 1.1rem;
         }
         .step-badge {
-          width: 34px;
-          height: 34px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
-          background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+          background: linear-gradient(135deg, #4a4580, #6b5fa0);
           color: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 800;
-          font-size: 0.95rem;
+          font-weight: 700;
+          font-size: 0.9rem;
           flex-shrink: 0;
-          box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+          box-shadow: 0 3px 10px rgba(74, 69, 128, 0.20);
         }
         .section-card-title {
-          font-size: 1.3rem;
-          font-weight: 800;
-          color: #0f172a !important;
-          margin: 0 0 0.25rem 0;
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #1a1f35 !important;
+          margin: 0 0 0.2rem 0;
         }
         .section-card-subtitle {
-          font-size: 0.88rem;
-          color: #64748b !important;
+          font-size: 0.875rem;
+          color: #5a6480 !important;
           margin: 0;
         }
         .durations-interactive-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-          gap: 1rem;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 0.9rem;
         }
         .duration-interactive-card {
-          padding: 1.25rem;
-          border: 1.5px solid #e2e8f0;
-          background: #f8fafc;
+          padding: 1.1rem 1.15rem;
+          border: 1.5px solid #dde1ee;
+          background: #f6f7fb;
           border-radius: var(--radius-sm);
           cursor: pointer;
           transition: all 0.2s ease;
@@ -583,84 +583,84 @@ export default function Apply() {
           justify-content: space-between;
         }
         .duration-interactive-card:hover {
-          border-color: #818cf8;
+          border-color: #9095c4;
           background: #ffffff;
           transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);
+          box-shadow: 0 6px 16px rgba(74, 69, 128, 0.07);
         }
         .duration-interactive-card.selected {
-          border-color: #4f46e5;
+          border-color: #4a4580;
           background: #ffffff;
-          box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15), 0 8px 20px rgba(79, 70, 229, 0.1);
+          box-shadow: 0 0 0 2.5px rgba(74, 69, 128, 0.14), 0 6px 18px rgba(74, 69, 128, 0.08);
         }
         .duration-card-top {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.65rem;
         }
         .duration-title-group {
           display: flex;
           align-items: center;
-          gap: 0.65rem;
+          gap: 0.6rem;
         }
         .radio-dot-indicator {
-          width: 18px;
-          height: 18px;
+          width: 17px;
+          height: 17px;
           border-radius: 50%;
-          border: 2px solid #cbd5e1;
+          border: 2px solid #b8bed8;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: all 0.2s;
         }
         .radio-dot-indicator.active {
-          border-color: #4f46e5;
+          border-color: #4a4580;
         }
         .inner-dot {
-          width: 8px;
-          height: 8px;
+          width: 7px;
+          height: 7px;
           border-radius: 50%;
-          background: #4f46e5;
+          background: #4a4580;
         }
         .duration-title-text {
-          font-size: 0.98rem;
-          font-weight: 800;
-          color: #0f172a;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #1a1f35;
           display: block;
         }
         .duration-weeks-sub {
-          font-size: 0.75rem;
-          color: #64748b;
+          font-size: 0.74rem;
+          color: #5a6480;
           display: block;
         }
         .duration-fee-pill {
-          font-size: 1.15rem;
-          font-weight: 900;
-          color: #4f46e5;
-          background: rgba(79, 70, 229, 0.08);
-          padding: 0.25rem 0.65rem;
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #4a4580;
+          background: rgba(74, 69, 128, 0.08);
+          padding: 0.2rem 0.6rem;
           border-radius: var(--radius-full);
         }
         .duration-card-features {
           display: flex;
           flex-direction: column;
-          gap: 0.35rem;
-          padding-top: 0.75rem;
-          border-top: 1px dashed #e2e8f0;
+          gap: 0.3rem;
+          padding-top: 0.65rem;
+          border-top: 1px dashed #dde1ee;
         }
         .dur-feat-item {
           display: flex;
           align-items: center;
           gap: 0.4rem;
-          font-size: 0.76rem;
-          color: #475569;
+          font-size: 0.75rem;
+          color: #5a6480;
           font-weight: 500;
         }
         .date-fields-wrapper {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 1.25rem;
+          gap: 1.1rem;
         }
         .date-input-box {
           display: flex;
@@ -671,136 +671,143 @@ export default function Apply() {
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          font-size: 0.85rem;
-          font-weight: 700;
-          color: #1e293b;
+          font-size: 0.84rem;
+          font-weight: 600;
+          color: #1a1f35;
         }
         .custom-date-field {
           width: 100%;
-          padding: 0.85rem 1rem;
-          border: 1.5px solid #cbd5e1;
+          padding: 0.8rem 1rem;
+          border: 1.5px solid #c8cedf;
           border-radius: var(--radius-sm);
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: #0f172a;
+          font-size: 0.93rem;
+          font-weight: 500;
+          color: #1a1f35;
           background: #ffffff;
           transition: all 0.2s;
         }
         .custom-date-field:focus {
-          border-color: #4f46e5;
-          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+          border-color: #6065a8;
+          box-shadow: 0 0 0 3px rgba(74, 69, 128, 0.10);
           outline: none;
         }
         .date-helper {
-          font-size: 0.76rem;
-          color: #64748b;
+          font-size: 0.75rem;
+          color: #5a6480;
         }
         .schedule-flexibility-notice {
           display: flex;
           align-items: center;
           gap: 0.65rem;
-          background: rgba(245, 158, 11, 0.08);
-          border: 1px solid rgba(245, 158, 11, 0.25);
-          padding: 0.85rem 1.15rem;
+          background: rgba(154, 112, 48, 0.07);
+          border: 1px solid rgba(154, 112, 48, 0.20);
+          padding: 0.8rem 1.1rem;
           border-radius: var(--radius-sm);
-          margin-top: 1.25rem;
-          font-size: 0.84rem;
-          color: #92400e;
-          line-height: 1.45;
+          margin-top: 1.1rem;
+          font-size: 0.83rem;
+          color: #7a5520;
+          line-height: 1.5;
         }
         .candidate-details-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 1rem;
+          gap: 0.9rem;
         }
         .candidate-info-chip {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          padding: 0.85rem 1rem;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          gap: 0.7rem;
+          padding: 0.8rem 1rem;
+          background: #f6f7fb;
+          border: 1px solid #dde1ee;
           border-radius: var(--radius-sm);
           position: relative;
         }
         .info-chip-label {
           display: block;
-          font-size: 0.72rem;
-          color: #64748b;
+          font-size: 0.7rem;
+          color: #5a6480;
           text-transform: uppercase;
-          font-weight: 700;
+          font-weight: 600;
+          letter-spacing: 0.03em;
         }
         .info-chip-val {
           display: block;
-          font-size: 0.9rem;
-          color: #0f172a;
+          font-size: 0.88rem;
+          color: #1a1f35;
+          font-weight: 600;
           word-break: break-all;
         }
         .verified-pill {
           margin-left: auto;
-          font-size: 0.7rem;
+          font-size: 0.68rem;
           font-weight: 700;
-          color: #059669;
-          background: rgba(5, 150, 105, 0.08);
+          color: #2d7a5f;
+          background: rgba(45, 122, 95, 0.08);
           padding: 0.15rem 0.5rem;
           border-radius: var(--radius-full);
           white-space: nowrap;
+          border: 1px solid rgba(45, 122, 95, 0.18);
         }
         .inline-icon {
           vertical-align: middle;
           margin-right: 0.35rem;
-          color: #4f46e5;
+          color: #4a4580;
         }
         .styled-text-field {
           width: 100%;
-          padding: 0.85rem 1rem;
-          font-size: 0.95rem;
-          border: 1.5px solid #cbd5e1;
+          padding: 0.8rem 1rem;
+          font-size: 0.93rem;
+          border: 1.5px solid #c8cedf;
           border-radius: var(--radius-sm);
+          color: #1a1f35;
+          background: #ffffff;
+          transition: all 0.2s;
         }
         .styled-text-field:focus {
-          border-color: #4f46e5;
-          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+          border-color: #6065a8;
+          box-shadow: 0 0 0 3px rgba(74, 69, 128, 0.10);
+          outline: none;
         }
         .apply-sidebar-col {
           position: sticky;
           top: 96px;
         }
         .sticky-summary-card {
-          padding: 2.25rem;
+          padding: 1.85rem;
           background: #ffffff !important;
-          border: 1.5px solid #cbd5e1 !important;
+          border: 1.5px solid #c8cedf !important;
           border-radius: var(--radius-md);
-          box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+          box-shadow: 0 8px 28px rgba(20, 25, 50, 0.07);
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
+          gap: 1.15rem;
         }
         .summary-card-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid #f1f5f9;
-          padding-bottom: 0.85rem;
+          border-bottom: 1px solid #eef0f6;
+          padding-bottom: 0.8rem;
         }
         .seal-badge {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          font-size: 0.78rem;
-          font-weight: 800;
-          color: #4f46e5;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #4a4580;
           text-transform: uppercase;
-          letter-spacing: 0.03em;
+          letter-spacing: 0.04em;
         }
         .live-status-pill {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          font-size: 0.72rem;
+          font-size: 0.7rem;
           font-weight: 700;
-          color: #059669;
-          background: rgba(5, 150, 105, 0.08);
+          color: #2d7a5f;
+          background: rgba(45, 122, 95, 0.08);
           padding: 0.2rem 0.55rem;
           border-radius: var(--radius-full);
         }
@@ -810,16 +817,16 @@ export default function Apply() {
           gap: 0.35rem;
         }
         .summary-category-tag {
-          font-size: 0.75rem;
+          font-size: 0.72rem;
           font-weight: 700;
-          color: #0284c7;
+          color: #2a7da0;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
+          letter-spacing: 0.05em;
         }
         .summary-domain-name {
-          font-size: 1.45rem;
-          font-weight: 900;
-          color: #0f172a !important;
+          font-size: 1.35rem;
+          font-weight: 800;
+          color: #1a1f35 !important;
           margin: 0;
           line-height: 1.25;
         }
@@ -827,69 +834,69 @@ export default function Apply() {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          font-size: 0.825rem;
-          font-weight: 700;
-          color: #475569;
-          background: #f1f5f9;
-          padding: 0.25rem 0.65rem;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #5a6480;
+          background: #eef0f6;
+          padding: 0.22rem 0.6rem;
           border-radius: var(--radius-full);
           align-self: flex-start;
-          margin-top: 0.25rem;
+          margin-top: 0.2rem;
         }
         .summary-breakdown-box {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: #f6f7fb;
+          border: 1px solid #dde1ee;
           border-radius: var(--radius-sm);
-          padding: 1.15rem;
+          padding: 1.1rem;
           display: flex;
           flex-direction: column;
-          gap: 0.65rem;
+          gap: 0.6rem;
         }
         .breakdown-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          font-size: 0.88rem;
-          color: #475569;
+          font-size: 0.875rem;
+          color: #5a6480;
         }
         .breakdown-row strong {
-          color: #0f172a;
+          color: #1a1f35;
         }
         .breakdown-divider {
           height: 1px;
-          background: #e2e8f0;
-          margin: 0.35rem 0;
+          background: #dde1ee;
+          margin: 0.3rem 0;
         }
         .fee-highlight-row {
           align-items: center;
         }
         .fee-row-label {
           display: block;
-          font-size: 0.95rem;
-          font-weight: 800;
-          color: #0f172a;
+          font-size: 0.93rem;
+          font-weight: 700;
+          color: #1a1f35;
         }
         .fee-tax-sub {
           display: block;
-          font-size: 0.72rem;
-          color: #64748b;
+          font-size: 0.7rem;
+          color: #5a6480;
         }
         .summary-total-fee {
-          font-size: 1.85rem;
+          font-size: 1.75rem;
           font-weight: 900;
-          color: #4f46e5;
+          color: #4a4580;
         }
         .summary-deliverables-section {
           display: flex;
           flex-direction: column;
-          gap: 0.6rem;
+          gap: 0.55rem;
         }
         .deliverables-heading {
-          font-size: 0.78rem;
-          font-weight: 800;
-          color: #334155;
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #5a6480;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
+          letter-spacing: 0.05em;
         }
         .deliverables-checklist {
           list-style: none;
@@ -897,14 +904,14 @@ export default function Apply() {
           margin: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.55rem;
+          gap: 0.5rem;
         }
         .deliverables-checklist li {
           display: flex;
           align-items: flex-start;
           gap: 0.5rem;
-          font-size: 0.825rem;
-          color: #334155;
+          font-size: 0.815rem;
+          color: #3a4255;
           line-height: 1.4;
         }
         .check-icon {
@@ -912,33 +919,33 @@ export default function Apply() {
           margin-top: 2px;
         }
         .btn-apply-submit {
-          padding: 1.05rem 1.5rem;
-          font-size: 1.02rem;
-          font-weight: 800;
+          padding: 1rem 1.5rem;
+          font-size: 1rem;
+          font-weight: 700;
           border-radius: var(--radius-sm);
-          box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+          box-shadow: 0 6px 20px rgba(74, 69, 128, 0.22);
         }
         .security-trust-footer {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 1.5rem;
-          padding-top: 0.4rem;
+          padding-top: 0.35rem;
         }
         .trust-item {
           display: flex;
           align-items: center;
           gap: 0.35rem;
-          font-size: 0.74rem;
-          color: #64748b;
-          font-weight: 600;
+          font-size: 0.72rem;
+          color: #5a6480;
+          font-weight: 500;
         }
         .error-message-box {
-          padding: 0.85rem 1rem;
-          background: rgba(239, 68, 68, 0.08);
-          border: 1px solid rgba(239, 68, 68, 0.25);
-          color: #dc2626;
-          font-size: 0.85rem;
+          padding: 0.8rem 1rem;
+          background: rgba(192, 57, 43, 0.07);
+          border: 1px solid rgba(192, 57, 43, 0.20);
+          color: #c0392b;
+          font-size: 0.84rem;
           font-weight: 600;
           border-radius: var(--radius-sm);
         }
@@ -953,7 +960,7 @@ export default function Apply() {
         }
         @media (max-width: 600px) {
           .apply-section-card {
-            padding: 1.5rem 1.15rem;
+            padding: 1.4rem 1rem;
           }
           .date-fields-wrapper {
             grid-template-columns: 1fr;
@@ -965,7 +972,7 @@ export default function Apply() {
             grid-template-columns: 1fr;
           }
           .apply-page-title {
-            font-size: 1.85rem;
+            font-size: 1.75rem;
           }
           .sticky-summary-card {
             padding: 1.5rem 1.15rem;

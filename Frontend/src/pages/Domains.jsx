@@ -136,11 +136,11 @@ export default function Domains() {
           >
             <span className="pulse-dot"></span>
             <Sparkles size={14} />
-            <span>❄️ Winter Internship Cohort 2026–2027 • 25+ Industry Tracks</span>
+            <span>Live Internship Tracks Catalog</span>
           </motion.div>
-          <h1 className="domains-hero-title">Winter Internship Tracks Catalog</h1>
+          <h1 className="domains-hero-title">Explore Internship Domains</h1>
           <p className="domains-hero-subtitle">
-            Explore 25+ verified technology, data, design, and business tracks for the Winter Cohort. Choose your track to receive your guaranteed Offer Letter and unlock project milestone repositories.
+            Browse through 25+ industry-aligned tech tracks. Click any track to inspect the curriculum roadmap and select your preferred program duration.
           </p>
 
           {/* Search & Filter Bar */}

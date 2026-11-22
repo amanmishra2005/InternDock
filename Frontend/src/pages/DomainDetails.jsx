@@ -73,9 +73,6 @@ export default function DomainDetails() {
       >
         <div className="hero-top-info">
           <span className="badge-pill badge-pill-cyan">{domain.category}</span>
-          <span className="badge-pill badge-pill-cyan">
-            <span>❄️ Winter Cohort 2026–27</span>
-          </span>
           <span className="badge-pill badge-pill-emerald">
             <CheckCircle2 size={13} />
             <span>Verified Capstone Track</span>

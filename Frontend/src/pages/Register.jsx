@@ -259,15 +259,15 @@ export default function Register() {
             className="badge-pill badge-pill-emerald"
           >
             <span className="pulse-dot"></span>
-            <Sparkles size={14} />
-            <span>❄️ Winter Internship Cohort 2026–2027 • Fast-Track Applications</span>
+            <ShieldCheck size={14} />
+            <span>Candidate Verification &amp; Security</span>
           </motion.div>
 
           <h1 className="auth-visual-title">
-            Join <span className="gradient-text">InternDock</span> Winter Cohort 2026–27
+            Join <span className="gradient-text">InternDock</span> Internship Platform
           </h1>
           <p className="auth-visual-sub">
-            Enroll in hands-on tech internships across 25+ domains, receive your official Selection Offer Letter, and complete real-world capstone projects with 1-on-1 mentor feedback.
+            Enroll in hands-on tech internships across 25+ domains, work on real-world capstone projects, and build a cryptographically verified portfolio.
           </p>
 
           <div className="auth-illustration-box">

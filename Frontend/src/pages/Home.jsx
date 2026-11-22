@@ -107,7 +107,7 @@ export default function Home() {
             >
               <span className="pulse-dot"></span>
               <Sparkles size={14} />
-              <span>❄️ Winter Internship Cohort 2026–2027 • Applications Now Live</span>
+              <span>2026 Cohort Open • All Streams Welcome</span>
             </motion.div>
 
             <h1 className="hero-heading">
@@ -118,7 +118,9 @@ export default function Home() {
             </h1>
 
             <p className="hero-subheading">
-              InternDock's Winter Internship Cohort empowers students and graduates to master high-growth tech tracks, build production capstones, and secure cryptographically verified offer letters and credentials.
+              InternDock helps students and graduates from every stream turn
+              focused project work into credible experience, mentor feedback,
+              and verifiable credentials.
             </p>
 
             <div className="hero-cta-group">
@@ -193,7 +195,7 @@ export default function Home() {
                 </span>
                 <div>
                   <strong>Guaranteed Selection Letter</strong>
-                  <span>Winter Cohort 2026–27 Verification</span>
+                  <span>Direct HR Ledger Verification</span>
                 </div>
               </motion.div>
 

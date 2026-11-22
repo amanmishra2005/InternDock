@@ -278,7 +278,7 @@ export default function DomainDetails() {
         .duration-row {
           display: flex; align-items: center; justify-content: space-between;
           padding: 1rem 1.25rem;
-          background: #f8f9fc;
+          background: #f8fafc;
           border: 1.5px solid #e2e8f0;
           border-radius: var(--radius-sm);
           cursor: pointer; transition: all 0.18s ease;

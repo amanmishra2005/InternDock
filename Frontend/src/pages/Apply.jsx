@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Clock,
   CalendarDays,
+  Sparkles,
 } from "lucide-react";
 import api from "../api/axios";
 

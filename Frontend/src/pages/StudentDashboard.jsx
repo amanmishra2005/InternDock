@@ -364,7 +364,7 @@ export default function StudentDashboard() {
 
                   <div className="winter-perks-row">
                     <div className="winter-perk-item">
-                      <Zap size={16} color="#d97706" />
+                      <Zap size={16} color="#9a7030" />
                       <span>Instant Selection Offer Letter</span>
                     </div>
                     <div className="winter-perk-item">
@@ -372,11 +372,11 @@ export default function StudentDashboard() {
                       <span>Verifiable Certificate</span>
                     </div>
                     <div className="winter-perk-item">
-                      <Code2 size={16} color="#059669" />
+                      <Code2 size={16} color="#2d7a5f" />
                       <span>Weekly Practical Capstones</span>
                     </div>
                     <div className="winter-perk-item">
-                      <Clock size={16} color="#0284c7" />
+                      <Clock size={16} color="#2a7da0" />
                       <span>Self-Paced 4–24 Weeks</span>
                     </div>
                   </div>
@@ -487,7 +487,7 @@ export default function StudentDashboard() {
                         className="pulse-dot"
                         style={{ background: "#25D366" }}
                       ></span>
-                      <WhatsAppIcon size={14} color="#059669" />
+                      <WhatsAppIcon size={14} color="#2d7a5f" />
                       <span>Official WhatsApp Community</span>
                     </div>
                     <h2>Join Selected Interns WhatsApp Hub</h2>
@@ -866,7 +866,7 @@ export default function StudentDashboard() {
 
                 <div className="modal-perks-row">
                   <div className="modal-perk">
-                    <Zap size={15} color="#d97706" />
+                    <Zap size={15} color="#9a7030" />
                     <span>Instant Offer Letter</span>
                   </div>
                   <div className="modal-perk">
@@ -874,11 +874,11 @@ export default function StudentDashboard() {
                     <span>Verifiable Certificate</span>
                   </div>
                   <div className="modal-perk">
-                    <Code2 size={15} color="#059669" />
+                    <Code2 size={15} color="#2d7a5f" />
                     <span>Weekly Capstones</span>
                   </div>
                   <div className="modal-perk">
-                    <Clock size={15} color="#0284c7" />
+                    <Clock size={15} color="#2a7da0" />
                     <span>Self-Paced Flexible</span>
                   </div>
                 </div>
@@ -933,38 +933,38 @@ export default function StudentDashboard() {
       <style>{`
         .dashboard-container { padding: 3.5rem 1.5rem; }
         .dashboard-welcome-card { display: flex; align-items: center; justify-content: space-between; padding: 2.75rem 3rem; margin-bottom: 2.5rem; }
-        .welcome-text h1 { font-size: 2.3rem; font-weight: 800; margin: 0.5rem 0; color: #0f172a !important; }
+        .welcome-text h1 { font-size: 2.3rem; font-weight: 800; margin: 0.5rem 0; color: #1a1f35 !important; }
         .welcome-text p { color: var(--text-muted) !important; font-size: 1rem; max-width: 650px; }
-        .dashboard-nav-tabs { display: flex; gap: 1rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 2rem; }
-        .tab-btn { background: none; border: none; color: #64748b !important; font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; padding: 0.75rem 1.25rem; cursor: pointer; position: relative; transition: var(--transition-fast); }
-        .tab-btn:hover { color: #1e3a8a !important; }
-        .tab-btn.active { color: #4f46e5 !important; font-weight: 800; }
+        .dashboard-nav-tabs { display: flex; gap: 1rem; border-bottom: 2px solid #dde1ee; margin-bottom: 2rem; }
+        .tab-btn { background: none; border: none; color: #5a6480 !important; font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; padding: 0.75rem 1.25rem; cursor: pointer; position: relative; transition: var(--transition-fast); }
+        .tab-btn:hover { color: #3b3870 !important; }
+        .tab-btn.active { color: #4a4580 !important; font-weight: 800; }
         .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, var(--primary), var(--accent-purple)); border-radius: var(--radius-full); }
         .dashboard-section-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
         .results-count { color: var(--text-muted) !important; font-weight: 600; font-size: 0.9rem; }
         .search-input-group { position: relative; width: 100%; }
-        .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #64748b !important; }
-        .domains-search-input { width: 100%; padding: 0.85rem 1rem 0.85rem 2.8rem; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: var(--radius-sm); color: #0f172a !important; font-size: 0.95rem; font-weight: 500; }
-        .domains-search-input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important; }
-        .clear-btn { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b !important; cursor: pointer; }
+        .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #5a6480 !important; }
+        .domains-search-input { width: 100%; padding: 0.85rem 1rem 0.85rem 2.8rem; background: #ffffff !important; border: 1px solid #c8cedf !important; border-radius: var(--radius-sm); color: #1a1f35 !important; font-size: 0.95rem; font-weight: 500; }
+        .domains-search-input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(74, 69, 128, 0.15) !important; }
+        .clear-btn { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #5a6480 !important; cursor: pointer; }
         .categories-scroll-row { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; }
-        .cat-pill-btn { padding: 0.4rem 1rem; background: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; border-radius: var(--radius-full); color: #475569 !important; font-size: 0.825rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; }
-        .cat-pill-btn:hover { background: #e2e8f0 !important; color: #0f172a !important; }
-        .cat-pill-btn.active { background: rgba(79, 70, 229, 0.12) !important; border-color: var(--primary) !important; color: #4f46e5 !important; font-weight: 700; }
+        .cat-pill-btn { padding: 0.4rem 1rem; background: #eef0f6 !important; border: 1px solid #c8cedf !important; border-radius: var(--radius-full); color: #5a6480 !important; font-size: 0.825rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; }
+        .cat-pill-btn:hover { background: #e2e8f0 !important; color: #1a1f35 !important; }
+        .cat-pill-btn.active { background: rgba(74, 69, 128, 0.12) !important; border-color: var(--primary) !important; color: #4a4580 !important; font-weight: 700; }
         .application-card { padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
         .app-card-header { display: flex; align-items: center; justify-content: space-between; }
-        .app-id-tag { font-family: monospace; font-size: 0.8rem; color: #64748b !important; font-weight: 600; }
+        .app-id-tag { font-family: monospace; font-size: 0.8rem; color: #5a6480 !important; font-weight: 600; }
         .status-pill { padding: 0.3rem 0.85rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
-        .status-submitted { background: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1; }
-        .status-review { background: rgba(245, 158, 11, 0.12) !important; color: #d97706 !important; border: 1px solid rgba(245, 158, 11, 0.3); }
-        .status-selected { background: rgba(2, 132, 199, 0.12) !important; color: #0284c7 !important; border: 1px solid rgba(2, 132, 199, 0.3); }
-        .status-active { background: rgba(79, 70, 229, 0.12) !important; color: #4f46e5 !important; border: 1px solid rgba(79, 70, 229, 0.3); }
-        .status-completed { background: rgba(5, 150, 105, 0.12) !important; color: #059669 !important; border: 1px solid rgba(5, 150, 105, 0.3); }
-        .app-domain-title { font-size: 1.4rem; font-weight: 800; color: #0f172a !important; }
-        .app-meta-row { display: flex; gap: 1.5rem; font-size: 0.875rem; color: #475569 !important; }
+        .status-submitted { background: #eef0f6 !important; color: #5a6480 !important; border: 1px solid #c8cedf; }
+        .status-review { background: rgba(154, 112, 48, 0.12) !important; color: #9a7030 !important; border: 1px solid rgba(154, 112, 48, 0.3); }
+        .status-selected { background: rgba(42, 125, 160, 0.12) !important; color: #2a7da0 !important; border: 1px solid rgba(42, 125, 160, 0.3); }
+        .status-active { background: rgba(74, 69, 128, 0.12) !important; color: #4a4580 !important; border: 1px solid rgba(74, 69, 128, 0.3); }
+        .status-completed { background: rgba(45, 122, 95, 0.12) !important; color: #2d7a5f !important; border: 1px solid rgba(45, 122, 95, 0.3); }
+        .app-domain-title { font-size: 1.4rem; font-weight: 800; color: #1a1f35 !important; }
+        .app-meta-row { display: flex; gap: 1.5rem; font-size: 0.875rem; color: #5a6480 !important; }
         .inline-meta-icon { vertical-align: middle; margin-right: 2px; }
         .app-progress-bar-container { display: flex; flex-direction: column; gap: 0.4rem; }
-        .progress-label { display: flex; justify-content: space-between; font-size: 0.775rem; color: #64748b !important; font-weight: 600; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.775rem; color: #5a6480 !important; font-weight: 600; }
         .progress-track { width: 100%; height: 8px; background: #e2e8f0 !important; border-radius: var(--radius-full); overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent-purple)); border-radius: var(--radius-full); }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
@@ -979,7 +979,7 @@ export default function StudentDashboard() {
           justify-content: space-between;
           padding: 2rem 2.25rem;
           margin-bottom: 2rem;
-          background: linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(16, 185, 129, 0.05), rgba(79, 70, 229, 0.04));
+          background: linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(16, 185, 129, 0.05), rgba(74, 69, 128, 0.04));
           border: 1px solid rgba(37, 211, 102, 0.35);
           border-radius: var(--radius-md);
           gap: 2rem;
@@ -987,11 +987,11 @@ export default function StudentDashboard() {
         .whatsapp-banner-left h2 {
           font-size: 1.45rem;
           font-weight: 800;
-          color: #0f172a !important;
+          color: #1a1f35 !important;
           margin: 0.4rem 0 0.35rem 0;
         }
         .whatsapp-banner-left p {
-          color: #475569 !important;
+          color: #5a6480 !important;
           font-size: 0.925rem;
           line-height: 1.55;
           max-width: 600px;
@@ -1105,18 +1105,18 @@ export default function StudentDashboard() {
         }
         .winter-cohort-cta-card {
           padding: 2.5rem;
-          background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(2, 132, 199, 0.08) 50%, rgba(124, 58, 237, 0.06) 100%);
-          border: 1.5px solid rgba(79, 70, 229, 0.25);
+          background: linear-gradient(135deg, rgba(74, 69, 128, 0.08) 0%, rgba(42, 125, 160, 0.08) 50%, rgba(124, 58, 237, 0.06) 100%);
+          border: 1.5px solid rgba(74, 69, 128, 0.25);
           border-radius: var(--radius-md);
         }
         .winter-cta-header h2 {
           font-size: 1.85rem;
           font-weight: 800;
-          color: #0f172a !important;
+          color: #1a1f35 !important;
           margin: 0.5rem 0;
         }
         .winter-cta-header p {
-          color: #475569 !important;
+          color: #5a6480 !important;
           font-size: 1rem;
           max-width: 720px;
           line-height: 1.6;
@@ -1133,11 +1133,11 @@ export default function StudentDashboard() {
           gap: 0.5rem;
           font-size: 0.88rem;
           font-weight: 700;
-          color: #1e293b !important;
+          color: #1a1f35 !important;
           background: #ffffff;
           padding: 0.4rem 0.9rem;
           border-radius: var(--radius-full);
-          border: 1px solid #e2e8f0;
+          border: 1px solid #dde1ee;
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
         }
         .winter-tracks-section {
@@ -1154,11 +1154,11 @@ export default function StudentDashboard() {
         .winter-tracks-header h3 {
           font-size: 1.45rem;
           font-weight: 800;
-          color: #0f172a !important;
+          color: #1a1f35 !important;
           margin: 0 0 0.25rem 0;
         }
         .winter-tracks-header p {
-          color: #64748b !important;
+          color: #5a6480 !important;
           font-size: 0.9rem;
           margin: 0;
         }
@@ -1173,13 +1173,13 @@ export default function StudentDashboard() {
           flex-direction: column;
           justify-content: space-between;
           border-radius: var(--radius-md);
-          border: 1px solid #e2e8f0;
+          border: 1px solid #dde1ee;
           background: #ffffff;
           transition: all 0.25s ease;
         }
         .winter-track-card:hover {
-          border-color: #6366f1;
-          box-shadow: 0 10px 25px rgba(99, 102, 241, 0.12);
+          border-color: #6065a8;
+          box-shadow: 0 10px 25px rgba(96, 101, 168, 0.12);
         }
         .winter-track-top {
           display: flex;
@@ -1190,21 +1190,21 @@ export default function StudentDashboard() {
         .winter-badge-mini {
           font-size: 0.72rem;
           font-weight: 700;
-          color: #0284c7;
-          background: rgba(2, 132, 199, 0.08);
-          border: 1px solid rgba(2, 132, 199, 0.2);
+          color: #2a7da0;
+          background: rgba(42, 125, 160, 0.08);
+          border: 1px solid rgba(42, 125, 160, 0.2);
           padding: 0.2rem 0.55rem;
           border-radius: var(--radius-full);
         }
         .winter-track-name {
           font-size: 1.25rem;
           font-weight: 800;
-          color: #0f172a !important;
+          color: #1a1f35 !important;
           margin: 0 0 0.5rem 0;
         }
         .winter-track-desc {
           font-size: 0.85rem;
-          color: #64748b !important;
+          color: #5a6480 !important;
           line-height: 1.5;
           margin-bottom: 1rem;
         }
@@ -1219,7 +1219,7 @@ export default function StudentDashboard() {
           align-items: center;
           justify-content: space-between;
           padding-top: 1rem;
-          border-top: 1px solid #f1f5f9;
+          border-top: 1px solid #eef0f6;
         }
         .fee-info {
           display: flex;
@@ -1227,24 +1227,24 @@ export default function StudentDashboard() {
         }
         .fee-label {
           font-size: 0.7rem;
-          color: #64748b;
+          color: #5a6480;
           text-transform: uppercase;
           font-weight: 600;
         }
         .fee-val {
           font-size: 1.15rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #1a1f35;
         }
         .custom-domain-hint-box {
           padding: 1.25rem;
-          color: #64748b;
+          color: #5a6480;
           font-size: 0.9rem;
         }
         .link-btn-text {
           background: none;
           border: none;
-          color: #4f46e5;
+          color: #4a4580;
           font-weight: 700;
           cursor: pointer;
           text-decoration: underline;
@@ -1256,8 +1256,8 @@ export default function StudentDashboard() {
           justify-content: space-between;
           padding: 1rem 1.5rem;
           margin-bottom: 1.75rem;
-          background: rgba(2, 132, 199, 0.05);
-          border: 1px solid rgba(2, 132, 199, 0.25);
+          background: rgba(42, 125, 160, 0.05);
+          border: 1px solid rgba(42, 125, 160, 0.25);
           border-radius: var(--radius-sm);
         }
         .active-banner-left {
@@ -1268,7 +1268,7 @@ export default function StudentDashboard() {
         .active-banner-msg {
           font-size: 0.88rem;
           font-weight: 600;
-          color: #1e293b;
+          color: #1a1f35;
         }
         .winter-welcome-modal {
           max-width: 620px !important;
@@ -1283,12 +1283,12 @@ export default function StudentDashboard() {
         .winter-welcome-body h2 {
           font-size: 1.65rem;
           font-weight: 800;
-          color: #0f172a !important;
+          color: #1a1f35 !important;
           margin: 0.5rem 0;
         }
         .welcome-intro-text {
           font-size: 0.925rem;
-          color: #475569 !important;
+          color: #5a6480 !important;
           line-height: 1.55;
           margin-bottom: 1.25rem;
         }
@@ -1302,13 +1302,13 @@ export default function StudentDashboard() {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: #f6f7fb;
+          border: 1px solid #dde1ee;
           padding: 0.5rem 0.75rem;
           border-radius: var(--radius-sm);
           font-size: 0.8rem;
           font-weight: 700;
-          color: #1e293b;
+          color: #1a1f35;
         }
         .modal-top-tracks {
           margin-bottom: 1.5rem;
@@ -1317,7 +1317,7 @@ export default function StudentDashboard() {
           display: block;
           font-size: 0.825rem;
           font-weight: 700;
-          color: #475569;
+          color: #5a6480;
           margin-bottom: 0.75rem;
           text-transform: uppercase;
           letter-spacing: 0.03em;
@@ -1333,14 +1333,14 @@ export default function StudentDashboard() {
           justify-content: space-between;
           padding: 0.75rem 1rem;
           background: #ffffff;
-          border: 1.5px solid #e2e8f0;
+          border: 1.5px solid #dde1ee;
           border-radius: var(--radius-sm);
           text-decoration: none;
           transition: all 0.2s ease;
         }
         .modal-track-card:hover {
-          border-color: #4f46e5;
-          background: rgba(79, 70, 229, 0.02);
+          border-color: #4a4580;
+          background: rgba(74, 69, 128, 0.02);
           transform: translateX(3px);
         }
         .modal-track-info {
@@ -1348,18 +1348,18 @@ export default function StudentDashboard() {
           flex-direction: column;
         }
         .modal-track-info strong {
-          color: #0f172a;
+          color: #1a1f35;
           font-size: 0.925rem;
         }
         .modal-track-info span {
-          color: #64748b;
+          color: #5a6480;
           font-size: 0.78rem;
         }
         .apply-chip {
           display: inline-flex;
           align-items: center;
           gap: 0.25rem;
-          background: #4f46e5;
+          background: #4a4580;
           color: #ffffff;
           font-size: 0.75rem;
           font-weight: 700;

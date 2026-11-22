@@ -277,7 +277,7 @@ export default function Header() {
 
       <style>{`
         .winter-announcement-bar {
-          background: linear-gradient(90deg, #1e1b4b 0%, #312e81 50%, #1e3a8a 100%);
+          background: linear-gradient(90deg, #1f1d3a 0%, #2d2a5e 50%, #1a2f52 100%);
           color: #ffffff;
           font-size: 0.775rem;
           padding: 0.4rem 0;
@@ -316,14 +316,14 @@ export default function Header() {
           display: inline-flex;
           align-items: center;
           gap: 0.3rem;
-          color: #38bdf8;
+          color: #a8d4e6;
           font-weight: 700;
           font-size: 0.75rem;
           white-space: nowrap;
           transition: var(--transition-fast);
         }
         .announcement-cta:hover {
-          color: #7dd3fc;
+          color: #b8ddef;
           transform: translateX(2px);
         }
         @media (max-width: 768px) {

@@ -492,7 +492,7 @@ export default function Login({ initialMode }) {
                 <div className="auth-form-header text-center">
                   <div className="auth-logo-center">
                     <div className="icon-badge-round">
-                      <KeyRound size={28} color="#38bdf8" />
+                      <KeyRound size={28} color="#4fb8d4" />
                     </div>
                   </div>
                   <h2>Reset Your Password</h2>
@@ -594,7 +594,7 @@ export default function Login({ initialMode }) {
                 <div className="auth-form-header text-center">
                   <div className="auth-logo-center">
                     <div className="icon-badge-round icon-badge-indigo">
-                      <Lock size={28} color="#818cf8" />
+                      <Lock size={28} color="#9095c4" />
                     </div>
                   </div>
                   <h2>Set New Password</h2>
@@ -803,13 +803,13 @@ export default function Login({ initialMode }) {
                     width: "72px",
                     height: "72px",
                     borderRadius: "50%",
-                    background: "rgba(16, 185, 129, 0.15)",
-                    border: "2px solid #10b981",
+                    background: "rgba(45, 122, 95, 0.15)",
+                    border: "2px solid #2d7a5f",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     margin: "0 auto 1.5rem auto",
-                    color: "#10b981",
+                    color: "#2d7a5f",
                   }}
                 >
                   <CheckCircle2 size={40} />
@@ -935,7 +935,7 @@ export default function Login({ initialMode }) {
         .forgot-link-btn {
           background: none;
           border: none;
-          color: #38bdf8;
+          color: #4fb8d4;
           font-size: 0.825rem;
           font-weight: 600;
           cursor: pointer;
@@ -964,7 +964,7 @@ export default function Login({ initialMode }) {
         .footer-link-action {
           background: none;
           border: none;
-          color: #38bdf8;
+          color: #4fb8d4;
           font-weight: 700;
           cursor: pointer;
           margin-top: 0.4rem;
@@ -1020,8 +1020,8 @@ export default function Login({ initialMode }) {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          background: rgba(16, 185, 129, 0.15);
-          border: 1px solid rgba(16, 185, 129, 0.3);
+          background: rgba(45, 122, 95, 0.15);
+          border: 1px solid rgba(45, 122, 95, 0.3);
           color: #34d399;
           padding: 0.75rem;
           border-radius: var(--radius-sm);
@@ -1057,7 +1057,7 @@ export default function Login({ initialMode }) {
           margin-bottom: 1.5rem;
         }
         .email-chip-icon {
-          color: #38bdf8;
+          color: #4fb8d4;
           display: flex;
         }
         .email-chip-content {
@@ -1080,7 +1080,7 @@ export default function Login({ initialMode }) {
         .email-chip-change-btn {
           background: none;
           border: none;
-          color: #38bdf8;
+          color: #4fb8d4;
           font-size: 0.85rem;
           font-weight: 700;
           cursor: pointer;
@@ -1103,7 +1103,7 @@ export default function Login({ initialMode }) {
           font-weight: 700;
         }
         .otp-label-icon {
-          color: #818cf8;
+          color: #9095c4;
         }
         .otp-boxes-container {
           display: flex;
@@ -1128,14 +1128,14 @@ export default function Login({ initialMode }) {
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
         .otp-box-digit:focus {
-          border-color: #6366f1;
+          border-color: #6065a8;
           background: #ffffff;
           box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), 0 4px 12px rgba(99, 102, 241, 0.2);
           transform: translateY(-2px);
           color: #000000 !important;
         }
         .otp-box-digit.filled {
-          border-color: #6366f1;
+          border-color: #6065a8;
           background: #f8fafc;
           color: #000000 !important;
         }
@@ -1150,7 +1150,7 @@ export default function Login({ initialMode }) {
         .resend-action-btn {
           background: none;
           border: none;
-          color: #38bdf8;
+          color: #4fb8d4;
           font-weight: 600;
           cursor: pointer;
           display: inline-flex;

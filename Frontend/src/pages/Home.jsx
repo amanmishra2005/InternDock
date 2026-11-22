@@ -191,7 +191,7 @@ export default function Home() {
                 className="floating-badge badge-top-right"
               >
                 <span className="badge-icon">
-                  <Zap size={22} color="#d97706" />
+                  <Zap size={22} color="#9a7030" />
                 </span>
                 <div>
                   <strong>Guaranteed Selection Letter</strong>
@@ -210,7 +210,7 @@ export default function Home() {
                 className="floating-badge badge-bottom-left"
               >
                 <span className="badge-icon">
-                  <Award size={22} color="#7c3aed" />
+                  <Award size={22} color="#6b5fa0" />
                 </span>
                 <div>
                   <strong>Flexible Program Duration</strong>
@@ -241,37 +241,37 @@ export default function Home() {
             {[
               {
                 icon: ShieldCheck,
-                color: "#4f46e5",
+                color: "#4a4580",
                 title: "Verifiable Credentials",
                 desc: "Every offer letter and completion certificate includes a public verification URL and QR code for recruiter validation.",
               },
               {
                 icon: Code2,
-                color: "#7c3aed",
+                color: "#6b5fa0",
                 title: "Weekly Production Capstones",
                 desc: "Work on practical projects across technology, design, business, and creative tracks instead of simulated multiple-choice quizzes.",
               },
               {
                 icon: Award,
-                color: "#059669",
+                color: "#2d7a5f",
                 title: "Accredited Evaluation Reports",
                 desc: "Get detailed weekly code reviews and mentor feedback to level up your software architecture skills.",
               },
               {
                 icon: Zap,
-                color: "#d97706",
+                color: "#9a7030",
                 title: "Self-Paced Remote Flexibility",
                 desc: "Complete assignments on your schedule with 4, 6, 8, 12, or 24-week flexible duration tracks.",
               },
               {
                 icon: Compass,
-                color: "#0284c7",
+                color: "#2a7da0",
                 title: "Specified Custom Track Builder",
                 desc: "Need a specialized domain like Game Dev, Systems Rust, or AI Analytics? Create your own customized track instantly.",
               },
               {
                 icon: BookOpen,
-                color: "#db2777",
+                color: "#a04570",
                 title: "Shareable Digital Certificate",
                 desc: "Finish your track and receive a detailed, verifiable completion certificate you can share on LinkedIn, your resume, or with recruiters.",
               },
@@ -358,7 +358,7 @@ export default function Home() {
                 </motion.div>
                 {idx < 3 && (
                   <div className="step-horizontal-arrow-connector">
-                    <ChevronRight size={24} color="#6366f1" />
+                    <ChevronRight size={24} color="#6065a8" />
                   </div>
                 )}
               </React.Fragment>
@@ -570,7 +570,7 @@ export default function Home() {
                 >
                   <CheckCircle2
                     size={48}
-                    color="#059669"
+                    color="#2d7a5f"
                     style={{ marginBottom: "1rem" }}
                   />
                   <h3>Message Dispatched to InternDock!</h3>
@@ -697,7 +697,7 @@ export default function Home() {
         .floating-badge { position: absolute; display: flex; align-items: center; gap: 0.85rem; background: #ffffff; border: 1px solid var(--border-color); padding: 0.85rem 1.35rem; border-radius: var(--radius-md); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08); z-index: 10; }
         .badge-top-right { top: -20px; right: -20px; }
         .badge-bottom-left { bottom: -20px; left: -20px; }
-        .floating-badge strong { display: block; font-size: 0.85rem; color: #0f172a; }
+        .floating-badge strong { display: block; font-size: 0.85rem; color: #1a1f35; }
         .floating-badge span { font-size: 0.75rem; color: var(--text-muted); }
         
         /* Features Section */
@@ -740,7 +740,7 @@ export default function Home() {
           font-size: 1.8rem;
           font-weight: 900;
           color: var(--primary);
-          background: rgba(79, 70, 229, 0.08);
+          background: rgba(74, 69, 128, 0.08);
           padding: 0.2rem 0.75rem;
           border-radius: var(--radius-sm);
         }
@@ -775,7 +775,7 @@ export default function Home() {
         .slider-nav-btn { width: 44px; height: 44px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .horizontal-slider-wrapper { overflow-x: auto; scroll-behavior: smooth; padding-bottom: 1rem; }
         .horizontal-slider-wrapper::-webkit-scrollbar { height: 6px; }
-        .horizontal-slider-wrapper::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.3); border-radius: 10px; }
+        .horizontal-slider-wrapper::-webkit-scrollbar-thumb { background: rgba(74, 69, 128, 0.3); border-radius: 10px; }
         .horizontal-slider-track { display: flex; gap: 1.5rem; width: max-content; }
         .slider-card-item { width: 360px; flex-shrink: 0; }
 
@@ -788,9 +788,9 @@ export default function Home() {
         .contact-details-stack { display: flex; flex-direction: column; gap: 1.1rem; }
         .contact-detail-item { display: flex; align-items: flex-start; gap: 1rem; }
         .c-icon { color: var(--primary); margin-top: 3px; flex-shrink: 0; }
-        .contact-detail-item strong { color: #0f172a; font-size: 0.95rem; display: block; }
+        .contact-detail-item strong { color: #1a1f35; font-size: 0.95rem; display: block; }
         .contact-detail-item p { font-size: 0.875rem; margin: 0; color: var(--text-muted); }
-        .contact-success-box { padding: 3rem 1.5rem; background: rgba(5, 150, 105, 0.05); border: 1px solid rgba(5, 150, 105, 0.2); border-radius: var(--radius-md); }
+        .contact-success-box { padding: 3rem 1.5rem; background: rgba(45, 122, 95, 0.05); border: 1px solid rgba(45, 122, 95, 0.2); border-radius: var(--radius-md); }
         .full-width { width: 100%; }
         .contact-main-form { gap: 0.8rem; }
         .contact-main-form .input-group { margin-bottom: 0; }

@@ -341,18 +341,18 @@ export default function Domains() {
         .domains-hero-subtitle { color: var(--text-muted); font-size: 1.1rem; max-width: 720px; margin: 0 auto 2.5rem auto; }
         .domains-search-panel { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; max-width: 980px; margin: 0 auto; }
         .search-input-group { position: relative; width: 100%; }
-        .search-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: #64748b; }
-        .domains-search-input { width: 100%; padding: 0.95rem 3rem 0.95rem 3.25rem; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: var(--radius-sm); color: #0f172a !important; font-size: 1rem; }
-        .domains-search-input:focus { outline: none; border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important; }
-        .clear-btn { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; }
+        .search-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: #5a6480; }
+        .domains-search-input { width: 100%; padding: 0.95rem 3rem 0.95rem 3.25rem; background: #ffffff !important; border: 1px solid #c8cedf !important; border-radius: var(--radius-sm); color: #1a1f35 !important; font-size: 1rem; }
+        .domains-search-input:focus { outline: none; border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(74, 69, 128, 0.15) !important; }
+        .clear-btn { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #5a6480; cursor: pointer; }
         .categories-scroll-row { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; }
-        .cat-pill-btn { padding: 0.45rem 1.1rem; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: var(--radius-full); color: #475569; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: var(--transition-fast); }
-        .cat-pill-btn:hover { background: #e2e8f0; color: #0f172a; }
-        .cat-pill-btn.active { background: rgba(79, 70, 229, 0.12); border-color: var(--primary); color: #4f46e5; font-weight: 700; }
+        .cat-pill-btn { padding: 0.45rem 1.1rem; background: #eef0f6; border: 1px solid #c8cedf; border-radius: var(--radius-full); color: #5a6480; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: var(--transition-fast); }
+        .cat-pill-btn:hover { background: #dde1ee; color: #1a1f35; }
+        .cat-pill-btn.active { background: rgba(74, 69, 128, 0.12); border-color: var(--primary); color: #4a4580; font-weight: 700; }
         .domains-grid-section { padding: 3rem 0 5rem 0; }
         .domains-section-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
         .results-count { color: var(--text-muted); font-weight: 600; font-size: 0.95rem; }
-        .custom-domain-banner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-lg); }
+        .custom-domain-banner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 3rem; background: linear-gradient(135deg, rgba(96, 101, 168, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%); border: 1px solid rgba(96, 101, 168, 0.3); border-radius: var(--radius-lg); }
         .custom-domain-banner h2 { font-size: 1.8rem; font-weight: 800; margin: 0.75rem 0 0.5rem 0; }
         .custom-domain-banner p { color: var(--text-muted); max-width: 700px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }

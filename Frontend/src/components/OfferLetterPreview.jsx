@@ -45,11 +45,21 @@ export default function OfferLetterPreview({
 
       if (card && typeof html2pdfFn === "function") {
         const cleanName = (studentName || "Intern").replace(/[^a-zA-Z0-9]/g, "_");
+        // A4 portrait: 210mm × 297mm @ 96dpi ≈ 794 × 1123px
         const opt = {
           margin: 0,
           filename: `InternDock_OfferLetter_${cleanName}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
+          image: { type: "jpeg", quality: 0.99 },
+          html2canvas: {
+            scale: 3,
+            useCORS: true,
+            logging: false,
+            width: 794,
+            height: 1123,
+            windowWidth: 794,
+            windowHeight: 1123,
+            backgroundColor: "#fffdf8",
+          },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         };
         await html2pdfFn().set(opt).from(card).save();

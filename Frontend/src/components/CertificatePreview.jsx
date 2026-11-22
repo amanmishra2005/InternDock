@@ -43,11 +43,21 @@ export default function CertificatePreview({
 
       if (card && typeof html2pdfFn === "function") {
         const cleanName = (studentName || "Intern").replace(/[^a-zA-Z0-9]/g, "_");
+        // A4 landscape: 297mm × 210mm @ 96dpi ≈ 1123 × 794px
         const opt = {
           margin: 0,
           filename: `InternDock_Certificate_${cleanName}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
+          image: { type: "jpeg", quality: 0.99 },
+          html2canvas: {
+            scale: 3,
+            useCORS: true,
+            logging: false,
+            width: 1123,
+            height: 794,
+            windowWidth: 1123,
+            windowHeight: 794,
+            backgroundColor: "#fffdf8",
+          },
           jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
         };
         await html2pdfFn().set(opt).from(card).save();

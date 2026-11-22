@@ -65,6 +65,8 @@ const DOCUMENT_STYLES = `
     border: 2px solid #0f172a;
     box-sizing: border-box;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
   }
 
   .doc-card-portrait {
@@ -77,19 +79,53 @@ const DOCUMENT_STYLES = `
     margin-inline: auto;
   }
 
+  /* Inner content fills card height and distributes sections */
+  .doc-inner-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* Top group stretches to fill available space */
+  .doc-body-top-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Bottom group stays at bottom */
+  .doc-body-bottom-group {
+    flex-shrink: 0;
+  }
+
   .doc-inner-content {
     border: 1px solid #0f172a;
     border-radius: 4px;
     padding: 2.25rem 2rem 1.25rem 2rem;
     background-color: #fffdf8;
-    background-image: radial-gradient(#d8d2c2 0.85px, transparent 0.85px);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Ccircle cx='0.85' cy='0.85' r='0.85' fill='%23d8d2c2'/%3E%3C/svg%3E");
     background-size: 16px 16px;
+    background-repeat: repeat;
     position: relative;
     overflow: hidden;
     min-width: 0;
     box-sizing: border-box;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .doc-body-top-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .doc-body-bottom-group {
+    flex-shrink: 0;
   }
 
   /* Decorative Corner L-Brackets */
@@ -587,6 +623,20 @@ const DOCUMENT_STYLES = `
       padding: 10mm 15mm 7mm 15mm !important;
     }
 
+    .doc-print-portrait .cert-body-center,
+    .doc-print-landscape .cert-body-center {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+    }
+
+    .doc-print-portrait .doc-body-top-group,
+    .doc-print-landscape .doc-body-top-group {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
     .doc-print-portrait .offer-main-title {
       font-size: 2.1rem !important;
     }
